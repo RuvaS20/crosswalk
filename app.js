@@ -89,12 +89,6 @@ function render(plan) {
 
     ${altBlock(plan.alternatives)}
   `;
-
-  // Public users will click a lesson and hit a login wall. Say so once, up
-  // front, rather than letting them discover it.
-  out.insertAdjacentHTML('afterbegin',
-    '<p class="loginnote">Lesson titles link to the Technovation curriculum. ' +
-    'Opening them needs a free Technovation account.</p>');
 }
 
 function week(w) {
