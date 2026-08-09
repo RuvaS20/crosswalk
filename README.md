@@ -104,8 +104,9 @@ last, and each choice group contributes exactly one lesson.
   URL spelled out, so a printed plan is still usable.
 - **Download as spreadsheet** gives a CSV with a row per lesson: week, date, whether
   it is in class or at home, category, minutes, activities and link.
-- **The login note** tells facilitators up front that opening a lesson needs a free
-  Technovation account, rather than letting them find out by clicking.
+- **Lesson links open the public curriculum.** Verified: lesson pages on
+  technovationchallenge.org are readable without an account, so a facilitator who
+  finds this tool can follow every link straight through.
 
 ## Notes on behaviour
 
