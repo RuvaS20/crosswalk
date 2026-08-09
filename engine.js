@@ -88,9 +88,7 @@ export function resolveChoiceGroups(lessons, params) {
   const platform = params.platform || 'mobile';
 
   // Default builder when the user has not chosen one.
-  const fallback = platform === 'web' ? 'python_streamlit'
-                 : params.age === 'beginner' ? 'app_inventor'
-                 : 'app_inventor';
+  const fallback = platform === 'web' ? 'python_streamlit' : 'app_inventor';
 
   const groups = new Map();
   const singles = [];
@@ -120,6 +118,25 @@ export function resolveChoiceGroups(lessons, params) {
   kept.sort((a, b) => (a.source_week - b.source_week) ||
                       a.lesson_id.localeCompare(b.lesson_id));
   return { lessons: kept, alternatives };
+}
+
+
+/**
+ * Which coding tools this configuration can be taught in, and how completely
+ * each one is linked. The UI uses this to build the tool control and to warn
+ * when a choice would produce lessons with no link to follow.
+ */
+export function availableBuilders(all, params) {
+  const lessons = filterLessons(all, params);
+  const tally = new Map();
+  for (const l of lessons) {
+    if (!l.choice_group || l.builder === 'any') continue;
+    if (!tally.has(l.builder)) tally.set(l.builder, { builder: l.builder, total: 0, linked: 0 });
+    const t = tally.get(l.builder);
+    t.total++;
+    if (l.url) t.linked++;
+  }
+  return [...tally.values()].sort((a, b) => b.total - a.total);
 }
 
 
