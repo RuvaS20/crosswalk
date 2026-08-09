@@ -94,6 +94,19 @@ It asserts that no week exceeds its session length, plans never exceed the weeks
 available, dependency order survives compression, the deadline-locked tail stays
 last, and each choice group contributes exactly one lesson.
 
+## What the page does
+
+- **Coding tool choice** appears only where a real choice exists: App Inventor vs
+  Thunkable for 13-18 mobile, App Inventor vs Scratch for 8-12. Hidden for web apps
+  (Python + Streamlit only) and for AI-focused, where the alternatives split by
+  mobile vs web and the platform control already asks that.
+- **Print or save as PDF** hides the form and prints the schedule with each lesson's
+  URL spelled out, so a printed plan is still usable.
+- **Download as spreadsheet** gives a CSV with a row per lesson: week, date, whether
+  it is in class or at home, category, minutes, activities and link.
+- **The login note** tells facilitators up front that opening a lesson needs a free
+  Technovation account, rather than letting them find out by clicking.
+
 ## Notes on behaviour
 
 - **Below 10 weeks the planner refuses** and says what would work instead.
