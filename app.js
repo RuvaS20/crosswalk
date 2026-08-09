@@ -1,9 +1,10 @@
-import { buildPlan } from './engine.js';
+import { buildPlan, filterLessons } from './engine.js';
 import { ENDPOINT } from './config.js';
 
 const $ = s => document.querySelector(s);
 const out = $('#out');
 let data = null;
+let current = null;   // last built plan, for export
 
 /* ---------------------------------------------------------------- loading */
 
@@ -88,6 +89,12 @@ function render(plan) {
 
     ${altBlock(plan.alternatives)}
   `;
+
+  // Public users will click a lesson and hit a login wall. Say so once, up
+  // front, rather than letting them discover it.
+  out.insertAdjacentHTML('afterbegin',
+    '<p class="loginnote">Lesson titles link to the Technovation curriculum. ' +
+    'Opening them needs a free Technovation account.</p>');
 }
 
 function week(w) {
@@ -136,6 +143,99 @@ function altBlock(alts) {
     </div>`;
 }
 
+/* ----------------------------------------------------- coding tool choice */
+
+const TOOL_NAMES = {
+  app_inventor: 'App Inventor',
+  thunkable: 'Thunkable',
+  scratch: 'Scratch',
+  python_streamlit: 'Python + Streamlit'
+};
+
+/**
+ * Which coding tools this configuration can actually choose between.
+ *
+ * Read from the data rather than hardcoded, so a curriculum change that adds
+ * or retires a tool needs no code change. AI-focused is excluded on purpose:
+ * its alternatives split by mobile vs web, which the platform control already
+ * asks, and asking twice for the same thing invites contradictory answers.
+ */
+function toolChoices(params) {
+  if (params.aiMode === 'focused') return [];
+  const groups = {};
+  for (const l of filterLessons(data.lessons, params)) {
+    if (!l.choice_group) continue;
+    (groups[l.choice_group] ||= new Set()).add(l.builder);
+  }
+  const tools = new Set();
+  Object.values(groups).forEach(set =>
+    set.forEach(b => { if (b !== 'any') tools.add(b); }));
+  return tools.size > 1 ? [...tools] : [];
+}
+
+function renderToolChoice() {
+  if (!data) return;
+  const params = readParams();
+  const tools = toolChoices(params);
+  const field = $('#builderField');
+  const seg = $('#builderSeg');
+
+  if (!tools.length) { field.hidden = true; seg.innerHTML = ''; return; }
+
+  const previous = document.querySelector('[name=builder]:checked')?.value;
+  const keep = tools.includes(previous) ? previous : tools[0];
+
+  seg.innerHTML = tools.map((t, i) => `
+    <input type="radio" name="builder" id="b${i}" value="${t}" ${t === keep ? 'checked' : ''}>
+    <label for="b${i}">${TOOL_NAMES[t] || t}</label>`).join('');
+
+  $('#builderHint').textContent = params.age === 'beginner'
+    ? 'Both are fine for 8-12. Scratch is gentler; App Inventor makes a real phone app.'
+    : 'Pick what your group will code in. It changes which tutorials appear.';
+  field.hidden = false;
+}
+
+/* --------------------------------------------------------------- exporting */
+
+function toCSV(plan) {
+  const rows = [['Week', 'Date', 'Where', 'Category', 'Lesson', 'Minutes',
+                 'In class', 'Out of class', 'Link']];
+
+  plan.weeks.forEach(w => {
+    if (w.workTime) {
+      rows.push([w.week, w.date, 'In class', 'Work time',
+                 'Building, testing and user feedback', w.minutes, '', '', '']);
+      return;
+    }
+    w.lessons.forEach(l => rows.push([
+      w.week, w.date, 'In class', l.category, l.title, l.minutes,
+      l.in_class || '', l.out_of_class || '', l.url || ''
+    ]));
+  });
+
+  plan.homework.forEach(l => rows.push([
+    '', '', 'Out of class', l.category, l.title, l.minutes,
+    '', l.out_of_class || '', l.url || ''
+  ]));
+
+  return rows.map(r => r.map(cell => {
+    const v = String(cell ?? '').replace(/\r?\n/g, ' ');
+    return /[",]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }).join(',')).join('\r\n');
+}
+
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function planName(p) {
+  const { age, platform, aiMode, weeks } = p.params;
+  return `technovation-plan-${age}-${platform}-${aiMode}-${weeks}wk`;
+}
+
 /* ----------------------------------------------------------------- helpers */
 
 const esc = t => String(t ?? '').replace(/[&<>"]/g,
@@ -172,21 +272,55 @@ function syncPlatform() {
     : '';
 }
 
-$('#controls').addEventListener('change', syncPlatform);
+$('#controls').addEventListener('change', () => { syncPlatform(); renderToolChoice(); });
+
+function readParams() {
+  return {
+    age: document.querySelector('[name=age]:checked').value,
+    platform: document.querySelector('[name=platform]:checked').value,
+    aiMode: document.querySelector('[name=aiMode]:checked').value,
+    builder: document.querySelector('[name=builder]:checked')?.value || 'auto',
+    weeks: +$('#weeks').value,
+    sessionLength: +$('#len').value
+  };
+}
 
 $('#controls').addEventListener('submit', e => {
   e.preventDefault();
   if (!data) return;
-  render(buildPlan(data, {
-    age: document.querySelector('[name=age]:checked').value,
-    platform: document.querySelector('[name=platform]:checked').value,
-    aiMode: document.querySelector('[name=aiMode]:checked').value,
-    weeks: +$('#weeks').value,
-    sessionLength: +$('#len').value
-  }));
+  const params = readParams();
+  current = buildPlan(data, params);
+  render(current);
+
+  $('#actions').hidden = current.status !== 'ok';
+  $('#printhead').innerHTML = current.status === 'ok'
+    ? `<h1>Technovation plan</h1><p>${describe(params)} &middot; submissions due ${current.deadline}</p>`
+    : '';
+
   out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-load().then(syncPlatform).catch(err => {
+$('#printBtn').addEventListener('click', () => window.print());
+
+$('#csvBtn').addEventListener('click', () => {
+  if (current?.status === 'ok') {
+    download(planName(current) + '.csv', toCSV(current), 'text/csv;charset=utf-8');
+  }
+});
+
+const AGE_LABEL = { beginner: 'Ages 8-12', junior: 'Ages 13-15', senior: 'Ages 16-18' };
+const AI_LABEL = { none: 'no AI', integrated: 'AI included', focused: 'AI-focused' };
+
+function describe(p) {
+  return [
+    AGE_LABEL[p.age],
+    p.age === 'beginner' ? null : (p.platform === 'web' ? 'web app' : 'mobile app'),
+    p.builder !== 'auto' ? TOOL_NAMES[p.builder] : null,
+    AI_LABEL[p.aiMode],
+    `${p.weeks} weeks x ${p.sessionLength} min`
+  ].filter(Boolean).join(' &middot; ');
+}
+
+load().then(() => { syncPlatform(); renderToolChoice(); }).catch(err => {
   $('#source').textContent = 'Could not load the curriculum: ' + err.message;
 });
