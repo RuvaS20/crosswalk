@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curriculum Crosswalk — Technovation session planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#141A2E;         /* headings, spine */
+  --ink-soft:#4A5270;    /* body */
+  --ink-faint:#8A90A6;   /* captions */
+  --surface:#F4F6FA;     /* page */
+  --card:#FFFFFF;
+  --line:#DFE3EE;
+  --violet:#5B3DF5;      /* primary action, in-class */
+  --violet-wash:#EDEAFE;
+  --teal:#0B7F73;        /* out-of-class */
+  --teal-wash:#E0F2EF;
+  --amber:#B26B00;       /* deadline-locked tail */
+  --amber-wash:#FDF0DA;
+  --red:#B02A37;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--surface);color:var(--ink-soft);
+  font:400 15px/1.55 Inter,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:"Bricolage Grotesque",Inter,sans-serif;color:var(--ink);margin:0;line-height:1.15}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+header{padding:36px 0 24px;border-bottom:1px solid var(--line);margin-bottom:28px}
+header h1{font-size:clamp(26px,3.4vw,38px);font-weight:700;letter-spacing:-.02em}
+header p{margin:8px 0 0;max-width:60ch;color:var(--ink-faint)}
+.deadline{
+  display:inline-flex;gap:8px;align-items:baseline;margin-top:14px;
+  padding:5px 11px;border-radius:99px;background:var(--amber-wash);color:var(--amber);
+  font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+}
+.layout{display:grid;grid-template-columns:320px 1fr;gap:32px;align-items:start}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+
+/* ---------- controls ---------- */
+.panel{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:20px;position:sticky;top:20px;
+}
+@media(max-width:860px){.panel{position:static}}
+.field{margin-bottom:18px}
+.field:last-of-type{margin-bottom:22px}
+.field > label{
+  display:block;font-size:11px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px;
+}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg input{position:absolute;opacity:0;width:0;height:0}
+.seg label{
+  flex:1 1 auto;text-align:center;padding:8px 10px;border:1px solid var(--line);
+  border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;
+  color:var(--ink-soft);transition:background .12s,border-color .12s,color .12s;
+  white-space:nowrap;
+}
+.seg label:hover{border-color:var(--ink-faint)}
+.seg input:checked + label{background:var(--violet);border-color:var(--violet);color:#fff}
+.seg input:focus-visible + label{outline:2px solid var(--violet);outline-offset:2px}
+.nums{display:flex;gap:10px}
+.nums > div{flex:1}
+.nums input{
+  width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;
+  font:500 15px/1 "JetBrains Mono",monospace;color:var(--ink);background:#fff;
+}
+.nums input:focus{outline:2px solid var(--violet);outline-offset:1px;border-color:var(--violet)}
+.hint{font-size:12px;color:var(--ink-faint);margin-top:6px}
+button.go{
+  width:100%;padding:11px;border:0;border-radius:8px;background:var(--ink);color:#fff;
+  font:600 14px Inter,sans-serif;cursor:pointer;
+}
+button.go:hover{background:var(--violet)}
+button.go:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.src{margin-top:14px;font-size:11px;color:var(--ink-faint);line-height:1.4}
+
+/* ---------- summary ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:18px}
+.stat{background:var(--card);padding:14px 16px}
+.stat b{display:block;font-family:"JetBrains Mono",monospace;font-size:22px;color:var(--ink);font-weight:700}
+.stat span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
+.notes{margin:0 0 22px;padding:0;list-style:none}
+.notes li{
+  background:var(--card);border:1px solid var(--line);border-left:3px solid var(--violet);
+  border-radius:0 7px 7px 0;padding:10px 14px;margin-bottom:7px;font-size:13.5px;
+}
+.notes li.warn{border-left-color:var(--amber);background:var(--amber-wash)}
+
+/* ---------- the spine: weeks counting down to the deadline ---------- */
+.spine{position:relative;padding-left:64px}
+.spine::before{
+  content:"";position:absolute;left:26px;top:8px;bottom:34px;width:2px;
+  background:linear-gradient(var(--line) 0 70%,var(--amber) 100%);
+}
+.wk{position:relative;margin-bottom:14px}
+.wk-no{
+  position:absolute;left:-64px;top:2px;width:52px;text-align:right;
+  font-family:"JetBrains Mono",monospace;font-weight:700;font-size:15px;color:var(--ink);
+}
+.wk-no small{display:block;font-weight:500;font-size:10.5px;color:var(--ink-faint);letter-spacing:.02em}
+.wk::before{
+  content:"";position:absolute;left:-40px;top:8px;width:9px;height:9px;border-radius:50%;
+  background:var(--card);border:2px solid var(--line);
+}
+.wk.locked::before{border-color:var(--amber);background:var(--amber)}
+.wk-body{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px}
+.wk.locked .wk-body{border-color:#EBD4A8;background:var(--amber-wash)}
+.wk.slack .wk-body{background:transparent;border-style:dashed}
+.wk-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:6px}
+.wk-head h3{font-size:14px;font-weight:600}
+.wk-time{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-faint);white-space:nowrap}
+.lesson{display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--line);font-size:14px}
+.wk.locked .lesson{border-top-color:#EBD4A8}
+.lesson:first-of-type{border-top:0}
+.lesson a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+.lesson a:hover{color:var(--violet);border-color:var(--violet)}
+.lesson .t{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-faint);
+  min-width:52px;padding-top:2px}
+.tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:1px 6px;border-radius:4px;background:var(--violet-wash);color:var(--violet);margin-left:6px}
+.terminus{
+  margin-left:-64px;margin-top:20px;display:inline-flex;align-items:center;gap:10px;
+  background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;
+  font-family:"JetBrains Mono",monospace;font-size:12.5px;font-weight:700;letter-spacing:.06em;
+}
+
+/* ---------- secondary blocks ---------- */
+.block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-top:18px}
+.block h3{font-size:14px;margin-bottom:4px}
+.block p{margin:0 0 10px;font-size:13px;color:var(--ink-faint)}
+.block ul{margin:0;padding-left:18px;font-size:13.5px}
+.block li{margin-bottom:4px}
+.block.home{border-left:3px solid var(--teal)}
+.block.home h3{color:var(--teal)}
+
+/* ---------- states ---------- */
+.refused{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--red);
+  border-radius:var(--r);padding:22px}
+.refused h2{font-size:18px;color:var(--red);margin-bottom:8px}
+.refused ul{margin:12px 0 0;padding-left:18px}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:44px 24px;text-align:center;color:var(--ink-faint)}
+.empty strong{display:block;color:var(--ink);font-family:"Bricolage Grotesque",sans-serif;font-size:17px;margin-bottom:5px}
+
+@media print{
+  body{background:#fff}
+  .panel,header p,.deadline,.src{display:none}
+  .layout{display:block}
+  .wk-body{break-inside:avoid}
+}
+@media(prefers-reduced-motion:no-preference){
+  .wk{animation:rise .28s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(5px)}}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Curriculum Crosswalk</h1>
+  <p>Enter how much time your group actually has. You get the Technovation lessons
+     to cover each week, with the video and submission work reserved at the end.</p>
+  <div class="deadline"><span class="mono">Submissions due 5 May 2027</span></div>
+</header>
+
+<div class="layout">
+
+  <form class="panel" id="controls">
+    <div class="field">
+      <label>Age group</label>
+      <div class="seg">
+        <input type="radio" name="age" id="a1" value="beginner"><label for="a1">8–12</label>
+        <input type="radio" name="age" id="a2" value="junior"><label for="a2">13–15</label>
+        <input type="radio" name="age" id="a3" value="senior" checked><label for="a3">16–18</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>What they'll build</label>
+      <div class="seg">
+        <input type="radio" name="platform" id="p1" value="mobile" checked><label for="p1">Mobile app</label>
+        <input type="radio" name="platform" id="p2" value="web"><label for="p2">Web app</label>
+      </div>
+      <p class="hint" id="platHint"></p>
+    </div>
+
+    <div class="field">
+      <label>AI</label>
+      <div class="seg">
+        <input type="radio" name="aiMode" id="m1" value="none"><label for="m1">None</label>
+        <input type="radio" name="aiMode" id="m2" value="integrated" checked><label for="m2">Included</label>
+        <input type="radio" name="aiMode" id="m3" value="focused"><label for="m3">AI-focused</label>
+      </div>
+      <p class="hint">Every team submits source code either way. AI is optional.</p>
+    </div>
+
+    <div class="field">
+      <label>Time available</label>
+      <div class="nums">
+        <div>
+          <input type="number" id="weeks" value="16" min="1" max="52" aria-label="Number of weeks">
+          <p class="hint">weeks</p>
+        </div>
+        <div>
+          <input type="number" id="len" value="90" min="15" max="300" step="15" aria-label="Minutes per session">
+          <p class="hint">minutes each</p>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="go">Build the plan</button>
+    <p class="src" id="source">Loading curriculum…</p>
+  </form>
+
+  <main id="out">
+    <div class="empty">
+      <strong>No plan yet</strong>
+      Set your group's details and build a plan.
+    </div>
+  </main>
+
+</div>
+</div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
