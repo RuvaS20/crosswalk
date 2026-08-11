@@ -30,19 +30,13 @@ async function load() {
       const res = await fetch(ENDPOINT + '?slim=1');
       if (res.ok) {
         const json = await res.json();
-        if (json.lessons?.length) {
-          data = json;
-          $('#source').textContent =
-            `${json.lesson_count} lessons, published ${fmtDate(json.generated_at)}.`;
-          return;
-        }
+        if (json.lessons?.length) { data = json; return; }
       }
     } catch { /* fall through */ }
   }
+  // Falls back to the copy committed beside the site. Silent by design: which
+  // file the data came from is our problem, not the facilitator's.
   data = await (await fetch('./curriculum.json')).json();
-  $('#source').innerHTML =
-    `${data.lesson_count} lessons from the copy in this repo. ` +
-    `<strong>Set ENDPOINT in config.js</strong> to follow the live sheet.`;
 }
 
 
@@ -240,7 +234,7 @@ function week(w) {
 
   return `
     <div class="wk ${cls}">
-      <div class="wk-no">${w.week}<small>${shortDate(w.date)}</small></div>
+      <div class="wk-no">${w.week}</div>
       <details class="wk-body" data-week="${w.week}" ${open ? 'open' : ''}>
         <summary>
           <span class="sum-main">
@@ -352,14 +346,6 @@ const mins = m => m >= 60
 
 const hrs = m => m >= 60 ? `${(m / 60).toFixed(m % 60 ? 1 : 0)}h` : `${m}m`;
 
-const shortDate = d => d
-  ? new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB',
-      { day: 'numeric', month: 'short', timeZone: 'UTC' }) : '';
-
-const fmtDate = iso => iso
-  ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-  : 'unknown';
-
 function describe(p) {
   return [
     AGE_LABEL[p.age],
@@ -440,4 +426,9 @@ window.addEventListener('afterprint', () =>
 load()
   .then(() => { syncPlatform(); renderToolChoice(); syncEnvFromLength();
                 update({ immediate: true }); })
-  .catch(err => { $('#source').textContent = 'Could not load the curriculum: ' + err.message; });
+  .catch(err => {
+    $('#out').innerHTML =
+      '<div class="nofit"><h2>Couldn\'t load the curriculum</h2>' +
+      '<p>' + esc(err.message) + '</p>' +
+      '<div class="fixes"><button type="button" onclick="location.reload()">Try again</button></div></div>';
+  });
