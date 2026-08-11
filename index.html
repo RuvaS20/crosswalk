@@ -49,13 +49,17 @@ header p{margin:12px 0 0;max-width:56ch;font-size:15.5px}
 .deadline b{background:var(--lime);color:var(--indigo);padding:2px 9px;border-radius:99px;
   font:600 12px/1.5 Rubik,sans-serif}
 
-.layout{display:grid;grid-template-columns:310px 1fr;gap:36px;align-items:start}
+.layout{display:block}
 
 /* ------------------------------------------------------------ controls */
+/* A horizontal bar: the controls are a header for the plan, not a sidebar
+   competing with it for width. */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  padding:22px;position:sticky;top:20px}
-.field{margin-bottom:20px}
-.field:last-child{margin-bottom:0}
+  padding:20px 22px;margin-bottom:28px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));
+  gap:18px 22px;align-items:start}
+.field{margin:0}
+.field.time{min-width:200px}
 .field > label{display:block;font:600 11px/1 Rubik,sans-serif;letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted);margin-bottom:9px}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
@@ -73,8 +77,6 @@ header p{margin:12px 0 0;max-width:56ch;font-size:15.5px}
   font:600 15px/1 Poppins,sans-serif;font-variant-numeric:tabular-nums;color:var(--indigo);background:#fff}
 .nums input:focus{outline:2.5px solid var(--indigo);outline-offset:1px;border-color:var(--indigo)}
 .hint{font-size:12px;color:var(--muted);margin:7px 0 0}
-.src{margin-top:18px;padding-top:14px;border-top:1px solid var(--line-soft);
-  font-size:11.5px;color:var(--muted);line-height:1.45}
 
 /* --------------------------------------------------------- chips (mobile) */
 .chips{display:none}
@@ -105,14 +107,13 @@ header p{margin:12px 0 0;max-width:56ch;font-size:15.5px}
 .actions button:hover{border-color:var(--indigo);background:var(--lime-tint)}
 
 /* ------------------------------------------------------------- the spine */
-.spine{position:relative;padding-left:62px}
-.spine::before{content:"";position:absolute;left:25px;top:10px;bottom:40px;width:2px;
+.spine{position:relative;padding-left:52px}
+.spine::before{content:"";position:absolute;left:19px;top:10px;bottom:40px;width:2px;
   background:linear-gradient(var(--line) 0%,var(--line) 62%,var(--lime) 100%)}
 .wk{position:relative;margin-bottom:10px}
-.wk-no{position:absolute;left:-62px;top:12px;width:50px;text-align:right;
+.wk-no{position:absolute;left:-52px;top:14px;width:26px;text-align:center;
   font:700 15px/1.1 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
-.wk-no small{display:block;font:400 10.5px/1.5 Poppins,sans-serif;color:var(--muted)}
-.wk::before{content:"";position:absolute;left:-41px;top:17px;width:11px;height:11px;border-radius:50%;
+.wk::before{content:"";position:absolute;left:-14px;top:19px;width:9px;height:9px;border-radius:50%;
   background:var(--card);border:2px solid var(--line)}
 .wk.locked::before{background:var(--lime);border-color:var(--lime-deep)}
 
@@ -140,7 +141,7 @@ details[open] .chev{transform:rotate(-135deg)}
 .lesson a:hover{border-bottom-color:var(--indigo)}
 .tag{display:inline-block;font:600 10px/1.6 Rubik,sans-serif;letter-spacing:.05em;text-transform:uppercase;
   padding:0 7px;border-radius:4px;background:var(--lime-tint);color:var(--lime-deep);margin-left:7px}
-.terminus{margin-left:-62px;margin-top:18px;display:inline-flex;align-items:center;gap:11px;
+.terminus{margin-left:-52px;margin-top:18px;display:inline-flex;align-items:center;gap:11px;
   background:var(--indigo);color:#fff;padding:11px 18px;border-radius:99px;
   font:600 12.5px Rubik,sans-serif;letter-spacing:.07em}
 .terminus b{color:var(--lime)}
@@ -168,18 +169,20 @@ details[open] .chev{transform:rotate(-135deg)}
 
 /* ------------------------------------------------------------- responsive */
 @media(max-width:900px){
-  .layout{grid-template-columns:1fr;gap:0}
   .chips{display:flex;gap:7px;overflow-x:auto;padding:11px 20px;
     position:sticky;top:0;z-index:20;background:rgba(251,250,245,.94);
     backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  .panel{position:static;margin-bottom:22px;order:2}
-  .results{order:1;margin-bottom:26px}
   header{padding:26px 0 16px}
-  .spine{padding-left:46px}
+  .panel{grid-template-columns:1fr 1fr;padding:18px}
+  .field.time{grid-column:1/-1}
+  .spine{padding-left:42px}
   .spine::before{left:15px}
-  .wk-no{left:-46px;width:36px;font-size:14px}
-  .wk::before{left:-31px}
-  .terminus{margin-left:-46px}
+  .wk-no{left:-42px;width:22px;font-size:14px}
+  .wk::before{left:-16px}
+  .terminus{margin-left:-42px}
+}
+@media(max-width:520px){
+  .panel{grid-template-columns:1fr}
 }
 
 /* ----------------------------------------------------------------- print */
@@ -187,7 +190,7 @@ details[open] .chev{transform:rotate(-135deg)}
 @media print{
   @page{margin:12mm}
   body{background:#fff;font-size:10pt;color:#000}
-  header,.panel,.chips,.actions,.src,.terminus,.legend,.chev,.fill,.notes{display:none !important}
+  header,.panel,.chips,.actions,.terminus,.legend,.chev,.fill,.notes{display:none !important}
   .printhead{display:block;border-bottom:2.5px solid var(--indigo);padding-bottom:9px;margin-bottom:14px}
   .printhead h1{font-size:16pt}
   .printhead p{margin:3px 0 0;font-size:9pt;color:#000}
@@ -199,14 +202,14 @@ details[open] .chev{transform:rotate(-135deg)}
   .spine::before,.wk::before{display:none}
   .wk{break-inside:avoid;margin-bottom:7px;display:block}
   .wk-no{position:static;width:auto;text-align:left;font-size:10pt;margin-bottom:2px}
-  .wk-no small{display:inline;margin-left:6px}
   details.wk-body,.wk.locked details.wk-body{border:1px solid #BBB;background:#fff !important}
   summary{padding:7px 9px}
   .lessons{padding:0 9px 7px}
   /* A printed plan is a tracker: give every lesson a box to tick. */
   .lesson::before{content:"";display:inline-block;width:9px;height:9px;border:1px solid #777;
     margin-top:4px;flex:none}
-  .lesson a{border:0;color:#000}
+  /* Keep links readable AS links in the PDF - it stays clickable. */
+  .lesson a{border:0;color:var(--indigo);text-decoration:underline}
   .block{break-inside:avoid;border-color:#BBB}
 }
 </style>
@@ -274,7 +277,7 @@ details[open] .chev{transform:rotate(-135deg)}
         </div>
       </div>
 
-      <div class="field">
+      <div class="field time">
         <label>Time available</label>
         <div class="nums">
           <div><input type="number" id="weeks" value="16" min="1" max="52" aria-label="Number of weeks">
@@ -283,8 +286,6 @@ details[open] .chev{transform:rotate(-135deg)}
             <p class="hint">minutes each</p></div>
         </div>
       </div>
-
-      <p class="src" id="source">Loading curriculum…</p>
     </form>
 
     <div class="results">
