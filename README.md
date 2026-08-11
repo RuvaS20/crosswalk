@@ -96,6 +96,10 @@ last, and each choice group contributes exactly one lesson.
 
 ## What the page does
 
+- **Environment presets** set a typical session length — in school 45 min, after
+  school 90, weekend club 150. A shortcut for the minutes field, not a parameter: the
+  engine never sees it. Typing your own minutes flips the buttons to Custom rather
+  than leaving one lit that contradicts the field.
 - **Coding tool choice** appears only where a real choice exists: App Inventor vs
   Thunkable for 13-18 mobile, App Inventor vs Scratch for 8-12. Hidden for web apps
   (Python + Streamlit only) and for AI-focused, where the alternatives split by
