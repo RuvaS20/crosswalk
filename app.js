@@ -266,6 +266,32 @@ function syncPlatform() {
     : '';
 }
 
+/**
+ * Environment presets. A shortcut for the minutes field, not a parameter -
+ * the engine never sees it. Typing your own minutes flips it to Custom rather
+ * than silently disagreeing with the button that is lit up.
+ */
+function applyEnvPreset() {
+  const env = document.querySelector('[name=env]:checked');
+  if (!env || env.value === 'custom') return;
+  $('#len').value = env.value;
+}
+
+function syncEnvFromLength() {
+  const mins = String($('#len').value);
+  const match = [...document.querySelectorAll('[name=env]')]
+    .find(i => i.value === mins);
+  ($('#e4') && !match ? $('#e4') : match).checked = true;
+}
+
+$('#len').addEventListener('input', syncEnvFromLength);
+
+// Bound directly to the radios rather than read off a bubbled event's target:
+// the preset must only fire when the preset itself is chosen, never when some
+// other control changes and happens to route through the same handler.
+document.querySelectorAll('[name=env]')
+  .forEach(i => i.addEventListener('change', applyEnvPreset));
+
 $('#controls').addEventListener('change', () => { syncPlatform(); renderToolChoice(); });
 
 function readParams() {
@@ -315,6 +341,6 @@ function describe(p) {
   ].filter(Boolean).join(' &middot; ');
 }
 
-load().then(() => { syncPlatform(); renderToolChoice(); }).catch(err => {
+load().then(() => { syncPlatform(); renderToolChoice(); syncEnvFromLength(); }).catch(err => {
   $('#source').textContent = 'Could not load the curriculum: ' + err.message;
 });
