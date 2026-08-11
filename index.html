@@ -6,281 +6,304 @@
 <title>Curriculum Crosswalk — Technovation session planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,500;0,600;0,700;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#141A2E;         /* headings, spine */
-  --ink-soft:#4A5270;    /* body */
-  --ink-faint:#8A90A6;   /* captions */
-  --surface:#F4F6FA;     /* page */
+  /* Brand: deep indigo + lime, sampled from the Technovation covers. */
+  --indigo:#1D1349;
+  --indigo-600:#3A2E72;
+  --muted:#5F5980;
+  --lime:#D8E583;
+  --lime-tint:#F2F6DC;
+  --lime-deep:#5A6912;      /* darkened until it clears 4.5:1 on white AND on the tint */
+  --paper:#FBFAF5;
   --card:#FFFFFF;
-  --line:#DFE3EE;
-  --violet:#5B3DF5;      /* primary action, in-class */
-  --violet-wash:#EDEAFE;
-  --teal:#0B7F73;        /* out-of-class */
-  --teal-wash:#E0F2EF;
-  --amber:#B26B00;       /* deadline-locked tail */
-  --amber-wash:#FDF0DA;
-  --red:#B02A37;
-  --r:10px;
+  --line:#E7E4EF;
+  --line-soft:#F0EEF6;
+  --r:12px;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
+html{scroll-behavior:smooth}
 body{
-  background:var(--surface);color:var(--ink-soft);
-  font:400 15px/1.55 Inter,system-ui,sans-serif;
+  margin:0;background:var(--paper);color:var(--muted);
+  font:400 15px/1.6 Poppins,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
-h1,h2,h3{font-family:"Bricolage Grotesque",Inter,sans-serif;color:var(--ink);margin:0;line-height:1.15}
-.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:Rubik,Poppins,sans-serif;color:var(--indigo);margin:0;line-height:1.15}
+.mono{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2.5px solid var(--indigo);outline-offset:2px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
 
-/* ---------- shell ---------- */
-.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
-header{padding:36px 0 24px;border-bottom:1px solid var(--line);margin-bottom:28px}
-header h1{font-size:clamp(26px,3.4vw,38px);font-weight:700;letter-spacing:-.02em}
-header p{margin:8px 0 0;max-width:60ch;color:var(--ink-faint)}
-.deadline{
-  display:inline-flex;gap:8px;align-items:baseline;margin-top:14px;
-  padding:5px 11px;border-radius:99px;background:var(--amber-wash);color:var(--amber);
-  font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
-}
-.layout{display:grid;grid-template-columns:320px 1fr;gap:32px;align-items:start}
-@media(max-width:860px){.layout{grid-template-columns:1fr}}
+/* ---------------------------------------------------------------- shell */
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px 96px}
+header{padding:40px 0 22px}
+.brandmark{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.brandmark .dot{width:26px;height:26px;border-radius:7px;background:var(--indigo);position:relative;flex:none}
+.brandmark .dot::after{content:"";position:absolute;inset:7px;border-radius:3px;background:var(--lime)}
+.brandmark span{font:600 12px/1 Rubik,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+header h1{font-size:clamp(30px,4.4vw,46px);font-weight:700;letter-spacing:-.025em}
+header h1 em{font-style:italic;color:var(--lime-deep)}
+header p{margin:12px 0 0;max-width:56ch;font-size:15.5px}
+.deadline{display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:7px 14px 7px 12px;
+  border-radius:99px;background:var(--indigo);color:#fff;font-size:12.5px;font-weight:500}
+.deadline b{background:var(--lime);color:var(--indigo);padding:2px 9px;border-radius:99px;
+  font:600 12px/1.5 Rubik,sans-serif}
 
-/* ---------- controls ---------- */
-.panel{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  padding:20px;position:sticky;top:20px;
-}
-@media(max-width:860px){.panel{position:static}}
-.field{margin-bottom:18px}
-.field:last-of-type{margin-bottom:22px}
-.field > label{
-  display:block;font-size:11px;font-weight:600;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px;
-}
+.layout{display:grid;grid-template-columns:310px 1fr;gap:36px;align-items:start}
+
+/* ------------------------------------------------------------ controls */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:22px;position:sticky;top:20px}
+.field{margin-bottom:20px}
+.field:last-child{margin-bottom:0}
+.field > label{display:block;font:600 11px/1 Rubik,sans-serif;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:9px}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
-.seg input{position:absolute;opacity:0;width:0;height:0}
-.seg label{
-  flex:1 1 auto;text-align:center;padding:8px 10px;border:1px solid var(--line);
-  border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;
-  color:var(--ink-soft);transition:background .12s,border-color .12s,color .12s;
-  white-space:nowrap;
-}
-.seg label:hover{border-color:var(--ink-faint)}
-.seg input:checked + label{background:var(--violet);border-color:var(--violet);color:#fff}
-.seg input:focus-visible + label{outline:2px solid var(--violet);outline-offset:2px}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label{flex:1 1 auto;text-align:center;padding:9px 11px;border:1.5px solid var(--line);
+  border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:var(--indigo);
+  transition:background .14s,border-color .14s,color .14s;white-space:nowrap}
+.seg label:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
+.seg input:checked + label{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.seg input:focus-visible + label{outline:2.5px solid var(--indigo);outline-offset:2px}
+.seg input:disabled + label{opacity:.42;cursor:not-allowed}
 .nums{display:flex;gap:10px}
 .nums > div{flex:1}
-.nums input{
-  width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;
-  font:500 15px/1 "JetBrains Mono",monospace;color:var(--ink);background:#fff;
-}
-.nums input:focus{outline:2px solid var(--violet);outline-offset:1px;border-color:var(--violet)}
-.hint{font-size:12px;color:var(--ink-faint);margin-top:6px}
-button.go{
-  width:100%;padding:11px;border:0;border-radius:8px;background:var(--ink);color:#fff;
-  font:600 14px Inter,sans-serif;cursor:pointer;
-}
-button.go:hover{background:var(--violet)}
-button.go:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
-.src{margin-top:14px;font-size:11px;color:var(--ink-faint);line-height:1.4}
+.nums input{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;
+  font:600 15px/1 Poppins,sans-serif;font-variant-numeric:tabular-nums;color:var(--indigo);background:#fff}
+.nums input:focus{outline:2.5px solid var(--indigo);outline-offset:1px;border-color:var(--indigo)}
+.hint{font-size:12px;color:var(--muted);margin:7px 0 0}
+.src{margin-top:18px;padding-top:14px;border-top:1px solid var(--line-soft);
+  font-size:11.5px;color:var(--muted);line-height:1.45}
 
-/* ---------- summary ---------- */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;
-  background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:18px}
-.stat{background:var(--card);padding:14px 16px}
-.stat b{display:block;font-family:"JetBrains Mono",monospace;font-size:22px;color:var(--ink);font-weight:700}
-.stat span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
-.notes{margin:0 0 22px;padding:0;list-style:none}
-.notes li{
-  background:var(--card);border:1px solid var(--line);border-left:3px solid var(--violet);
-  border-radius:0 7px 7px 0;padding:10px 14px;margin-bottom:7px;font-size:13.5px;
-}
-.notes li.warn{border-left-color:var(--amber);background:var(--amber-wash)}
+/* --------------------------------------------------------- chips (mobile) */
+.chips{display:none}
+.chips button{border:1.5px solid var(--line);background:#fff;color:var(--indigo);
+  border-radius:99px;padding:7px 13px;font:500 12.5px Poppins,sans-serif;cursor:pointer;white-space:nowrap}
+.chips button:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
 
-/* ---------- the spine: weeks counting down to the deadline ---------- */
-.spine{position:relative;padding-left:64px}
-.spine::before{
-  content:"";position:absolute;left:26px;top:8px;bottom:34px;width:2px;
-  background:linear-gradient(var(--line) 0 70%,var(--amber) 100%);
-}
-.wk{position:relative;margin-bottom:14px}
-.wk-no{
-  position:absolute;left:-64px;top:2px;width:52px;text-align:right;
-  font-family:"JetBrains Mono",monospace;font-weight:700;font-size:15px;color:var(--ink);
-}
-.wk-no small{display:block;font-weight:500;font-size:10.5px;color:var(--ink-faint);letter-spacing:.02em}
-.wk::before{
-  content:"";position:absolute;left:-40px;top:8px;width:9px;height:9px;border-radius:50%;
-  background:var(--card);border:2px solid var(--line);
-}
-.wk.locked::before{border-color:var(--amber);background:var(--amber)}
-.wk-body{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px}
-.wk.locked .wk-body{border-color:#EBD4A8;background:var(--amber-wash)}
-.wk.slack .wk-body{background:transparent;border-style:dashed}
-.wk-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:6px}
-.wk-head h3{font-size:14px;font-weight:600}
-.wk-time{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-faint);white-space:nowrap}
-.lesson{display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--line);font-size:14px}
-.wk.locked .lesson{border-top-color:#EBD4A8}
-.lesson:first-of-type{border-top:0}
-.lesson a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
-.lesson a:hover{color:var(--violet);border-color:var(--violet)}
-.lesson .t{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-faint);
-  min-width:52px;padding-top:2px}
-.tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
-  padding:1px 6px;border-radius:4px;background:var(--violet-wash);color:var(--violet);margin-left:6px}
-.terminus{
-  margin-left:-64px;margin-top:20px;display:inline-flex;align-items:center;gap:10px;
-  background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;
-  font-family:"JetBrains Mono",monospace;font-size:12.5px;font-weight:700;letter-spacing:.06em;
-}
+/* --------------------------------------------------------------- results */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.stat{background:var(--card);padding:15px 16px}
+.stat b{display:block;font:700 23px/1.15 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
+.stat span{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 
-/* ---------- secondary blocks ---------- */
-.block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-top:18px}
-.block h3{font-size:14px;margin-bottom:4px}
-.block p{margin:0 0 10px;font-size:13px;color:var(--ink-faint)}
+.notes{margin:0 0 18px;padding:0;list-style:none}
+.notes li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--lime-deep);
+  border-radius:0 8px 8px 0;padding:11px 15px;margin-bottom:7px;font-size:13.5px}
+
+.bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.k-class{background:var(--indigo)}
+.k-locked{background:var(--lime)}
+.k-slack{background:#fff;border:1.5px dashed var(--line)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions button{padding:8px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);
+  font:500 13px Poppins,sans-serif;color:var(--indigo);cursor:pointer}
+.actions button:hover{border-color:var(--indigo);background:var(--lime-tint)}
+
+/* ------------------------------------------------------------- the spine */
+.spine{position:relative;padding-left:62px}
+.spine::before{content:"";position:absolute;left:25px;top:10px;bottom:40px;width:2px;
+  background:linear-gradient(var(--line) 0%,var(--line) 62%,var(--lime) 100%)}
+.wk{position:relative;margin-bottom:10px}
+.wk-no{position:absolute;left:-62px;top:12px;width:50px;text-align:right;
+  font:700 15px/1.1 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
+.wk-no small{display:block;font:400 10.5px/1.5 Poppins,sans-serif;color:var(--muted)}
+.wk::before{content:"";position:absolute;left:-41px;top:17px;width:11px;height:11px;border-radius:50%;
+  background:var(--card);border:2px solid var(--line)}
+.wk.locked::before{background:var(--lime);border-color:var(--lime-deep)}
+
+details.wk-body{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.wk.locked details.wk-body{background:var(--lime-tint);border-color:#DDE4B8}
+.wk.slack details.wk-body{background:transparent;border-style:dashed}
+summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:rgba(29,19,73,.03)}
+.sum-main{flex:1;min-width:0}
+.sum-title{font:600 14px/1.3 Rubik,sans-serif;color:var(--indigo)}
+.sum-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.sum-time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.chev{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+  transform:rotate(45deg);transition:transform .16s;flex:none;margin-left:2px}
+details[open] .chev{transform:rotate(-135deg)}
+.fill{height:3px;border-radius:2px;background:var(--line-soft);margin-top:8px;overflow:hidden}
+.fill i{display:block;height:100%;background:var(--indigo);border-radius:2px}
+.wk.locked .fill i{background:var(--lime-deep)}
+.lessons{padding:0 16px 12px}
+.lesson{display:flex;gap:12px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:14px}
+.wk.locked .lesson{border-top-color:#E4EAC6}
+.lesson .t{font-size:12px;color:var(--muted);min-width:50px;padding-top:2px;font-variant-numeric:tabular-nums}
+.lesson a{color:var(--indigo);text-decoration:none;border-bottom:1.5px solid var(--lime)}
+.lesson a:hover{border-bottom-color:var(--indigo)}
+.tag{display:inline-block;font:600 10px/1.6 Rubik,sans-serif;letter-spacing:.05em;text-transform:uppercase;
+  padding:0 7px;border-radius:4px;background:var(--lime-tint);color:var(--lime-deep);margin-left:7px}
+.terminus{margin-left:-62px;margin-top:18px;display:inline-flex;align-items:center;gap:11px;
+  background:var(--indigo);color:#fff;padding:11px 18px;border-radius:99px;
+  font:600 12.5px Rubik,sans-serif;letter-spacing:.07em}
+.terminus b{color:var(--lime)}
+
+/* ------------------------------------------------------ secondary blocks */
+.block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px;margin-top:16px}
+.block h3{font-size:14px;margin-bottom:5px}
+.block p{margin:0 0 11px;font-size:13px}
 .block ul{margin:0;padding-left:18px;font-size:13.5px}
-.block li{margin-bottom:4px}
-.block.home{border-left:3px solid var(--teal)}
-.block.home h3{color:var(--teal)}
+.block li{margin-bottom:5px}
+.block.home{border-left:3px solid var(--lime-deep)}
+.block.home h3{color:var(--lime-deep)}
 
-/* ---------- states ---------- */
-.refused{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--red);
-  border-radius:var(--r);padding:22px}
-.refused h2{font-size:18px;color:var(--red);margin-bottom:8px}
-.refused ul{margin:12px 0 0;padding-left:18px}
-.empty{border:1px dashed var(--line);border-radius:var(--r);padding:44px 24px;text-align:center;color:var(--ink-faint)}
-.empty strong{display:block;color:var(--ink);font-family:"Bricolage Grotesque",sans-serif;font-size:17px;margin-bottom:5px}
+/* -------------------------------------------------------- doesn't-fit state */
+.nofit{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--lime);
+  border-radius:var(--r);padding:26px}
+.nofit h2{font-size:20px;margin-bottom:9px}
+.nofit p{margin:0;font-size:14.5px}
+.fixes{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+.fixes button{padding:10px 16px;border:0;border-radius:9px;background:var(--indigo);color:#fff;
+  font:500 13.5px Poppins,sans-serif;cursor:pointer}
+.fixes button:hover{background:var(--indigo-600)}
+.fixes button.alt{background:var(--lime);color:var(--indigo)}
+.fixes button.alt:hover{background:#CBDA6C}
 
-/* ---------- actions ---------- */
-.actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.actions button{
-  padding:8px 14px;border:1px solid var(--line);border-radius:7px;background:var(--card);
-  font:500 13px Inter,sans-serif;color:var(--ink);cursor:pointer;
+/* ------------------------------------------------------------- responsive */
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;gap:0}
+  .chips{display:flex;gap:7px;overflow-x:auto;padding:11px 20px;
+    position:sticky;top:0;z-index:20;background:rgba(251,250,245,.94);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .panel{position:static;margin-bottom:22px;order:2}
+  .results{order:1;margin-bottom:26px}
+  header{padding:26px 0 16px}
+  .spine{padding-left:46px}
+  .spine::before{left:15px}
+  .wk-no{left:-46px;width:36px;font-size:14px}
+  .wk::before{left:-31px}
+  .terminus{margin-left:-46px}
 }
-.actions button:hover{border-color:var(--violet);color:var(--violet)}
-.actions button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
-/* ---------- print ---------- */
+
+/* ----------------------------------------------------------------- print */
 .printhead{display:none}
 @media print{
-  @page{margin:14mm}
-  body{background:#fff;font-size:11.5pt}
-  .panel,header,.actions,.src,.terminus{display:none !important}
-  .printhead{display:block;margin-bottom:14px;border-bottom:2px solid var(--ink);padding-bottom:10px}
-  .printhead h1{font-size:17pt;margin-bottom:3px}
-  .printhead p{margin:0;font-size:10pt;color:#000}
+  @page{margin:12mm}
+  body{background:#fff;font-size:10pt;color:#000}
+  header,.panel,.chips,.actions,.src,.terminus,.legend,.chev,.fill,.notes{display:none !important}
+  .printhead{display:block;border-bottom:2.5px solid var(--indigo);padding-bottom:9px;margin-bottom:14px}
+  .printhead h1{font-size:16pt}
+  .printhead p{margin:3px 0 0;font-size:9pt;color:#000}
+  .wrap{max-width:none;padding:0}
   .layout{display:block}
-  .wrap{padding:0}
-  .spine{padding-left:52px}
-  .spine::before{left:20px}
-  .wk{break-inside:avoid;margin-bottom:9px}
-  .wk-no{left:-52px}
-  .wk::before{left:-33px}
-  .wk-body,.stats,.stat,.block,.notes li{border-color:#999;background:#fff !important}
-  .lesson a{color:#000;border:0}
-  .lesson a::after{content:" (" attr(href) ")";font-size:7.5pt;color:#666;word-break:break-all}
-  .block,.stats{break-inside:avoid}
-}
-@media(prefers-reduced-motion:no-preference){
-  .wk{animation:rise .28s ease both}
-  @keyframes rise{from{opacity:0;transform:translateY(5px)}}
+  .stats{grid-template-columns:repeat(4,1fr);margin-bottom:12px}
+  .stat b{font-size:14pt}
+  .spine{padding-left:0;columns:2;column-gap:12mm}
+  .spine::before,.wk::before{display:none}
+  .wk{break-inside:avoid;margin-bottom:7px;display:block}
+  .wk-no{position:static;width:auto;text-align:left;font-size:10pt;margin-bottom:2px}
+  .wk-no small{display:inline;margin-left:6px}
+  details.wk-body,.wk.locked details.wk-body{border:1px solid #BBB;background:#fff !important}
+  summary{padding:7px 9px}
+  .lessons{padding:0 9px 7px}
+  /* A printed plan is a tracker: give every lesson a box to tick. */
+  .lesson::before{content:"";display:inline-block;width:9px;height:9px;border:1px solid #777;
+    margin-top:4px;flex:none}
+  .lesson a{border:0;color:#000}
+  .block{break-inside:avoid;border-color:#BBB}
 }
 </style>
 </head>
 <body>
+
+<div class="chips" id="chips" role="group" aria-label="Current selections"></div>
+
 <div class="wrap">
 
-<div class="printhead" id="printhead" aria-hidden="true"></div>
+  <div class="printhead" id="printhead" aria-hidden="true"></div>
 
-<header>
-  <h1>Curriculum Crosswalk</h1>
-  <p>Enter how much time your group actually has. You get the Technovation lessons
-     to cover each week, with the video and submission work reserved at the end.</p>
-  <div class="deadline"><span class="mono">Submissions due 5 May 2027</span></div>
-</header>
+  <header>
+    <div class="brandmark"><span class="dot" aria-hidden="true"></span><span>Technovation</span></div>
+    <h1>Build a season that <em>fits</em>.</h1>
+    <p>Tell us how much time your group actually has. You'll get the lessons to cover
+       each week, with the video and submission work reserved at the end.</p>
+    <div class="deadline">Submissions close <b class="mono">5 May 2027</b></div>
+  </header>
 
-<div class="layout">
+  <div class="layout">
 
-  <form class="panel" id="controls">
-    <div class="field">
-      <label>Age group</label>
-      <div class="seg">
-        <input type="radio" name="age" id="a1" value="beginner"><label for="a1">8–12</label>
-        <input type="radio" name="age" id="a2" value="junior"><label for="a2">13–15</label>
-        <input type="radio" name="age" id="a3" value="senior" checked><label for="a3">16–18</label>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>What they'll build</label>
-      <div class="seg">
-        <input type="radio" name="platform" id="p1" value="mobile" checked><label for="p1">Mobile app</label>
-        <input type="radio" name="platform" id="p2" value="web"><label for="p2">Web app</label>
-      </div>
-      <p class="hint" id="platHint"></p>
-    </div>
-
-    <div class="field" id="builderField" hidden>
-      <label>Coding tool</label>
-      <div class="seg" id="builderSeg"></div>
-      <p class="hint" id="builderHint"></p>
-    </div>
-
-    <div class="field">
-      <label>AI</label>
-      <div class="seg">
-        <input type="radio" name="aiMode" id="m1" value="none"><label for="m1">None</label>
-        <input type="radio" name="aiMode" id="m2" value="integrated" checked><label for="m2">Included</label>
-        <input type="radio" name="aiMode" id="m3" value="focused"><label for="m3">AI-focused</label>
-      </div>
-      <p class="hint">Every team submits source code either way. AI is optional.</p>
-    </div>
-
-    <div class="field">
-      <label>How you meet</label>
-      <div class="seg" id="envSeg">
-        <input type="radio" name="env" id="e1" value="45"><label for="e1">In school</label>
-        <input type="radio" name="env" id="e2" value="90" checked><label for="e2">After school</label>
-        <input type="radio" name="env" id="e3" value="150"><label for="e3">Weekend club</label>
-        <input type="radio" name="env" id="e4" value="custom"><label for="e4">Custom</label>
-      </div>
-      <p class="hint">Sets a typical session length. Change the minutes below and this switches to Custom.</p>
-    </div>
-
-    <div class="field">
-      <label>Time available</label>
-      <div class="nums">
-        <div>
-          <input type="number" id="weeks" value="16" min="1" max="52" aria-label="Number of weeks">
-          <p class="hint">weeks</p>
-        </div>
-        <div>
-          <input type="number" id="len" value="90" min="15" max="300" step="15" aria-label="Minutes per session">
-          <p class="hint">minutes each</p>
+    <form class="panel" id="controls">
+      <div class="field">
+        <label id="l-age">Age group</label>
+        <div class="seg" role="radiogroup" aria-labelledby="l-age">
+          <input type="radio" name="age" id="a1" value="beginner"><label for="a1">8–12</label>
+          <input type="radio" name="age" id="a2" value="junior"><label for="a2">13–15</label>
+          <input type="radio" name="age" id="a3" value="senior" checked><label for="a3">16–18</label>
         </div>
       </div>
+
+      <div class="field">
+        <label id="l-plat">What they'll build</label>
+        <div class="seg" role="radiogroup" aria-labelledby="l-plat">
+          <input type="radio" name="platform" id="p1" value="mobile" checked><label for="p1">Mobile app</label>
+          <input type="radio" name="platform" id="p2" value="web"><label for="p2">Web app</label>
+        </div>
+        <p class="hint" id="platHint"></p>
+      </div>
+
+      <div class="field" id="builderField" hidden>
+        <label id="l-build">Coding tool</label>
+        <div class="seg" id="builderSeg" role="radiogroup" aria-labelledby="l-build"></div>
+        <p class="hint" id="builderHint"></p>
+      </div>
+
+      <div class="field">
+        <label id="l-ai">AI</label>
+        <div class="seg" role="radiogroup" aria-labelledby="l-ai">
+          <input type="radio" name="aiMode" id="m1" value="none"><label for="m1">None</label>
+          <input type="radio" name="aiMode" id="m2" value="integrated" checked><label for="m2">Included</label>
+          <input type="radio" name="aiMode" id="m3" value="focused"><label for="m3">AI-focused</label>
+        </div>
+        <p class="hint">Every team submits source code either way. AI is optional.</p>
+      </div>
+
+      <div class="field">
+        <label id="l-env">How you meet</label>
+        <div class="seg" id="envSeg" role="radiogroup" aria-labelledby="l-env">
+          <input type="radio" name="env" id="e1" value="45"><label for="e1">In school</label>
+          <input type="radio" name="env" id="e2" value="90" checked><label for="e2">After school</label>
+          <input type="radio" name="env" id="e3" value="150"><label for="e3">Weekend</label>
+          <input type="radio" name="env" id="e4" value="custom"><label for="e4">Custom</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Time available</label>
+        <div class="nums">
+          <div><input type="number" id="weeks" value="16" min="1" max="52" aria-label="Number of weeks">
+            <p class="hint">weeks</p></div>
+          <div><input type="number" id="len" value="90" min="15" max="300" step="5" aria-label="Minutes per session">
+            <p class="hint">minutes each</p></div>
+        </div>
+      </div>
+
+      <p class="src" id="source">Loading curriculum…</p>
+    </form>
+
+    <div class="results">
+      <div class="bar">
+        <div class="legend" id="legend" hidden>
+          <span><i class="k-class"></i>Lesson week</span>
+          <span><i class="k-locked"></i>Videos &amp; submission</span>
+          <span><i class="k-slack"></i>Work time</span>
+        </div>
+        <div class="actions" id="actions" hidden>
+          <button type="button" id="expandBtn" aria-expanded="false">Expand all</button>
+          <button type="button" id="printBtn">Print</button>
+          <button type="button" id="csvBtn">Spreadsheet</button>
+        </div>
+      </div>
+      <main id="out" aria-live="polite" tabindex="-1"></main>
     </div>
 
-    <button type="submit" class="go">Build the plan</button>
-    <p class="src" id="source">Loading curriculum…</p>
-  </form>
-
-  <div>
-  <div class="actions" id="actions" hidden>
-    <button type="button" id="printBtn">Print or save as PDF</button>
-    <button type="button" id="csvBtn">Download as spreadsheet</button>
   </div>
-  <main id="out">
-    <div class="empty">
-      <strong>No plan yet</strong>
-      Set your group's details and build a plan.
-    </div>
-  </main>
-  </div>
-
-</div>
 </div>
 
 <script type="module" src="./app.js"></script>
