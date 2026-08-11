@@ -43,7 +43,7 @@ header{padding:40px 0 22px}
 .brandmark span{font:600 12px/1 Rubik,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 header h1{font-size:clamp(30px,4.4vw,46px);font-weight:700;letter-spacing:-.025em}
 header h1 em{font-style:italic;color:var(--lime-deep)}
-header p{margin:12px 0 0;max-width:56ch;font-size:15.5px}
+header p{margin:14px 0 0;max-width:74ch;font-size:16px}
 .deadline{display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:7px 14px 7px 12px;
   border-radius:99px;background:var(--indigo);color:#fff;font-size:12.5px;font-weight:500}
 .deadline b{background:var(--lime);color:var(--indigo);padding:2px 9px;border-radius:99px;
@@ -56,10 +56,10 @@ header p{margin:12px 0 0;max-width:56ch;font-size:15.5px}
    competing with it for width. */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   padding:20px 22px;margin-bottom:28px;
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));
-  gap:18px 22px;align-items:start}
-.field{margin:0}
-.field.time{min-width:200px}
+  display:flex;flex-wrap:wrap;gap:16px 22px;align-items:flex-start}
+/* Fields size to their content rather than sharing the row equally, so related
+   controls sit next to each other instead of being pushed to the far edges. */
+.field{margin:0;flex:0 1 auto}
 .field > label{display:block;font:600 11px/1 Rubik,sans-serif;letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted);margin-bottom:9px}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
@@ -71,8 +71,8 @@ header p{margin:12px 0 0;max-width:56ch;font-size:15.5px}
 .seg input:checked + label{background:var(--indigo);border-color:var(--indigo);color:#fff}
 .seg input:focus-visible + label{outline:2.5px solid var(--indigo);outline-offset:2px}
 .seg input:disabled + label{opacity:.42;cursor:not-allowed}
-.nums{display:flex;gap:10px}
-.nums > div{flex:1}
+.nums{display:flex;gap:9px}
+.nums > div{width:86px}
 .nums input{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;
   font:600 15px/1 Poppins,sans-serif;font-variant-numeric:tabular-nums;color:var(--indigo);background:#fff}
 .nums input:focus{outline:2.5px solid var(--indigo);outline-offset:1px;border-color:var(--indigo)}
@@ -173,8 +173,7 @@ details[open] .chev{transform:rotate(-135deg)}
     position:sticky;top:0;z-index:20;background:rgba(251,250,245,.94);
     backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
   header{padding:26px 0 16px}
-  .panel{grid-template-columns:1fr 1fr;padding:18px}
-  .field.time{grid-column:1/-1}
+  .panel{padding:18px;gap:14px 18px}
   .spine{padding-left:42px}
   .spine::before{left:15px}
   .wk-no{left:-42px;width:22px;font-size:14px}
@@ -182,7 +181,8 @@ details[open] .chev{transform:rotate(-135deg)}
   .terminus{margin-left:-42px}
 }
 @media(max-width:520px){
-  .panel{grid-template-columns:1fr}
+  .field,.field.time{flex:1 1 100%}
+  .nums > div{width:auto;flex:1}
 }
 
 /* ----------------------------------------------------------------- print */
@@ -225,8 +225,7 @@ details[open] .chev{transform:rotate(-135deg)}
   <header>
     <div class="brandmark"><span class="dot" aria-hidden="true"></span><span>Technovation</span></div>
     <h1>Build a season that <em>fits</em>.</h1>
-    <p>Tell us how much time your group actually has. You'll get the lessons to cover
-       each week, with the video and submission work reserved at the end.</p>
+    <p>Tell us how much time your group actually has. You'll get the lessons to cover each week.</p>
     <div class="deadline">Submissions close <b class="mono">5 May 2027</b></div>
   </header>
 
@@ -242,6 +241,16 @@ details[open] .chev{transform:rotate(-135deg)}
         </div>
       </div>
 
+      <div class="field time">
+        <label>Time available</label>
+        <div class="nums">
+          <div><input type="number" id="weeks" value="20" min="1" max="52" aria-label="Number of weeks">
+            <p class="hint">weeks</p></div>
+          <div><input type="number" id="len" value="90" min="15" max="300" step="5" aria-label="Minutes per session">
+            <p class="hint">minutes each</p></div>
+        </div>
+      </div>
+
       <div class="field">
         <label id="l-plat">What they'll build</label>
         <div class="seg" role="radiogroup" aria-labelledby="l-plat">
@@ -254,7 +263,6 @@ details[open] .chev{transform:rotate(-135deg)}
       <div class="field" id="builderField" hidden>
         <label id="l-build">Coding tool</label>
         <div class="seg" id="builderSeg" role="radiogroup" aria-labelledby="l-build"></div>
-        <p class="hint" id="builderHint"></p>
       </div>
 
       <div class="field">
@@ -264,28 +272,8 @@ details[open] .chev{transform:rotate(-135deg)}
           <input type="radio" name="aiMode" id="m2" value="integrated" checked><label for="m2">Included</label>
           <input type="radio" name="aiMode" id="m3" value="focused"><label for="m3">AI-focused</label>
         </div>
-        <p class="hint">Every team submits source code either way. AI is optional.</p>
       </div>
 
-      <div class="field">
-        <label id="l-env">How you meet</label>
-        <div class="seg" id="envSeg" role="radiogroup" aria-labelledby="l-env">
-          <input type="radio" name="env" id="e1" value="45"><label for="e1">In school</label>
-          <input type="radio" name="env" id="e2" value="90" checked><label for="e2">After school</label>
-          <input type="radio" name="env" id="e3" value="150"><label for="e3">Weekend</label>
-          <input type="radio" name="env" id="e4" value="custom"><label for="e4">Custom</label>
-        </div>
-      </div>
-
-      <div class="field time">
-        <label>Time available</label>
-        <div class="nums">
-          <div><input type="number" id="weeks" value="16" min="1" max="52" aria-label="Number of weeks">
-            <p class="hint">weeks</p></div>
-          <div><input type="number" id="len" value="90" min="15" max="300" step="5" aria-label="Minutes per session">
-            <p class="hint">minutes each</p></div>
-        </div>
-      </div>
     </form>
 
     <div class="results">
