@@ -117,10 +117,9 @@ body.
   the tool produces rather than an empty screen.
 - **On mobile** the plan comes first and the controls collapse to a sticky chip bar; tap a
   chip to jump to that control.
-- **Environment presets** set a typical session length — in school 45 min, after
-  school 90, weekend club 150. A shortcut for the minutes field, not a parameter: the
-  engine never sees it. Typing your own minutes flips the buttons to Custom rather
-  than leaving one lit that contradicts the field.
+- **Defaults are 20 weeks × 90 minutes**, a full season on a typical after-school
+  schedule. Both are plain number fields — earlier environment presets were removed as an
+  extra control that only ever set one value.
 - **Coding tool choice** appears only where a real choice exists: App Inventor vs
   Thunkable for 13-18 mobile, App Inventor vs Scratch for 8-12. Hidden for web apps
   (Python + Streamlit only) and for AI-focused, where the alternatives split by
