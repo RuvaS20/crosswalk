@@ -59,10 +59,7 @@ function setParams(patch) {
   if (patch.platform) $(`[name=platform][value="${patch.platform}"]`).checked = true;
   if (patch.aiMode)   $(`[name=aiMode][value="${patch.aiMode}"]`).checked = true;
   if (patch.weeks)    $('#weeks').value = patch.weeks;
-  if (patch.sessionLength) {
-    $('#len').value = patch.sessionLength;
-    syncEnvFromLength();
-  }
+  if (patch.sessionLength) $('#len').value = patch.sessionLength;
   syncPlatform();
   renderToolChoice();
   update({ focus: true });
@@ -110,9 +107,6 @@ function renderToolChoice() {
     $$('[name=builder]').forEach(i => i.addEventListener('change', () => update()));
   }
 
-  $('#builderHint').textContent = readParams().age === 'beginner'
-    ? 'Both work for 8-12. Scratch is gentler; App Inventor makes a real phone app.'
-    : 'Changes which tutorials appear.';
   field.hidden = false;
 }
 
@@ -369,27 +363,11 @@ function syncPlatform() {
     : '';
 }
 
-function applyEnvPreset() {
-  const env = $('[name=env]:checked');
-  if (!env || env.value === 'custom') return;
-  $('#len').value = env.value;
-}
-
-function syncEnvFromLength() {
-  const match = $$('[name=env]').find(i => i.value === String($('#len').value));
-  (match || $('#e4')).checked = true;
-}
-
-$$('[name=env]').forEach(i => i.addEventListener('change', () => {
-  applyEnvPreset();
-  update({ immediate: true });
-}));
-
-$('#len').addEventListener('input', () => { syncEnvFromLength(); update(); });
+$('#len').addEventListener('input', () => update());
 $('#weeks').addEventListener('input', () => update());
 
 $('#controls').addEventListener('change', e => {
-  if (e.target.name === 'env' || e.target.id === 'len') return;   // handled above
+  if (e.target.id === 'len' || e.target.id === 'weeks') return;   // handled above
   syncPlatform();
   renderToolChoice();
   update({ immediate: true });
@@ -424,8 +402,7 @@ window.addEventListener('afterprint', () =>
 // Land on a real plan rather than an empty screen: a first-time visitor sees
 // what the tool produces and adjusts, instead of facing a form and guessing.
 load()
-  .then(() => { syncPlatform(); renderToolChoice(); syncEnvFromLength();
-                update({ immediate: true }); })
+  .then(() => { syncPlatform(); renderToolChoice(); update({ immediate: true }); })
   .catch(err => {
     $('#out').innerHTML =
       '<div class="nofit"><h2>Couldn\'t load the curriculum</h2>' +
