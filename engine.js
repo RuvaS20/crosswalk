@@ -400,8 +400,11 @@ export function buildPlan(data, params) {
     return {
       status: 'refused',
       reason: 'too_short',
-      message: `A Technovation project needs at least ${MIN_WEEKS} weeks. ` +
+      message: `${MIN_WEEKS} weeks is about the least a Technovation project needs. ` +
                `You have ${weeks || 0}.`,
+      // Structured so the UI can offer a button that applies the fix, rather
+      // than a sentence the person has to translate back into a form field.
+      fixes: [{ label: `Use ${MIN_WEEKS} weeks`, set: { weeks: MIN_WEEKS } }],
       suggestions: [`Extend to ${MIN_WEEKS} weeks or more.`]
     };
   }
@@ -409,7 +412,10 @@ export function buildPlan(data, params) {
     return {
       status: 'refused',
       reason: 'session_too_short',
-      message: 'Sessions shorter than 30 minutes cannot carry a lesson.',
+      message: 'A lesson needs a bit more room than this. Sessions under 30 minutes ' +
+               'are too short to carry one.',
+      fixes: [{ label: 'Use 45 minutes', set: { sessionLength: 45 } },
+              { label: 'Use 90 minutes', set: { sessionLength: 90 } }],
       suggestions: ['Use at least 30 minutes, ideally 60-90.']
     };
   }
@@ -419,7 +425,11 @@ export function buildPlan(data, params) {
     return {
       status: 'refused',
       reason: 'no_lessons',
-      message: 'No lessons match that combination.',
+      message: 'Nothing matches that combination yet.',
+      fixes: params.age === 'beginner'
+        ? [{ label: 'Switch to mobile', set: { platform: 'mobile' } },
+           { label: 'Move up to 13-15', set: { age: 'junior' } }]
+        : [{ label: 'Switch to mobile', set: { platform: 'mobile' } }],
       suggestions: params.age === 'beginner' && params.platform === 'web'
         ? ['The Beginner course uses Scratch and App Inventor - choose Mobile, ' +
            'or move up to Junior for the web track.']
@@ -432,13 +442,22 @@ export function buildPlan(data, params) {
 
   if (!fit.ok) {
     const suggestions = [];
-    if (fit.needWeeks)  suggestions.push(`Extend to ${fit.needWeeks} weeks.`);
-    if (fit.needLength) suggestions.push(`Or lengthen sessions to ${fit.needLength} minutes.`);
+    const fixes = [];
+    if (fit.needWeeks) {
+      suggestions.push(`Extend to ${fit.needWeeks} weeks.`);
+      fixes.push({ label: `Use ${fit.needWeeks} weeks`, set: { weeks: fit.needWeeks } });
+    }
+    if (fit.needLength && fit.needLength <= 300) {
+      suggestions.push(`Or lengthen sessions to ${fit.needLength} minutes.`);
+      fixes.push({ label: `Make sessions ${fit.needLength} min`,
+                   set: { sessionLength: fit.needLength } });
+    }
     if (params.aiMode === 'integrated') {
       suggestions.push('Or switch to No AI, which removes the AI lessons.');
+      fixes.push({ label: 'Drop the AI lessons', set: { aiMode: 'none' } });
     }
     return {
-      status: 'refused', reason: fit.reason, message: fit.detail, suggestions
+      status: 'refused', reason: fit.reason, message: fit.detail, fixes, suggestions
     };
   }
 
