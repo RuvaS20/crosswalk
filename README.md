@@ -94,8 +94,29 @@ It asserts that no week exceeds its session length, plans never exceed the weeks
 available, dependency order survives compression, the deadline-locked tail stays
 last, and each choice group contributes exactly one lesson.
 
+## Design
+
+Brand palette taken from the Technovation covers — deep indigo `#1D1349` and lime
+`#D8E583` — on a warm off-white page. The lime is too light for text on white, so it
+works as fill and highlight with indigo on top; a darkened `#5A6912` carries lime-coloured
+text and clears 4.5:1 on both white and the lime tint. Rubik for headings, Poppins for
+body.
+
 ## What the page does
 
+- **Results update live.** No submit button — the engine runs locally in about a
+  millisecond, so changing weeks or session length rebuilds the plan immediately. Number
+  inputs are debounced 160ms.
+- **Weeks are collapsible.** Each shows a summary line — dominant category, lesson count,
+  total minutes, a fill bar against the session length. Expand for the lessons, or
+  Expand all.
+- **A plan that doesn't fit offers buttons that fix it**, not sentences. The engine
+  returns structured fixes (`{label, set:{weeks:14}}`), so "Use 14 weeks" applies itself
+  and rebuilds.
+- **The page loads with a real plan already rendered**, so a first-time visitor sees what
+  the tool produces rather than an empty screen.
+- **On mobile** the plan comes first and the controls collapse to a sticky chip bar; tap a
+  chip to jump to that control.
 - **Environment presets** set a typical session length — in school 45 min, after
   school 90, weekend club 150. A shortcut for the minutes field, not a parameter: the
   engine never sees it. Typing your own minutes flips the buttons to Custom rather
@@ -104,8 +125,9 @@ last, and each choice group contributes exactly one lesson.
   Thunkable for 13-18 mobile, App Inventor vs Scratch for 8-12. Hidden for web apps
   (Python + Streamlit only) and for AI-focused, where the alternatives split by
   mobile vs web and the platform control already asks that.
-- **Print or save as PDF** hides the form and prints the schedule with each lesson's
-  URL spelled out, so a printed plan is still usable.
+- **Print** produces a two-column one-page planner with a tick box beside every lesson,
+  so it works as a physical tracker. Collapsed weeks are force-opened before printing and
+  restored afterwards.
 - **Download as spreadsheet** gives a CSV with a row per lesson: week, date, whether
   it is in class or at home, category, minutes, activities and link.
 - **Lesson links open the public curriculum.** Verified: lesson pages on
