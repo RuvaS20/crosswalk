@@ -63,8 +63,13 @@ export function filterLessons(all, params) {
   if (course !== 'beginner' && course !== 'ai_in_action') {
     out = out.filter(l => l.division === 'both' || l.division === age);
   } else if (course === 'ai_in_action') {
-    out = out.filter(l => l.division === 'both' || l.division === age ||
-                          (age === 'beginner' && l.division === 'beginner'));
+    // AI in Action has no beginner-specific rows. An 8-12 team taking this
+    // course follows the junior track, so map beginner -> junior rather than
+    // letting the filter drop every junior row and silently shorten the plan.
+    const effective = age === 'beginner' ? 'junior' : age;
+    out = out.filter(l => l.division === 'both' ||
+                          l.division === effective ||
+                          l.division === 'beginner');
   }
 
   // AI mode. "none" strips the AI category; "focused" already routed to the
