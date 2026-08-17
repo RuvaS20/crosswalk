@@ -490,6 +490,17 @@ export function buildPlan(data, params) {
   }
 
   const all = [...bodyWeeks, ...gap, ...tailWeeks];
+
+  // Homework is displaced from the pool, not from a week, so it arrives with
+  // no date attached. Anchor each item to the week of the nearest in-class
+  // lesson that precedes it in curriculum order: that is where it sits in the
+  // sequence, and WHEN to assign it is the only thing a facilitator needs.
+  const homeworkByWeek = assignHomeworkToWeeks(fit.inClass, fit.homework, bodyWeeks);
+  all.forEach(w => {
+    w.homework = homeworkByWeek.get(w.week) || [];
+    w.homeworkMinutes = sum(w.homework);
+  });
+
   const violations = validateOrder(all);
 
   // Spare capacity is given back as work time rather than finishing early:
@@ -525,6 +536,35 @@ export function buildPlan(data, params) {
 
 
 /* ----------------------------------------------------------------- helpers */
+
+/**
+ * Maps each homework lesson to the week it belongs beside.
+ *
+ * Walks the body in curriculum order, tracking the week of the last in-class
+ * lesson seen. Homework attaches to that week. Prerequisite order therefore
+ * carries over for free: an item can never be assigned before the lesson it
+ * depends on has been taught.
+ */
+function assignHomeworkToWeeks(inClass, homework, bodyWeeks) {
+  const byWeek = new Map();
+  if (!homework.length) return byWeek;
+
+  const weekOf = new Map();
+  bodyWeeks.forEach(w => w.lessons.forEach(l => weekOf.set(l.lesson_id, w.week)));
+
+  const isHomework = new Set(homework.map(l => l.lesson_id));
+  let current = bodyWeeks.length ? bodyWeeks[0].week : 1;
+
+  for (const l of topoSort([...inClass, ...homework])) {
+    if (isHomework.has(l.lesson_id)) {
+      if (!byWeek.has(current)) byWeek.set(current, []);
+      byWeek.get(current).push(l);
+    } else if (weekOf.has(l.lesson_id)) {
+      current = weekOf.get(l.lesson_id);
+    }
+  }
+  return byWeek;
+}
 
 const sum = ls => ls.reduce((n, l) => n + (l.minutes || 0), 0);
 

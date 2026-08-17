@@ -97,7 +97,7 @@ header p{margin:14px 0 0;max-width:74ch;font-size:16px}
 
 .bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
 .k-class{background:var(--indigo)}
 .k-locked{background:var(--lime)}
 .k-slack{background:#fff;border:1.5px dashed var(--line)}
@@ -106,45 +106,61 @@ header p{margin:14px 0 0;max-width:74ch;font-size:16px}
   font:500 13px Poppins,sans-serif;color:var(--indigo);cursor:pointer}
 .actions button:hover{border-color:var(--indigo);background:var(--lime-tint)}
 
-/* ------------------------------------------------------------- the spine */
-.spine{position:relative;padding-left:52px}
-.spine::before{content:"";position:absolute;left:19px;top:10px;bottom:40px;width:2px;
-  background:linear-gradient(var(--line) 0%,var(--line) 62%,var(--lime) 100%)}
-.wk{position:relative;margin-bottom:10px}
-.wk-no{position:absolute;left:-52px;top:14px;width:26px;text-align:center;
-  font:700 15px/1.1 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
-.wk::before{content:"";position:absolute;left:-14px;top:19px;width:9px;height:9px;border-radius:50%;
-  background:var(--card);border:2px solid var(--line)}
-.wk.locked::before{background:var(--lime);border-color:var(--lime-deep)}
+/* -------------------------------------------------- homework + summary */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.homebar{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;
+  border:1px solid var(--line);border-left:4px solid var(--line);
+  border-radius:0 10px 10px 0;padding:13px 17px;margin-bottom:14px;background:var(--card)}
+.homebar b{font:700 16px/1.2 Rubik,sans-serif;color:var(--indigo)}
+.homebar span{font-size:13px;color:var(--muted)}
+.homebar.calm{border-left-color:var(--line)}
+.homebar.warn{border-left-color:var(--lime-deep);background:var(--lime-tint)}
+.homebar.alert{border-left-color:var(--indigo);background:var(--indigo);}
+.homebar.alert b{color:#fff}
+.homebar.alert span{color:#E6E2F2}
+.summline{font-size:13.5px;color:var(--muted);margin:0 0 16px}
+.summline b{color:var(--indigo);font-weight:600}
 
-details.wk-body{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.wk.locked details.wk-body{background:var(--lime-tint);border-color:#DDE4B8}
-.wk.slack details.wk-body{background:transparent;border-style:dashed}
-summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:12px}
-summary::-webkit-details-marker{display:none}
-summary:hover{background:rgba(29,19,73,.03)}
-.sum-main{flex:1;min-width:0}
-.sum-title{font:600 14px/1.3 Rubik,sans-serif;color:var(--indigo)}
-.sum-sub{font-size:12px;color:var(--muted);margin-top:2px}
-.sum-time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.chev{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
-  transform:rotate(45deg);transition:transform .16s;flex:none;margin-left:2px}
-details[open] .chev{transform:rotate(-135deg)}
-.fill{height:3px;border-radius:2px;background:var(--line-soft);margin-top:8px;overflow:hidden}
-.fill i{display:block;height:100%;background:var(--indigo);border-radius:2px}
-.wk.locked .fill i{background:var(--lime-deep)}
-.lessons{padding:0 16px 12px}
-.lesson{display:flex;gap:12px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:14px}
-.wk.locked .lesson{border-top-color:#E4EAC6}
-.lesson .t{font-size:12px;color:var(--muted);min-width:50px;padding-top:2px;font-variant-numeric:tabular-nums}
-.lesson a{color:var(--indigo);text-decoration:none;border-bottom:1.5px solid var(--lime)}
-.lesson a:hover{border-bottom-color:var(--indigo)}
-.tag{display:inline-block;font:600 10px/1.6 Rubik,sans-serif;letter-spacing:.05em;text-transform:uppercase;
-  padding:0 7px;border-radius:4px;background:var(--lime-tint);color:var(--lime-deep);margin-left:7px}
-.terminus{margin-left:-52px;margin-top:18px;display:inline-flex;align-items:center;gap:11px;
+/* ------------------------------------------------------------ the table */
+table.plan{width:100%;border-collapse:collapse;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+table.plan th{text-align:left;font:600 11px/1.4 Rubik,sans-serif;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);padding:11px 14px;
+  border-bottom:1.5px solid var(--line);background:var(--bg)}
+table.plan td{padding:11px 14px;vertical-align:top;border-bottom:1px solid var(--line-soft)}
+table.plan tr:last-child td{border-bottom:0}
+tr.locked td{background:var(--lime-tint)}
+tr.slack td{background:transparent;color:var(--muted)}
+.c-wk{width:104px;white-space:nowrap}
+.c-wk b{font:700 17px/1.1 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
+.c-wk .date{display:block;font-size:11px;color:var(--muted);margin-top:2px;
+  font-variant-numeric:tabular-nums}
+.c-wk .wtime{display:block;font-size:11.5px;color:var(--muted);margin-top:4px}
+.c-wk .over{display:block;font-size:11.5px;color:var(--indigo);font-weight:600;
+  margin-top:4px;white-space:normal}
+.c-home{width:30%}
+.c-done{width:44px;text-align:center}
+.tick{display:inline-block;width:17px;height:17px;border:1.5px solid var(--line);
+  border-radius:3px;margin-top:3px}
+.li{display:flex;gap:10px;font-size:13.5px;padding:3px 0}
+.li .t{font-size:11.5px;color:var(--muted);min-width:44px;padding-top:2px;
+  font-variant-numeric:tabular-nums}
+.li.muted{color:var(--muted);font-size:13px}
+.li a{color:var(--indigo);text-decoration:none;border-bottom:1.5px solid var(--lime)}
+.li a:hover{border-bottom-color:var(--indigo)}
+.tag{display:inline-block;font:600 10px/1.6 Rubik,sans-serif;letter-spacing:.05em;
+  text-transform:uppercase;padding:0 7px;border-radius:4px;background:var(--lime-tint);
+  color:var(--lime-deep);margin-left:7px}
+.terminus{margin-top:16px;display:inline-flex;align-items:center;gap:11px;
   background:var(--indigo);color:#fff;padding:11px 18px;border-radius:99px;
   font:600 12.5px Rubik,sans-serif;letter-spacing:.07em}
 .terminus b{color:var(--lime)}
+
+/* Native pickers on narrow screens: real select elements, built from the
+   radios so there is one source of truth. */
+.segsel{display:none;width:100%;padding:11px 12px;border:1.5px solid var(--line);
+  border-radius:9px;background:var(--card);font:400 14px Poppins,sans-serif;
+  color:var(--indigo)}
 
 /* ------------------------------------------------------ secondary blocks */
 .block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px;margin-top:16px}
@@ -174,15 +190,29 @@ details[open] .chev{transform:rotate(-135deg)}
     backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
   header{padding:26px 0 16px}
   .panel{padding:18px;gap:14px 18px}
-  .spine{padding-left:42px}
-  .spine::before{left:15px}
-  .wk-no{left:-42px;width:22px;font-size:14px}
-  .wk::before{left:-16px}
-  .terminus{margin-left:-42px}
+  .c-home{width:34%}
+}
+@media(max-width:640px){
+  /* One card per week. A four-column table cannot be read at 380px. */
+  table.plan,table.plan tbody,table.plan tr,table.plan td{display:block;width:auto}
+  table.plan thead{display:none}
+  table.plan{border:0;background:transparent}
+  table.plan tr{background:var(--card);border:1px solid var(--line);
+    border-radius:var(--r);margin-bottom:9px;padding:4px 2px;position:relative}
+  table.plan tr.locked{background:var(--lime-tint);border-color:#DDE4B8}
+  table.plan td{border-bottom:0;padding:7px 14px}
+  .c-wk{width:auto;display:flex !important;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .c-wk .date,.c-wk .wtime,.c-wk .over{display:inline;margin:0}
+  .c-in::before,.c-home::before{content:attr(data-label);display:block;
+    font:600 10px/1.5 Rubik,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:3px}
+  .c-done{position:absolute;top:8px;right:10px;width:auto;padding:0}
 }
 @media(max-width:520px){
   .field,.field.time{flex:1 1 100%}
   .nums > div{width:auto;flex:1}
+  .seg{display:none}
+  .segsel{display:block}
 }
 
 /* ----------------------------------------------------------------- print */
@@ -190,27 +220,26 @@ details[open] .chev{transform:rotate(-135deg)}
 @media print{
   @page{margin:12mm}
   body{background:#fff;font-size:10pt;color:#000}
-  header,.panel,.chips,.actions,.terminus,.legend,.chev,.fill,.notes{display:none !important}
-  .printhead{display:block;border-bottom:2.5px solid var(--indigo);padding-bottom:9px;margin-bottom:14px}
+  header,.panel,.chips,.actions,.legend,.notes,.homebar,.segsel{display:none !important}
+  .printhead{display:block;border-bottom:2.5px solid var(--indigo);padding-bottom:9px;margin-bottom:12px}
   .printhead h1{font-size:16pt}
   .printhead p{margin:3px 0 0;font-size:9pt;color:#000}
   .wrap{max-width:none;padding:0}
   .layout{display:block}
-  .stats{grid-template-columns:repeat(4,1fr);margin-bottom:12px}
-  .stat b{font-size:14pt}
-  .spine{padding-left:0;columns:2;column-gap:12mm}
-  .spine::before,.wk::before{display:none}
-  .wk{break-inside:avoid;margin-bottom:7px;display:block}
-  .wk-no{position:static;width:auto;text-align:left;font-size:10pt;margin-bottom:2px}
-  details.wk-body,.wk.locked details.wk-body{border:1px solid #BBB;background:#fff !important}
-  summary{padding:7px 9px}
-  .lessons{padding:0 9px 7px}
-  /* A printed plan is a tracker: give every lesson a box to tick. */
-  .lesson::before{content:"";display:inline-block;width:9px;height:9px;border:1px solid #777;
-    margin-top:4px;flex:none}
-  /* Keep links readable AS links in the PDF - it stays clickable. */
-  .lesson a{border:0;color:var(--indigo);text-decoration:underline}
-  .block{break-inside:avoid;border-color:#BBB}
+  .summline{font-size:9pt;margin-bottom:10px}
+  table.plan{border:1px solid #000;border-radius:0}
+  table.plan th{background:#fff;color:#000;border-bottom:1.5px solid #000;padding:5px 7px;font-size:8pt}
+  table.plan td{border-bottom:1px solid #999;padding:5px 7px}
+  tr.locked td,tr.slack td{background:#fff !important}
+  tr{break-inside:avoid}
+  .c-wk b{font-size:11pt}
+  /* A printed plan is a tracker: the box has to be big enough for a pen. */
+  .tick{width:24px;height:24px;border:1.5px solid #000;border-radius:0}
+  .c-done{width:38px}
+  .li a{border:0;color:#000;text-decoration:underline}
+  .terminus{background:#fff !important;color:#000;border:1.5px solid #000;padding:6px 12px}
+  .terminus b{color:#000}
+  .block{break-inside:avoid;border-color:#999}
 }
 </style>
 </head>
@@ -224,7 +253,7 @@ details[open] .chev{transform:rotate(-135deg)}
 
   <header>
     <div class="brandmark"><span class="dot" aria-hidden="true"></span><span>Technovation</span></div>
-    <h1>Build a season that <em>fits</em>.</h1>
+    <h1>Technovation <em>session planner</em></h1>
     <p>Tell us how much time your group actually has. You'll get the lessons to cover each week.</p>
     <div class="deadline">Submissions close <b class="mono">5 May 2027</b></div>
   </header>
@@ -284,7 +313,6 @@ details[open] .chev{transform:rotate(-135deg)}
           <span><i class="k-slack"></i>Work time</span>
         </div>
         <div class="actions" id="actions" hidden>
-          <button type="button" id="expandBtn" aria-expanded="false">Expand all</button>
           <button type="button" id="printBtn">Print</button>
           <button type="button" id="csvBtn">Spreadsheet</button>
         </div>

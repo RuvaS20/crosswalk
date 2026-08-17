@@ -6,8 +6,6 @@ const $$ = s => [...document.querySelectorAll(s)];
 
 let data = null;
 let current = null;      // last built plan, for export
-let expandAll = false;
-let openWeeks = new Set();
 
 const TOOL_NAMES = {
   app_inventor: 'App Inventor', thunkable: 'Thunkable',
@@ -168,29 +166,48 @@ function render(plan) {
   $('#actions').hidden = false;
   $('#legend').hidden = false;
 
+  // The weekly home load is the single most decision-relevant number here, so
+  // it gets a banner rather than a bullet. The engine raises the same point in
+  // notes; drop it there so it is not said twice.
+  const home = s.homeworkMinutesPerWeek;
+  const level = home >= 120 ? 'alert' : home >= 60 ? 'warn' : 'calm';
+  const homeMsg = {
+    alert: 'That is a lot to ask of a volunteer team. More weeks, or longer ' +
+           'sessions, would bring it down.',
+    warn:  'Workable, but check it is realistic for your group.',
+    calm:  'A manageable load for most groups.'
+  }[level];
+  const notes = plan.notes.filter(n => !/outside\s+class each week/.test(n));
+
   out.innerHTML = `
-    <div class="stats">
-      <div class="stat"><b>${s.lessonCount}</b><span>lessons</span></div>
-      <div class="stat"><b>${s.weeksUsed}</b><span>weeks</span></div>
-      <div class="stat"><b>${hrs(s.inClassMinutes)}</b><span>in class</span></div>
-      <div class="stat"><b>${hrs(s.homeworkMinutesPerWeek)}</b><span>a week at home</span></div>
-    </div>
-
-    ${plan.notes.length ? `<ul class="notes">${
-      plan.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
-
-    <div class="spine">
-      ${plan.weeks.map(week).join('')}
-      <div class="terminus">SUBMIT <b>${plan.deadline}</b></div>
-    </div>
-
-    ${plan.homework.length ? `
-      <div class="block home">
-        <h3>Between sessions</h3>
-        <p>Teams do these outside class. Nothing here is cut — only moved.</p>
-        <ul>${plan.homework.map(l =>
-          `<li>${link(l)} <span class="mono">${mins(l.minutes)}</span></li>`).join('')}</ul>
+    ${home ? `
+      <div class="homebar ${level}">
+        <b>${hrs(home)} a week outside class</b>
+        <span>${homeMsg}</span>
       </div>` : ''}
+
+    <p class="summline">
+      <b>${s.lessonCount}</b> lessons over <b>${s.weeksUsed}</b> weeks &middot;
+      <b>${hrs(s.inClassMinutes)}</b> in class${s.droppedMinutes
+        ? ` &middot; ${hrs(s.droppedMinutes)} left out` : ''}
+    </p>
+
+    ${notes.length ? `<ul class="notes">${
+      notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+
+    <table class="plan">
+      <thead>
+        <tr>
+          <th class="c-wk">Week</th>
+          <th class="c-in">In class</th>
+          <th class="c-home">At home</th>
+          <th class="c-done"><span class="sr">Done</span></th>
+        </tr>
+      </thead>
+      <tbody>${plan.weeks.map(weekRow).join('')}</tbody>
+    </table>
+
+    <div class="terminus">SUBMIT <b>${plan.deadline}</b></div>
 
     ${plan.dropped.length ? `
       <div class="block">
@@ -201,62 +218,50 @@ function render(plan) {
 
     ${altBlock(plan.alternatives)}`;
 
-  // Remember which weeks were open so a live re-render doesn't collapse them.
-  out.querySelectorAll('details.wk-body').forEach(d => {
-    d.addEventListener('toggle', () => {
-      const n = +d.dataset.week;
-      d.open ? openWeeks.add(n) : openWeeks.delete(n);
-    });
-  });
-
   $('#printhead').innerHTML =
     `<h1>Technovation plan</h1><p>${describe(plan.params)} &middot; submissions close ${plan.deadline}</p>`;
 }
 
-function week(w) {
+/**
+ * One row per week. In-class and at-home content sit side by side, because
+ * "what do I teach" and "what do I set" are the same decision.
+ */
+function weekRow(w) {
   const locked = w.lessons.some(l => l.deadline_locked);
   const cls = w.workTime ? 'slack' : locked ? 'locked' : '';
-  const open = expandAll || openWeeks.has(w.week);
-  const pct = Math.min(100, Math.round(100 * w.minutes / Math.max(w.minutes, sessionLen())));
 
-  const title = w.workTime ? 'Work time'
-              : locked ? 'Videos &amp; submission'
-              : cat(w.lessons);
+  const time = w.overrun
+    ? `<span class="over">Needs ${mins(w.minutes)} &mdash; ${mins(w.overrun)}
+       more than your session</span>`
+    : `<span class="wtime">${mins(w.minutes)}</span>`;
 
-  const sub = w.workTime ? 'Building, testing and user feedback'
-            : `${w.lessons.length} lesson${w.lessons.length === 1 ? '' : 's'}`;
+  const inClass = w.lessons.length
+    ? w.lessons.map(item).join('')
+    : '<div class="li muted">Build, test and gather feedback.</div>';
+
+  const homework = (w.homework || []).length
+    ? w.homework.map(item).join('')
+    : '<div class="li muted">&mdash;</div>';
 
   return `
-    <div class="wk ${cls}">
-      <div class="wk-no">${w.week}</div>
-      <details class="wk-body" data-week="${w.week}" ${open ? 'open' : ''}>
-        <summary>
-          <span class="sum-main">
-            <span class="sum-title">${title}</span>
-            <span class="sum-sub">${sub}</span>
-            <span class="fill"><i style="width:${pct}%"></i></span>
-          </span>
-          <span class="sum-time">${mins(w.minutes)}${w.overrun ? ` · ${mins(w.overrun)} over` : ''}</span>
-          <span class="chev" aria-hidden="true"></span>
-        </summary>
-        <div class="lessons">
-          ${w.lessons.length ? w.lessons.map(l => `
-            <div class="lesson">
-              <span class="t">${mins(l.minutes)}</span>
-              <span>${link(l)}${l.optional ? '<span class="tag">optional</span>' : ''}</span>
-            </div>`).join('')
-          : '<div class="lesson"><span>Time to build, test and gather feedback.</span></div>'}
-        </div>
-      </details>
-    </div>`;
+    <tr class="${cls}">
+      <td class="c-wk">
+        <b>${w.week}</b>
+        <span class="date">${w.date}</span>
+        ${time}
+      </td>
+      <td class="c-in" data-label="In class">${inClass}</td>
+      <td class="c-home" data-label="At home">${homework}</td>
+      <td class="c-done"><span class="tick" aria-hidden="true"></span></td>
+    </tr>`;
 }
 
-/** Names a week by what it mostly covers - more use than "Week 4". */
-function cat(lessons) {
-  const tally = {};
-  lessons.forEach(l => { tally[l.category] = (tally[l.category] || 0) + l.minutes; });
-  const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0];
-  return esc(top ? top[0] : 'Lessons');
+function item(l) {
+  return `
+    <div class="li">
+      <span class="t">${mins(l.minutes)}</span>
+      <span>${link(l)}${l.optional ? '<span class="tag">optional</span>' : ''}</span>
+    </div>`;
 }
 
 function altBlock(alts) {
@@ -308,9 +313,9 @@ function toCSV(plan) {
     }
     w.lessons.forEach(l => rows.push([w.week, w.date, 'In class', l.category, l.title,
       l.minutes, l.in_class || '', l.out_of_class || '', l.url || '']));
+    (w.homework || []).forEach(l => rows.push([w.week, w.date, 'At home', l.category,
+      l.title, l.minutes, '', l.out_of_class || '', l.url || '']));
   });
-  plan.homework.forEach(l => rows.push(['', '', 'Out of class', l.category, l.title,
-    l.minutes, '', l.out_of_class || '', l.url || '']));
 
   return rows.map(r => r.map(cell => {
     const v = String(cell ?? '').replace(/\r?\n/g, ' ');
@@ -363,6 +368,43 @@ function syncPlatform() {
     : '';
 }
 
+/**
+ * Mirrors each segmented control into a native <select> for narrow screens.
+ * Built from the radios rather than duplicated in markup, so there is still
+ * one source of truth - the radios - and the picker cannot drift out of sync.
+ */
+function buildSelects() {
+  $$('.seg').forEach(seg => {
+    const first = seg.querySelector('input');
+    if (!first) return;
+    const name = first.name;
+    let sel = seg.parentElement.querySelector(`select[data-for="${name}"]`);
+
+    if (!sel) {
+      sel = document.createElement('select');
+      sel.className = 'segsel';
+      sel.dataset.for = name;
+      const lab = seg.getAttribute('aria-labelledby');
+      if (lab) sel.setAttribute('aria-labelledby', lab);
+      seg.insertAdjacentElement('afterend', sel);
+      sel.addEventListener('change', () => {
+        const radio = $(`[name=${name}][value="${sel.value}"]`);
+        if (!radio) return;
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+
+    const inputs = [...seg.querySelectorAll('input')];
+    sel.innerHTML = inputs.map(i => {
+      const lbl = seg.querySelector(`label[for="${i.id}"]`);
+      return `<option value="${esc(i.value)}"${i.checked ? ' selected' : ''}>` +
+             `${esc(lbl ? lbl.textContent : i.value)}</option>`;
+    }).join('');
+    sel.disabled = inputs.every(i => i.disabled);
+  });
+}
+
 $('#len').addEventListener('input', () => update());
 $('#weeks').addEventListener('input', () => update());
 
@@ -370,19 +412,12 @@ $('#controls').addEventListener('change', e => {
   if (e.target.id === 'len' || e.target.id === 'weeks') return;   // handled above
   syncPlatform();
   renderToolChoice();
+  buildSelects();
   update({ immediate: true });
 });
 
 // No submit button - Enter should not reload the page.
 $('#controls').addEventListener('submit', e => e.preventDefault());
-
-$('#expandBtn').addEventListener('click', () => {
-  expandAll = !expandAll;
-  openWeeks = new Set(expandAll ? (current?.weeks || []).map(w => w.week) : []);
-  $('#expandBtn').textContent = expandAll ? 'Collapse all' : 'Expand all';
-  $('#expandBtn').setAttribute('aria-expanded', String(expandAll));
-  update({ immediate: true });
-});
 
 $('#printBtn').addEventListener('click', () => window.print());
 
@@ -393,16 +428,13 @@ $('#csvBtn').addEventListener('click', () => {
            toCSV(current), 'text/csv;charset=utf-8');
 });
 
-// Printing a collapsed plan would print headings and no lessons.
-window.addEventListener('beforeprint', () =>
-  $$('details.wk-body').forEach(d => { d.dataset.wasOpen = d.open; d.open = true; }));
-window.addEventListener('afterprint', () =>
-  $$('details.wk-body').forEach(d => { d.open = d.dataset.wasOpen === 'true'; }));
-
 // Land on a real plan rather than an empty screen: a first-time visitor sees
 // what the tool produces and adjusts, instead of facing a form and guessing.
 load()
-  .then(() => { syncPlatform(); renderToolChoice(); update({ immediate: true }); })
+  .then(() => {
+    syncPlatform(); renderToolChoice(); buildSelects();
+    update({ immediate: true });
+  })
   .catch(err => {
     $('#out').innerHTML =
       '<div class="nofit"><h2>Couldn\'t load the curriculum</h2>' +
