@@ -131,15 +131,17 @@ table.plan td{padding:11px 14px;vertical-align:top;border-bottom:1px solid var(-
 table.plan tr:last-child td{border-bottom:0}
 tr.locked td{background:var(--lime-tint)}
 tr.slack td{background:transparent;color:var(--muted)}
-.c-wk{width:104px;white-space:nowrap}
+.c-wk{width:118px;white-space:nowrap}
 .c-wk b{font:700 17px/1.1 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
-.c-wk .date{display:block;font-size:11px;color:var(--muted);margin-top:2px;
-  font-variant-numeric:tabular-nums}
 .c-wk .wtime{display:block;font-size:11.5px;color:var(--muted);margin-top:4px}
 .c-wk .over{display:block;font-size:11.5px;color:var(--indigo);font-weight:600;
   margin-top:4px;white-space:normal}
 .c-home{width:30%}
-.c-done{width:44px;text-align:center}
+/* The tick box belongs to the printed tracker. On screen it would be a control
+   that never responds, so it exists on paper only - hidden here, restored in
+   the print block. display:none also keeps it out of the accessibility tree,
+   so nobody is told about a "Done" column that holds nothing. */
+.c-done{display:none}
 .tick{display:inline-block;width:17px;height:17px;border:1.5px solid var(--line);
   border-radius:3px;margin-top:3px}
 .li{display:flex;gap:10px;font-size:13.5px;padding:3px 0}
@@ -202,11 +204,10 @@ tr.slack td{background:transparent;color:var(--muted)}
   table.plan tr.locked{background:var(--lime-tint);border-color:#DDE4B8}
   table.plan td{border-bottom:0;padding:7px 14px}
   .c-wk{width:auto;display:flex !important;align-items:baseline;gap:9px;flex-wrap:wrap}
-  .c-wk .date,.c-wk .wtime,.c-wk .over{display:inline;margin:0}
+  .c-wk .wtime,.c-wk .over{display:inline;margin:0}
   .c-in::before,.c-home::before{content:attr(data-label);display:block;
     font:600 10px/1.5 Rubik,sans-serif;letter-spacing:.08em;text-transform:uppercase;
     color:var(--muted);margin-bottom:3px}
-  .c-done{position:absolute;top:8px;right:10px;width:auto;padding:0}
 }
 @media(max-width:520px){
   .field,.field.time{flex:1 1 100%}
@@ -233,9 +234,10 @@ tr.slack td{background:transparent;color:var(--muted)}
   tr.locked td,tr.slack td{background:#fff !important}
   tr{break-inside:avoid}
   .c-wk b{font-size:11pt}
-  /* A printed plan is a tracker: the box has to be big enough for a pen. */
+  /* A printed plan is a tracker: the box has to be big enough for a pen.
+     This is the only place the Done column appears - see .c-done above. */
   .tick{width:24px;height:24px;border:1.5px solid #000;border-radius:0}
-  .c-done{width:38px}
+  .c-done{display:table-cell;width:38px;text-align:center}
   .li a{border:0;color:#000;text-decoration:underline}
   .terminus{background:#fff !important;color:#000;border:1.5px solid #000;padding:6px 12px}
   .terminus b{color:#000}

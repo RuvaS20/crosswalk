@@ -111,6 +111,55 @@ for (const age of ['beginner', 'junior', 'senior']) {
 
           assert(p.deadline === '2027-05-05',
             `${where}: deadline is ${p.deadline}`);
+
+
+          /* ------------------------------------------- homework distribution
+             assignHomeworkToWeeks spreads the flat homework list across the
+             body weeks so the plan table can show in-class and at-home work
+             side by side. The flat list stays the source of truth, so the two
+             views must never disagree. */
+
+          const placed = p.weeks.flatMap(w => (w.homework || []).map(l => l.lesson_id));
+
+          // Nothing lost, nothing invented, nothing placed twice.
+          assert(placed.length === p.homework.length &&
+                 new Set(placed).size === placed.length &&
+                 p.homework.every(l => placed.includes(l.lesson_id)),
+            `${where}: ${p.homework.length} homework lesson(s) but ${placed.length} ` +
+            `placed across weeks (${new Set(placed).size} distinct)`);
+
+          // A lesson is taught or it is set, never both.
+          const both = placed.filter(id => ids.includes(id));
+          assert(both.length === 0,
+            `${where}: ${both[0]} is scheduled in class and at home`);
+
+          // The per-week total the UI prints must match the lessons behind it.
+          const wrong = p.weeks.find(w =>
+            (w.homeworkMinutes || 0) !==
+            (w.homework || []).reduce((n, l) => n + (l.minutes || 0), 0));
+          assert(!wrong,
+            `${where}: week ${wrong?.week} reports ${wrong?.homeworkMinutes} min ` +
+            `of homework but its lessons total ` +
+            `${(wrong?.homework || []).reduce((n, l) => n + (l.minutes || 0), 0)}`);
+
+          // Homework inherits prerequisite order - that is the whole reason it
+          // attaches to the week of the last in-class lesson rather than being
+          // spread evenly. Nothing may be set before it has been taught.
+          const at = new Map();
+          p.weeks.forEach(w => {
+            w.lessons.forEach(l => at.set(l.lesson_id, w.week));
+            (w.homework || []).forEach(l => at.set(l.lesson_id, w.week));
+          });
+          const early = [];
+          p.weeks.forEach(w => (w.homework || []).forEach(l => {
+            for (const dep of l.depends_on || []) {
+              if (at.has(dep) && at.get(dep) > w.week) early.push([l, w, dep]);
+            }
+          }));
+          assert(early.length === 0,
+            `${where}: homework ${early[0]?.[0].lesson_id} sits in week ` +
+            `${early[0]?.[1].week} but depends on ${early[0]?.[2]} in week ` +
+            `${at.get(early[0]?.[2])}`);
         }
       }
     }

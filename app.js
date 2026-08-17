@@ -247,7 +247,6 @@ function weekRow(w) {
     <tr class="${cls}">
       <td class="c-wk">
         <b>${w.week}</b>
-        <span class="date">${w.date}</span>
         ${time}
       </td>
       <td class="c-in" data-label="In class">${inClass}</td>
@@ -296,8 +295,6 @@ function update({ immediate = false, focus = false } = {}) {
     if (focus) $('#out').focus();
   }, immediate ? 0 : 160);
 }
-
-function sessionLen() { return +$('#len').value || 90; }
 
 
 /* ---------------------------------------------------------------- exporting */
