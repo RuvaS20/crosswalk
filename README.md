@@ -83,16 +83,22 @@ git commit -am "Refresh curriculum snapshot"
 
 ## Tests
 
-The engine has a test suite covering a 360-combination parameter sweep:
+The engine has a test suite covering a 288-combination parameter sweep
+(3 divisions x 2 platforms x 3 AI modes x 4 week counts x 4 session lengths):
 
 ```bash
-cd ../engine
-node engine.test.js
+node engine.test.mjs
 ```
 
-It asserts that no week exceeds its session length, plans never exceed the weeks
-available, dependency order survives compression, the deadline-locked tail stays
-last, and each choice group contributes exactly one lesson.
+It asserts that plans never exceed the weeks available, that the packer never
+combines lessons past the session length, that a lesson longer than one session
+is flagged with `overrun` rather than silently overflowing, that no lesson is
+scheduled twice, that the deadline is carried through, and that every refusal
+explains itself. Four further checks guard the AI in Action Junior/Senior split,
+which is driven by division rather than by choice group.
+
+The suite reads `curriculum.json` from this folder, so refresh it before running
+or the checks test stale data.
 
 ## Design
 

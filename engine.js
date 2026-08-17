@@ -74,6 +74,10 @@ export function filterLessons(all, params) {
 
   // AI mode. "none" strips the AI category; "focused" already routed to the
   // AI course, where stripping AI would leave nothing.
+  // Matches the literal 'AI' section used by the Beginner, Mobile and Web
+  // courses. AI in Action uses its own section names and is never reached by
+  // aiMode 'none', so it needs no equivalent. If category values are ever
+  // renamed, this line must change with them.
   if (aiMode === 'none') out = out.filter(l => l.category !== 'AI');
 
   return out;

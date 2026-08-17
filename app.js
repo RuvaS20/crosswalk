@@ -27,7 +27,10 @@ const AI_LABEL  = { none: 'no AI', integrated: 'AI included', focused: 'AI-focus
 async function load() {
   if (ENDPOINT && !ENDPOINT.includes('PASTE_YOUR')) {
     try {
-      const res = await fetch(ENDPOINT + '?slim=1');
+      // Join with & if the endpoint already carries a query string. Some
+      // published Apps Script URLs do, and a bare '?' produced a second one.
+      const url = ENDPOINT + (ENDPOINT.includes('?') ? '&' : '?') + 'slim=1';
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
         if (json.lessons?.length) { data = json; return; }
