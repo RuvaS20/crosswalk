@@ -1,0 +1,111 @@
+# Keeps curriculum.json in step with the spreadsheet.
+#
+# The site fetches the live endpoint at page load, so this file is the
+# fallback - what visitors get when Google is slow, blocked, or down. Left
+# alone it silently rots, and a stale fallback is worse than an obvious one
+# because nothing on the page says which copy you are looking at.
+#
+# Runs daily, refuses to commit anything that fails the engine test suite,
+# and stays quiet when the sheet has not actually changed.
+
+name: Refresh curriculum
+
+on:
+  schedule:
+    - cron: '23 8 * * *'      # 08:23 UTC daily, off the hour to dodge the rush
+  workflow_dispatch:           # and a "Run workflow" button for edits you want live now
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # One source of truth for the URL: the same constant the site imports.
+      - name: Read the endpoint from config.js
+        id: cfg
+        run: |
+          url=$(sed -n "s/.*ENDPOINT = '\([^']*\)'.*/\1/p" config.js)
+          if [ -z "$url" ]; then
+            echo "::error::Could not parse ENDPOINT out of config.js"
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      # Apps Script is intermittently flaky; --retry covers the transient
+      # 5xx and timeout cases so one bad morning is not a failed run.
+      - name: Fetch
+        run: |
+          curl -sSL --fail --retry 3 --retry-delay 5 \
+            "${{ steps.cfg.outputs.url }}" -o fresh.json
+
+      # A published Apps Script can answer 200 with a login page or an error
+      # blob. Committing that would replace the whole curriculum with HTML,
+      # so check the shape before it goes anywhere near the repo.
+      - name: Sanity-check the payload
+        run: |
+          node -e '
+            const d = JSON.parse(require("fs").readFileSync("fresh.json"));
+            const n = d.lessons?.length ?? 0;
+            if (n < 100) throw new Error(`only ${n} lessons - refusing to overwrite`);
+            if (!d.submission_deadline) throw new Error("no submission_deadline");
+            console.log(`ok: ${n} lessons, deadline ${d.submission_deadline}`);
+          '
+
+      # generated_at is the response timestamp, not a sheet-edit timestamp, so
+      # it churns on its own. Compare without it or this commits every day.
+      - name: Has anything actually changed?
+        id: diff
+        run: |
+          node -e '
+            const fs = require("fs");
+            const strip = f => {
+              const d = JSON.parse(fs.readFileSync(f));
+              delete d.generated_at;
+              return JSON.stringify(d);
+            };
+            const changed = strip("fresh.json") !== strip("curriculum.json");
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${changed}\n`);
+            console.log(changed ? "sheet has changed" : "no change");
+          '
+
+      # Pretty-printed so the diff is reviewable. The endpoint returns minified
+      # JSON, which collapses every change into one unreadable line.
+      - name: Install it
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          node -e '
+            const fs = require("fs");
+            const d = JSON.parse(fs.readFileSync("fresh.json"));
+            fs.writeFileSync("curriculum.json", JSON.stringify(d, null, 1) + "\n");
+          '
+
+      # The whole point of the guard: a sheet edit that breaks an invariant
+      # fails here and never reaches main. Read the log before "fixing" it -
+      # the bug is usually in the spreadsheet, not the engine.
+      - name: Run the engine tests against the new data
+        if: steps.diff.outputs.changed == 'true'
+        run: node engine.test.mjs
+
+      - name: Commit
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          rm -f fresh.json
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add curriculum.json
+          git commit -m "Refresh curriculum data from sheet
+
+          Automated by .github/workflows/refresh-curriculum.yml"
+          git push
+
+      - name: Clean up
+        if: always()
+        run: rm -f fresh.json
