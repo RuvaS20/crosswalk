@@ -46,6 +46,7 @@ function readParams() {
     platform: $('[name=platform]:checked').value,
     aiMode: $('[name=aiMode]:checked').value,
     builder: $('[name=builder]:checked')?.value || 'auto',
+    core: $('#core').checked,
     weeks: +$('#weeks').value,
     sessionLength: +$('#len').value
   };
@@ -114,9 +115,13 @@ function renderToolChoice() {
 function renderChips(p) {
   const items = [
     ['#a1', AGE_LABEL[p.age]],
-    p.age === 'beginner' ? null : ['#p1', p.platform === 'web' ? 'Web app' : 'Mobile app'],
+    // Core has no platform or AI dimension, so those chips would name a
+    // control that is not on screen and a choice the plan never made.
+    p.core ? ['#core', 'Core curriculum'] : null,
+    p.core || p.age === 'beginner' ? null
+      : ['#p1', p.platform === 'web' ? 'Web app' : 'Mobile app'],
     p.builder !== 'auto' ? ['#builderField', TOOL_NAMES[p.builder]] : null,
-    ['#m1', AI_LABEL[p.aiMode]],
+    p.core ? null : ['#m1', AI_LABEL[p.aiMode]],
     ['#weeks', `${p.weeks} weeks`],
     ['#len', `${p.sessionLength} min`]
   ].filter(Boolean);
@@ -345,9 +350,11 @@ const hrs = m => m >= 60 ? `${(m / 60).toFixed(m % 60 ? 1 : 0)}h` : `${m}m`;
 function describe(p) {
   return [
     AGE_LABEL[p.age],
-    p.age === 'beginner' ? null : (p.platform === 'web' ? 'web app' : 'mobile app'),
+    p.core ? 'Core curriculum' : null,
+    p.core || p.age === 'beginner' ? null
+      : (p.platform === 'web' ? 'web app' : 'mobile app'),
     p.builder !== 'auto' ? TOOL_NAMES[p.builder] : null,
-    AI_LABEL[p.aiMode],
+    p.core ? null : AI_LABEL[p.aiMode],
     `${p.weeks} weeks &times; ${p.sessionLength} min`
   ].filter(Boolean).join(' &middot; ');
 }
@@ -363,6 +370,15 @@ function syncPlatform() {
   $('#platHint').textContent = beginner
     ? 'The 8–12 course uses Scratch and App Inventor, so this does not apply.'
     : '';
+}
+
+// Core is one reduced track: no web/mobile split and no AI lessons. Hiding the
+// two controls it ignores is honest - leaving them live would let someone pick
+// "Web app, AI-focused" and get a plan that quietly disregards both.
+function syncCore() {
+  const core = $('#core').checked;
+  $('#l-plat').closest('.field').hidden = core;
+  $('#l-ai').closest('.field').hidden = core;
 }
 
 /**
@@ -408,6 +424,7 @@ $('#weeks').addEventListener('input', () => update());
 $('#controls').addEventListener('change', e => {
   if (e.target.id === 'len' || e.target.id === 'weeks') return;   // handled above
   syncPlatform();
+  syncCore();
   renderToolChoice();
   buildSelects();
   update({ immediate: true });
@@ -429,7 +446,7 @@ $('#csvBtn').addEventListener('click', () => {
 // what the tool produces and adjusts, instead of facing a form and guessing.
 load()
   .then(() => {
-    syncPlatform(); renderToolChoice(); buildSelects();
+    syncPlatform(); syncCore(); renderToolChoice(); buildSelects();
     update({ immediate: true });
   })
   .catch(err => {

@@ -78,6 +78,15 @@ header p{margin:14px 0 0;max-width:74ch;font-size:16px}
 .nums input:focus{outline:2.5px solid var(--indigo);outline-offset:1px;border-color:var(--indigo)}
 .hint{font-size:12px;color:var(--muted);margin:7px 0 0}
 
+/* Core is a whole-curriculum switch rather than one more dimension, so it
+   reads as a sentence you agree with rather than a segmented control. */
+.corechk{display:flex;align-items:center;gap:9px;margin-top:22px;padding:9px 13px;
+  border:1.5px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;
+  font-size:13px;font-weight:500;color:var(--indigo);white-space:nowrap}
+.corechk:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
+.corechk input{width:16px;height:16px;accent-color:var(--indigo);cursor:pointer;flex:none}
+.corechk:has(input:checked){background:var(--indigo);border-color:var(--indigo);color:#fff}
+
 /* --------------------------------------------------------- chips (mobile) */
 .chips{display:none}
 .chips button{border:1.5px solid var(--line);background:#fff;color:var(--indigo);
@@ -303,6 +312,13 @@ tr.slack td{background:transparent;color:var(--muted)}
           <input type="radio" name="aiMode" id="m2" value="integrated" checked><label for="m2">Included</label>
           <input type="radio" name="aiMode" id="m3" value="focused"><label for="m3">AI-focused</label>
         </div>
+      </div>
+
+      <div class="field">
+        <label class="corechk">
+          <input type="checkbox" id="core">
+          Use the Core Curriculum (short on time)
+        </label>
       </div>
 
     </form>

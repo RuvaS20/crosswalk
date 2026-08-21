@@ -52,7 +52,8 @@ export function filterLessons(all, params) {
   const { age, platform, aiMode } = params;
 
   let course;
-  if (aiMode === 'focused')      course = 'ai_in_action';
+  if (params.core)               course = 'core';
+  else if (aiMode === 'focused') course = 'ai_in_action';
   else if (age === 'beginner')   course = 'beginner';
   else                           course = platform === 'web' ? 'jr_sr_web' : 'jr_sr_mobile';
 
@@ -60,7 +61,7 @@ export function filterLessons(all, params) {
 
   // Division. Rows marked "both" run for Junior and Senior alike; the Jr./Sr.
   // splits carry a specific division.
-  if (course !== 'beginner' && course !== 'ai_in_action') {
+if (course === 'jr_sr_mobile' || course === 'jr_sr_web' || course === 'core') {
     out = out.filter(l => l.division === 'both' || l.division === age);
   } else if (course === 'ai_in_action') {
     // AI in Action has no beginner-specific rows. An 8-12 team taking this
@@ -197,7 +198,7 @@ export function topoSort(lessons) {
  *
  * Returns { ok, inClass, homework, dropped, notes } or { ok: false, ... }.
  */
-export function fitToBudget(lessons, weeks, sessionLength) {
+export function fitToBudget(lessons, weeks, sessionLength, allowHomework = true) {
   const notes = [];
 
   const locked = lessons.filter(l => l.deadline_locked);
@@ -228,7 +229,9 @@ export function fitToBudget(lessons, weeks, sessionLength) {
   const dropped = [];
 
   // Lever 2. Push to homework, most home-suitable first. Nothing is lost.
-  if (packedCount(inClass) > bodyWeeksAvailable) {
+  // Core Curriculum is already the stripped-back version and exists for teams
+  // who cannot do work outside class, so this lever is skipped there.
+  if (allowHomework && packedCount(inClass) > bodyWeeksAvailable) {
     const cap = total * HOMEWORK_CAP;
     const candidates = inClass
       .map(l => ({ l, score: homeworkScore(l) }))
@@ -447,7 +450,7 @@ export function buildPlan(data, params) {
   }
 
   const { lessons: resolved, alternatives } = resolveChoiceGroups(filtered, params);
-  const fit = fitToBudget(resolved, weeks, sessionLength);
+  const fit = fitToBudget(resolved, weeks, sessionLength, !params.core);
 
   if (!fit.ok) {
     const suggestions = [];
