@@ -1,0 +1,243 @@
+:root{
+  /* Brand: deep indigo + lime, sampled from the Technovation covers. */
+  --indigo:#1D1349;
+  --indigo-600:#3A2E72;
+  --muted:#5F5980;
+  --lime:#D8E583;
+  --lime-tint:#F2F6DC;
+  --lime-deep:#5A6912;      /* darkened until it clears 4.5:1 on white AND on the tint */
+  --paper:#FBFAF5;
+  --card:#FFFFFF;
+  --line:#E7E4EF;
+  --line-soft:#F0EEF6;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--muted);
+  font:400 15px/1.6 Poppins,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:Rubik,Poppins,sans-serif;color:var(--indigo);margin:0;line-height:1.15}
+.mono{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2.5px solid var(--indigo);outline-offset:2px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+
+/* ---------------------------------------------------------------- shell */
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px 96px}
+header{padding:40px 0 22px}
+.brandmark{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.brandmark .logo{width:26px;height:26px;border-radius:7px;flex:none;display:block}
+.brandmark span{font:600 12px/1 Rubik,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+header h1{font-size:clamp(30px,4.4vw,46px);font-weight:700;letter-spacing:-.025em}
+header h1 em{font-style:italic;color:var(--lime-deep)}
+header p{margin:14px 0 0;max-width:74ch;font-size:16px}
+.deadline{display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:7px 14px 7px 12px;
+  border-radius:99px;background:var(--indigo);color:#fff;font-size:12.5px;font-weight:500}
+.deadline b{background:var(--lime);color:var(--indigo);padding:2px 9px;border-radius:99px;
+  font:600 12px/1.5 Rubik,sans-serif}
+
+.layout{display:block}
+
+/* ------------------------------------------------------------ controls */
+/* A horizontal bar: the controls are a header for the plan, not a sidebar
+   competing with it for width. */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:20px 22px;margin-bottom:28px;
+  display:flex;flex-wrap:wrap;gap:16px 22px;align-items:flex-start}
+/* Fields size to their content rather than sharing the row equally, so related
+   controls sit next to each other instead of being pushed to the far edges. */
+.field{margin:0;flex:0 1 auto}
+.field > label{display:block;font:600 11px/1 Rubik,sans-serif;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label{flex:1 1 auto;text-align:center;padding:9px 11px;border:1.5px solid var(--line);
+  border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:var(--indigo);
+  transition:background .14s,border-color .14s,color .14s;white-space:nowrap}
+.seg label:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
+.seg input:checked + label{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.seg input:focus-visible + label{outline:2.5px solid var(--indigo);outline-offset:2px}
+.seg input:disabled + label{opacity:.42;cursor:not-allowed}
+.nums{display:flex;gap:9px}
+.nums > div{width:86px}
+.nums input{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;
+  font:600 15px/1 Poppins,sans-serif;font-variant-numeric:tabular-nums;color:var(--indigo);background:#fff}
+.nums input:focus{outline:2.5px solid var(--indigo);outline-offset:1px;border-color:var(--indigo)}
+.hint{font-size:12px;color:var(--muted);margin:7px 0 0}
+
+/* Core is a whole-curriculum switch rather than one more dimension, so it
+   reads as a sentence you agree with rather than a segmented control. */
+.corechk{display:flex;align-items:center;gap:9px;margin-top:22px;padding:9px 13px;
+  border:1.5px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;
+  font-size:13px;font-weight:500;color:var(--indigo);white-space:nowrap}
+.corechk:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
+.corechk input{width:16px;height:16px;accent-color:var(--indigo);cursor:pointer;flex:none}
+.corechk:has(input:checked){background:var(--indigo);border-color:var(--indigo);color:#fff}
+
+/* --------------------------------------------------------- chips (mobile) */
+.chips{display:none}
+.chips button{border:1.5px solid var(--line);background:#fff;color:var(--indigo);
+  border-radius:99px;padding:7px 13px;font:500 12.5px Poppins,sans-serif;cursor:pointer;white-space:nowrap}
+.chips button:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
+
+/* --------------------------------------------------------------- results */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.stat{background:var(--card);padding:15px 16px}
+.stat b{display:block;font:700 23px/1.15 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
+.stat span{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+
+.notes{margin:0 0 18px;padding:0;list-style:none}
+.notes li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--lime-deep);
+  border-radius:0 8px 8px 0;padding:11px 15px;margin-bottom:7px;font-size:13.5px}
+
+.bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.k-class{background:var(--indigo)}
+.k-locked{background:var(--lime)}
+.k-slack{background:#fff;border:1.5px dashed var(--line)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions button{padding:8px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);
+  font:500 13px Poppins,sans-serif;color:var(--indigo);cursor:pointer}
+.actions button:hover{border-color:var(--indigo);background:var(--lime-tint)}
+
+/* -------------------------------------------------- homework + summary */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.homebar{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;
+  border:1px solid var(--line);border-left:4px solid var(--line);
+  border-radius:0 10px 10px 0;padding:13px 17px;margin-bottom:14px;background:var(--card)}
+.homebar b{font:700 16px/1.2 Rubik,sans-serif;color:var(--indigo)}
+.homebar span{font-size:13px;color:var(--muted)}
+.homebar.calm{border-left-color:var(--line)}
+.homebar.warn{border-left-color:var(--lime-deep);background:var(--lime-tint)}
+.homebar.alert{border-left-color:var(--indigo);background:var(--indigo);}
+.homebar.alert b{color:#fff}
+.homebar.alert span{color:#E6E2F2}
+.summline{font-size:13.5px;color:var(--muted);margin:0 0 16px}
+.summline b{color:var(--indigo);font-weight:600}
+
+/* ------------------------------------------------------------ the table */
+table.plan{width:100%;border-collapse:collapse;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+table.plan th{text-align:left;font:600 11px/1.4 Rubik,sans-serif;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);padding:11px 14px;
+  border-bottom:1.5px solid var(--line);background:var(--bg)}
+table.plan td{padding:11px 14px;vertical-align:top;border-bottom:1px solid var(--line-soft)}
+table.plan tr:last-child td{border-bottom:0}
+tr.locked td{background:var(--lime-tint)}
+tr.slack td{background:transparent;color:var(--muted)}
+.c-wk{width:118px;white-space:nowrap}
+.c-wk b{font:700 17px/1.1 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
+.c-wk .wtime{display:block;font-size:11.5px;color:var(--muted);margin-top:4px}
+.c-wk .over{display:block;font-size:11.5px;color:var(--indigo);font-weight:600;
+  margin-top:4px;white-space:normal}
+.c-home{width:30%}
+/* The tick box belongs to the printed tracker. On screen it would be a control
+   that never responds, so it exists on paper only - hidden here, restored in
+   the print block. display:none also keeps it out of the accessibility tree,
+   so nobody is told about a "Done" column that holds nothing. */
+.c-done{display:none}
+.tick{display:inline-block;width:17px;height:17px;border:1.5px solid var(--line);
+  border-radius:3px;margin-top:3px}
+.li{display:flex;gap:10px;font-size:13.5px;padding:3px 0}
+.li .t{font-size:11.5px;color:var(--muted);min-width:44px;padding-top:2px;
+  font-variant-numeric:tabular-nums}
+.li.muted{color:var(--muted);font-size:13px}
+.li a{color:var(--indigo);text-decoration:none;border-bottom:1.5px solid var(--lime)}
+.li a:hover{border-bottom-color:var(--indigo)}
+.tag{display:inline-block;font:600 10px/1.6 Rubik,sans-serif;letter-spacing:.05em;
+  text-transform:uppercase;padding:0 7px;border-radius:4px;background:var(--lime-tint);
+  color:var(--lime-deep);margin-left:7px}
+.terminus{margin-top:16px;display:inline-flex;align-items:center;gap:11px;
+  background:var(--indigo);color:#fff;padding:11px 18px;border-radius:99px;
+  font:600 12.5px Rubik,sans-serif;letter-spacing:.07em}
+.terminus b{color:var(--lime)}
+
+/* Native pickers on narrow screens: real select elements, built from the
+   radios so there is one source of truth. */
+.segsel{display:none;width:100%;padding:11px 12px;border:1.5px solid var(--line);
+  border-radius:9px;background:var(--card);font:400 14px Poppins,sans-serif;
+  color:var(--indigo)}
+
+/* ------------------------------------------------------ secondary blocks */
+.block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px;margin-top:16px}
+.block h3{font-size:14px;margin-bottom:5px}
+.block p{margin:0 0 11px;font-size:13px}
+.block ul{margin:0;padding-left:18px;font-size:13.5px}
+.block li{margin-bottom:5px}
+.block.home{border-left:3px solid var(--lime-deep)}
+.block.home h3{color:var(--lime-deep)}
+
+/* -------------------------------------------------------- doesn't-fit state */
+.nofit{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--lime);
+  border-radius:var(--r);padding:26px}
+.nofit h2{font-size:20px;margin-bottom:9px}
+.nofit p{margin:0;font-size:14.5px}
+.fixes{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+.fixes button{padding:10px 16px;border:0;border-radius:9px;background:var(--indigo);color:#fff;
+  font:500 13.5px Poppins,sans-serif;cursor:pointer}
+.fixes button:hover{background:var(--indigo-600)}
+.fixes button.alt{background:var(--lime);color:var(--indigo)}
+.fixes button.alt:hover{background:#CBDA6C}
+
+/* ------------------------------------------------------------- responsive */
+@media(max-width:900px){
+  .chips{display:flex;gap:7px;overflow-x:auto;padding:11px 20px;
+    position:sticky;top:0;z-index:20;background:rgba(251,250,245,.94);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  header{padding:26px 0 16px}
+  .panel{padding:18px;gap:14px 18px}
+  .c-home{width:34%}
+}
+@media(max-width:640px){
+  /* One card per week. A four-column table cannot be read at 380px. */
+  table.plan,table.plan tbody,table.plan tr,table.plan td{display:block;width:auto}
+  table.plan thead{display:none}
+  table.plan{border:0;background:transparent}
+  table.plan tr{background:var(--card);border:1px solid var(--line);
+    border-radius:var(--r);margin-bottom:9px;padding:4px 2px;position:relative}
+  table.plan tr.locked{background:var(--lime-tint);border-color:#DDE4B8}
+  table.plan td{border-bottom:0;padding:7px 14px}
+  .c-wk{width:auto;display:flex !important;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .c-wk .wtime,.c-wk .over{display:inline;margin:0}
+  .c-in::before,.c-home::before{content:attr(data-label);display:block;
+    font:600 10px/1.5 Rubik,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:3px}
+}
+@media(max-width:520px){
+  .field,.field.time{flex:1 1 100%}
+  .nums > div{width:auto;flex:1}
+  .seg{display:none}
+  .segsel{display:block}
+}
+
+/* ----------------------------------------------------------------- print */
+.printhead{display:none}
+@media print{
+  @page{margin:12mm}
+  body{background:#fff;font-size:10pt;color:#000}
+  header,.panel,.chips,.actions,.legend,.notes,.homebar,.segsel{display:none !important}
+  .printhead{display:block;border-bottom:2.5px solid var(--indigo);padding-bottom:9px;margin-bottom:12px}
+  .printhead h1{font-size:16pt}
+  .printhead p{margin:3px 0 0;font-size:9pt;color:#000}
+  .wrap{max-width:none;padding:0}
+  .layout{display:block}
+  .summline{font-size:9pt;margin-bottom:10px}
+  table.plan{border:1px solid #000;border-radius:0}
+  table.plan th{background:#fff;color:#000;border-bottom:1.5px solid #000;padding:5px 7px;font-size:8pt}
+  table.plan td{border-bottom:1px solid #999;padding:5px 7px}
+  tr.locked td,tr.slack td{background:#fff !important}
+  tr{break-inside:avoid}
+  .c-wk b{font-size:11pt}
+  /* A printed plan is a tracker: the box has to be big enough for a pen.
+     This is the only place the Done column appears - see .c-done above. */
+  .tick{width:24px;height:24px;border:1.5px solid #000;border-radius:0}
+  .c-done{display:table-cell;width:38px;text-align:center}
+  .li a{border:0;color:#000;text-decoration:underline}
+  .terminus{background:#fff !important;color:#000;border:1.5px solid #000;padding:6px 12px}
+  .terminus b{color:#000}
+  .block{break-inside:avoid;border-color:#999}
+}
