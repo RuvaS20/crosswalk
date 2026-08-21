@@ -79,7 +79,7 @@ export function filterLessons(all, params) {
   // aiMode 'none', so it needs no equivalent. If category values are ever
   // renamed, this line must change with them.
   if (aiMode === 'none') out = out.filter(l => l.category !== 'AI');
-
+  out = applyDivisionUrls(out, course, age);
   return out;
 }
 
@@ -579,4 +579,16 @@ function weekDate(week, totalWeeks, deadline) {
   const d = new Date(end);
   d.setUTCDate(d.getUTCDate() - (totalWeeks - week) * 7);
   return d.toISOString().slice(0, 10);
+}
+
+/* Mobile and Web are one course in the sheet, two on the site. Rows taught to
+   both divisions carry a url_junior alongside url; junior teams follow that. */
+function applyDivisionUrls(lessons, course, age) {
+  if (age !== 'junior') return lessons;
+  if (course !== 'jr_sr_mobile' && course !== 'jr_sr_web') return lessons;
+
+  return lessons.map(l => {
+    if (!l.url_junior) return l;
+    return Object.assign({}, l, { url: l.url_junior });   // copy, never mutate
+  });
 }
