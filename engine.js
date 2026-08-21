@@ -198,7 +198,7 @@ export function topoSort(lessons) {
  *
  * Returns { ok, inClass, homework, dropped, notes } or { ok: false, ... }.
  */
-export function fitToBudget(lessons, weeks, sessionLength, allowHomework = true) {
+export function fitToBudget(lessons, weeks, sessionLength) {
   const notes = [];
 
   const locked = lessons.filter(l => l.deadline_locked);
@@ -229,11 +229,12 @@ export function fitToBudget(lessons, weeks, sessionLength, allowHomework = true)
   const dropped = [];
 
   // Lever 2. Push to homework, most home-suitable first. Nothing is lost.
-  // Core Curriculum is already the stripped-back version and exists for teams
-  // who cannot do work outside class, so this lever is skipped there.
-  if (allowHomework && packedCount(inClass) > bodyWeeksAvailable) {
+  // Lessons marked essential are held back: they are the Core-equivalent
+  // spine, and a team that cannot work outside class still has to cover them.
+  if (packedCount(inClass) > bodyWeeksAvailable) {
     const cap = total * HOMEWORK_CAP;
     const candidates = inClass
+      .filter(l => !l.essential)          // Core-equivalent lessons stay in class  
       .map(l => ({ l, score: homeworkScore(l) }))
       .sort((a, b) => b.score - a.score || b.l.minutes - a.l.minutes)
       .map(x => x.l);
@@ -450,7 +451,7 @@ export function buildPlan(data, params) {
   }
 
   const { lessons: resolved, alternatives } = resolveChoiceGroups(filtered, params);
-  const fit = fitToBudget(resolved, weeks, sessionLength, !params.core);
+  const fit = fitToBudget(resolved, weeks, sessionLength);
 
   if (!fit.ok) {
     const suggestions = [];
