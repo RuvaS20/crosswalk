@@ -12,7 +12,9 @@ Live at https://curriculum-crosswalk.netlify.app
 
 | File | Purpose |
 |---|---|
-| `index.html` | The page and all styling |
+| `index.html` | The page — markup only |
+| `styles.css` | All styling |
+| `technovation_logo_svg.svg` | Brandmark in the header |
 | `app.js` | Loads data, runs the engine, renders the plan |
 | `engine.js` | The planning logic. Filtering, choice groups, time-fitting, dependency order |
 | `config.js` | Your Apps Script endpoint. **The one file you must edit** |
@@ -140,6 +142,11 @@ headings, Poppins for body.
 - **The weekly home load gets a banner**, not a bullet: calm under an hour, lime at
   1–2 hours, solid indigo above that. It is the single most decision-relevant number
   on the page.
+- **Core lessons stay in class.** Technovation publishes a Core Curriculum — the
+  minimum set a team needs to submit. The 39 lessons across Beginner, Mobile, Web and
+  AI in Action that correspond to it are marked `essential` and are never pushed to
+  homework. The video and submission tail is already protected by `deadline_locked`, so
+  between them the non-negotiable work always happens in the room.
 - **A plan that doesn't fit offers buttons that fix it**, not sentences. The engine
   returns structured fixes (`{label, set:{weeks:14}}`), so "Use 14 weeks" applies
   itself and rebuilds.
@@ -178,14 +185,17 @@ headings, Poppins for body.
   reports the weekly home load and flags it above 2 hours.
 - **Nothing required is ever dropped.** Only lessons marked optional, and only after
   moving work out of class has not been enough.
+- **Protecting the essential lessons makes tight schedules refuse more often.**
+  Removing 39 lessons from the homework pool takes away the engine's main lever on its
+  most important content. That's deliberate — a refusal naming a workable week count is
+  more useful than a plan that quietly sets Paper Prototypes as homework.
 - **The 8–12 course** uses Scratch and App Inventor, so the mobile/web choice is
   disabled for that age group.
-- **Core Curriculum keeps everything in class.** It is already the stripped-back
-  version and exists for teams who cannot do work outside class, so the homework lever
-  is skipped there, leaving only two — reserve the tail, drop optional work time.
-  **Not live yet:** `engine.js` and the checkbox are in place, but the sheet has no
-  `course: "core"` rows, so ticking the box currently returns the "Nothing matches that
-  combination yet" refusal at any length.
+- **Core Curriculum is a fifth course**, selectable when a facilitator is short on
+  time. All 27 of its rows are `essential`, so nothing goes home — it's already the
+  stripped-back version. That leaves two levers, reserve the tail and drop optional
+  work time, so Core needs 17 weeks at 45 or 60 minutes, or 13 at 90, and refuses
+  below that.
 
 ## Data model notes
 
@@ -211,6 +221,12 @@ Things learned the hard way, worth not relearning:
   taxonomy. Each course groups its lessons differently and that's Technovation's
   choice. `engine.js` matches the literal string `AI` for the "no AI" filter, so
   renaming category values means changing that line in the same commit.
+- **`essential` marks a lesson as in-class only.** It maps to Technovation's Core
+  Curriculum: if a lesson appears there, its equivalent in every other course carries
+  the flag. `deadline_locked` rows are already excluded from homework, so only the 39
+  non-locked equivalents needed it. When the curriculum changes, re-derive the flag
+  from the Core course page rather than editing rows individually — it's a mapping, not
+  a judgement call.
 - **The deadline lives in two places** — `engine.js` and the publish payload in
   `Crosswalk.gs`. Season rollover has to change both.
 
@@ -256,8 +272,13 @@ and its age, last publish, and whether the drift baseline matches the sheet.
 ## Still open
 
 - **Homework distribution is uneven.** Sequence-anchoring is honest but front-loads:
-  senior mobile at 14 × 60 puts 330 minutes in week 1 and nothing in weeks 9–14. Either
-  spread each week's overflow forward, or cap per-week homework at the session length.
+  senior web at 16 × 45 puts 540 minutes in week 1 and leaves 10 of the 16 weeks empty.
+  Either spread each week's overflow forward, or cap per-week homework at the session
+  length.
+- **Minimum viable week counts have gone up** and haven't been re-measured since
+  `essential` landed. Worth running the sweep and recording the shortest schedule that
+  works for each configuration, so the refusal messages can name a number that's
+  actually achievable.
 - **Shareable plan links.** Encode the parameters in the query string. The engine is
   already a pure function of them, so this is cheap.
 - **Season rollover runbook.** Currently undocumented.
