@@ -1,243 +1,1083 @@
+/* =============================================================================
+   Curriculum Crosswalk — stylesheet
+
+   Plain CSS, no build step and no preprocessor: what is here is what ships.
+   Ordered the way the page is read — tokens, base, shell, controls, results,
+   then the two alternate presentations (narrow screens, then print).
+
+   Two conventions worth knowing before editing:
+
+   1. Colour only ever comes from a token in :root. If you need a new shade,
+      add it there rather than inlining a hex, so contrast stays checkable in
+      one place.
+   2. The print block at the bottom is a real deliverable, not an afterthought.
+      A facilitator prints the plan and writes on it. Anything you add to the
+      screen layout should be considered there too.
+   ============================================================================= */
+
+
+/* -----------------------------------------------------------------------------
+   1. Design tokens
+
+   Brand palette sampled from the Technovation covers. The lime is genuinely
+   light — it cannot carry text on white — so it is used as fill and highlight
+   with indigo on top, and --lime-deep exists for the times we need lime-ish
+   text that still passes contrast.
+   -------------------------------------------------------------------------- */
+
 :root{
-  /* Brand: deep indigo + lime, sampled from the Technovation covers. */
-  --indigo:#1D1349;
-  --indigo-600:#3A2E72;
-  --muted:#5F5980;
-  --lime:#D8E583;
-  --lime-tint:#F2F6DC;
+  --indigo:#1D1349;         /* primary: headings, active states, ink on lime */
+  --indigo-600:#3A2E72;     /* the hover step up from --indigo */
+  --muted:#5F5980;          /* body text and secondary labels */
+
+  --lime:#D8E583;           /* accent fill only — too light for text on white */
+  --lime-tint:#F2F6DC;      /* the wash behind hovered and locked rows */
   --lime-deep:#5A6912;      /* darkened until it clears 4.5:1 on white AND on the tint */
-  --paper:#FBFAF5;
-  --card:#FFFFFF;
-  --line:#E7E4EF;
-  --line-soft:#F0EEF6;
-  --r:12px;
+
+  --paper:#FBFAF5;          /* page ground: warm off-white, not pure #fff */
+  --card:#FFFFFF;           /* raised surfaces sit brighter than the page */
+
+  --line:#E7E4EF;           /* default border */
+  --line-soft:#F0EEF6;      /* lighter divider, used between table rows */
+
+  --r:12px;                 /* the one corner radius for cards and panels */
 }
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
+
+
+/* -----------------------------------------------------------------------------
+   2. Base
+   -------------------------------------------------------------------------- */
+
+*{
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
 body{
-  margin:0;background:var(--paper);color:var(--muted);
+  margin:0;
+  background:var(--paper);
+  color:var(--muted);
   font:400 15px/1.6 Poppins,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
-h1,h2,h3{font-family:Rubik,Poppins,sans-serif;color:var(--indigo);margin:0;line-height:1.15}
-.mono{font-variant-numeric:tabular-nums}
-:focus-visible{outline:2.5px solid var(--indigo);outline-offset:2px;border-radius:4px}
-@media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
 
-/* ---------------------------------------------------------------- shell */
-.wrap{max-width:1200px;margin:0 auto;padding:0 20px 96px}
-header{padding:40px 0 22px}
-.brandmark{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-.brandmark .logo{width:26px;height:26px;border-radius:7px;flex:none;display:block}
-.brandmark span{font:600 12px/1 Rubik,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-header h1{font-size:clamp(30px,4.4vw,46px);font-weight:700;letter-spacing:-.025em}
-header h1 em{font-style:italic;color:var(--lime-deep)}
-header p{margin:14px 0 0;max-width:74ch;font-size:16px}
-.deadline{display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:7px 14px 7px 12px;
-  border-radius:99px;background:var(--indigo);color:#fff;font-size:12.5px;font-weight:500}
-.deadline b{background:var(--lime);color:var(--indigo);padding:2px 9px;border-radius:99px;
-  font:600 12px/1.5 Rubik,sans-serif}
+/* Rubik for headings, Poppins for everything else. */
+h1,h2,h3{
+  font-family:Rubik,Poppins,sans-serif;
+  color:var(--indigo);
+  margin:0;
+  line-height:1.15;
+}
 
-.layout{display:block}
+/* Numbers that should line up in columns rather than shuffle as they change. */
+.mono{
+  font-variant-numeric:tabular-nums;
+}
 
-/* ------------------------------------------------------------ controls */
-/* A horizontal bar: the controls are a header for the plan, not a sidebar
-   competing with it for width. */
-.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  padding:20px 22px;margin-bottom:28px;
-  display:flex;flex-wrap:wrap;gap:16px 22px;align-items:flex-start}
+/* One focus ring for the whole page, so keyboard users get a consistent target. */
+:focus-visible{
+  outline:2.5px solid var(--indigo);
+  outline-offset:2px;
+  border-radius:4px;
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{
+    animation:none !important;
+    transition:none !important;
+  }
+}
+
+
+/* -----------------------------------------------------------------------------
+   3. Shell — page frame and header
+   -------------------------------------------------------------------------- */
+
+.wrap{
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 20px 96px;
+}
+
+header{
+  padding:40px 0 22px;
+}
+
+.brandmark{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:18px;
+}
+
+/* The logo SVG is a hard-cornered square; the radius here is what rounds it. */
+.brandmark .logo{
+  width:26px;
+  height:26px;
+  border-radius:7px;
+  flex:none;
+  display:block;
+}
+
+.brandmark span{
+  font:600 12px/1 Rubik,sans-serif;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* Fluid between 30px and 46px so the title never wraps awkwardly on the way. */
+header h1{
+  font-size:clamp(30px,4.4vw,46px);
+  font-weight:700;
+  letter-spacing:-.025em;
+}
+
+header h1 em{
+  font-style:italic;
+  color:var(--lime-deep);
+}
+
+header p{
+  margin:14px 0 0;
+  max-width:74ch;
+  font-size:16px;
+}
+
+/* The submission deadline: a pill, because it is a fixed fact rather than
+   something the facilitator controls. */
+.deadline{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  margin-top:18px;
+  padding:7px 14px 7px 12px;
+  border-radius:99px;
+  background:var(--indigo);
+  color:#fff;
+  font-size:12.5px;
+  font-weight:500;
+}
+
+.deadline b{
+  background:var(--lime);
+  color:var(--indigo);
+  padding:2px 9px;
+  border-radius:99px;
+  font:600 12px/1.5 Rubik,sans-serif;
+}
+
+.layout{
+  display:block;
+}
+
+
+/* -----------------------------------------------------------------------------
+   4. Controls
+
+   A horizontal bar rather than a sidebar: the controls are a header for the
+   plan, not something competing with it for width.
+   -------------------------------------------------------------------------- */
+
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:20px 22px;
+  margin-bottom:28px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px 22px;
+  align-items:flex-start;
+}
+
 /* Fields size to their content rather than sharing the row equally, so related
    controls sit next to each other instead of being pushed to the far edges. */
-.field{margin:0;flex:0 1 auto}
-.field > label{display:block;font:600 11px/1 Rubik,sans-serif;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted);margin-bottom:9px}
-.seg{display:flex;flex-wrap:wrap;gap:6px}
-.seg input{position:absolute;opacity:0;width:1px;height:1px}
-.seg label{flex:1 1 auto;text-align:center;padding:9px 11px;border:1.5px solid var(--line);
-  border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:var(--indigo);
-  transition:background .14s,border-color .14s,color .14s;white-space:nowrap}
-.seg label:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
-.seg input:checked + label{background:var(--indigo);border-color:var(--indigo);color:#fff}
-.seg input:focus-visible + label{outline:2.5px solid var(--indigo);outline-offset:2px}
-.seg input:disabled + label{opacity:.42;cursor:not-allowed}
-.nums{display:flex;gap:9px}
-.nums > div{width:86px}
-.nums input{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;
-  font:600 15px/1 Poppins,sans-serif;font-variant-numeric:tabular-nums;color:var(--indigo);background:#fff}
-.nums input:focus{outline:2.5px solid var(--indigo);outline-offset:1px;border-color:var(--indigo)}
-.hint{font-size:12px;color:var(--muted);margin:7px 0 0}
+.field{
+  margin:0;
+  flex:0 1 auto;
+}
 
-/* Core is a whole-curriculum switch rather than one more dimension, so it
+.field > label{
+  display:block;
+  font:600 11px/1 Rubik,sans-serif;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:9px;
+}
+
+
+/* --- Segmented controls -----------------------------------------------------
+   Radio inputs styled as a button group. The input is visually hidden but
+   still focusable and still the source of truth; the <label> is what you see.
+   Below 520px these are swapped for native <select> pickers — see .segsel. */
+
+.seg{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+/* Hidden without display:none, which would take it out of the tab order. */
+.seg input{
+  position:absolute;
+  opacity:0;
+  width:1px;
+  height:1px;
+}
+
+.seg label{
+  flex:1 1 auto;
+  text-align:center;
+  padding:9px 11px;
+  border:1.5px solid var(--line);
+  border-radius:8px;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  background:#fff;
+  color:var(--indigo);
+  transition:background .14s,border-color .14s,color .14s;
+  white-space:nowrap;
+}
+
+.seg label:hover{
+  border-color:var(--indigo-600);
+  background:var(--lime-tint);
+}
+
+.seg input:checked + label{
+  background:var(--indigo);
+  border-color:var(--indigo);
+  color:#fff;
+}
+
+/* The ring has to be drawn on the label, since the input itself is invisible. */
+.seg input:focus-visible + label{
+  outline:2.5px solid var(--indigo);
+  outline-offset:2px;
+}
+
+/* Disabled for Beginner, where the mobile/web choice does not apply. */
+.seg input:disabled + label{
+  opacity:.42;
+  cursor:not-allowed;
+}
+
+
+/* --- Number inputs: weeks and session length ------------------------------ */
+
+.nums{
+  display:flex;
+  gap:9px;
+}
+
+.nums > div{
+  width:86px;
+}
+
+.nums input{
+  width:100%;
+  padding:10px;
+  border:1.5px solid var(--line);
+  border-radius:8px;
+  font:600 15px/1 Poppins,sans-serif;
+  font-variant-numeric:tabular-nums;
+  color:var(--indigo);
+  background:#fff;
+}
+
+.nums input:focus{
+  outline:2.5px solid var(--indigo);
+  outline-offset:1px;
+  border-color:var(--indigo);
+}
+
+.hint{
+  font-size:12px;
+  color:var(--muted);
+  margin:7px 0 0;
+}
+
+
+/* --- Core Curriculum checkbox ------------------------------------------------
+   Core is a whole-curriculum switch rather than one more dimension, so it
    reads as a sentence you agree with rather than a segmented control. */
-.corechk{display:flex;align-items:center;gap:9px;margin-top:22px;padding:9px 13px;
-  border:1.5px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;
-  font-size:13px;font-weight:500;color:var(--indigo);white-space:nowrap}
-.corechk:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
-.corechk input{width:16px;height:16px;accent-color:var(--indigo);cursor:pointer;flex:none}
-.corechk:has(input:checked){background:var(--indigo);border-color:var(--indigo);color:#fff}
 
-/* --------------------------------------------------------- chips (mobile) */
-.chips{display:none}
-.chips button{border:1.5px solid var(--line);background:#fff;color:var(--indigo);
-  border-radius:99px;padding:7px 13px;font:500 12.5px Poppins,sans-serif;cursor:pointer;white-space:nowrap}
-.chips button:hover{border-color:var(--indigo-600);background:var(--lime-tint)}
+.corechk{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-top:22px;
+  padding:9px 13px;
+  border:1.5px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  color:var(--indigo);
+  white-space:nowrap;
+}
 
-/* --------------------------------------------------------------- results */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;
-  background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
-.stat{background:var(--card);padding:15px 16px}
-.stat b{display:block;font:700 23px/1.15 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
-.stat span{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.corechk:hover{
+  border-color:var(--indigo-600);
+  background:var(--lime-tint);
+}
 
-.notes{margin:0 0 18px;padding:0;list-style:none}
-.notes li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--lime-deep);
-  border-radius:0 8px 8px 0;padding:11px 15px;margin-bottom:7px;font-size:13.5px}
+.corechk input{
+  width:16px;
+  height:16px;
+  accent-color:var(--indigo);
+  cursor:pointer;
+  flex:none;
+}
 
-.bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
-.k-class{background:var(--indigo)}
-.k-locked{background:var(--lime)}
-.k-slack{background:#fff;border:1.5px dashed var(--line)}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.actions button{padding:8px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);
-  font:500 13px Poppins,sans-serif;color:var(--indigo);cursor:pointer}
-.actions button:hover{border-color:var(--indigo);background:var(--lime-tint)}
+/* Fills like a checked segment, so the two control styles agree. */
+.corechk:has(input:checked){
+  background:var(--indigo);
+  border-color:var(--indigo);
+  color:#fff;
+}
 
-/* -------------------------------------------------- homework + summary */
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.homebar{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;
-  border:1px solid var(--line);border-left:4px solid var(--line);
-  border-radius:0 10px 10px 0;padding:13px 17px;margin-bottom:14px;background:var(--card)}
-.homebar b{font:700 16px/1.2 Rubik,sans-serif;color:var(--indigo)}
-.homebar span{font-size:13px;color:var(--muted)}
-.homebar.calm{border-left-color:var(--line)}
-.homebar.warn{border-left-color:var(--lime-deep);background:var(--lime-tint)}
-.homebar.alert{border-left-color:var(--indigo);background:var(--indigo);}
-.homebar.alert b{color:#fff}
-.homebar.alert span{color:#E6E2F2}
-.summline{font-size:13.5px;color:var(--muted);margin:0 0 16px}
-.summline b{color:var(--indigo);font-weight:600}
 
-/* ------------------------------------------------------------ the table */
-table.plan{width:100%;border-collapse:collapse;background:var(--card);
-  border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-table.plan th{text-align:left;font:600 11px/1.4 Rubik,sans-serif;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--muted);padding:11px 14px;
-  border-bottom:1.5px solid var(--line);background:var(--bg)}
-table.plan td{padding:11px 14px;vertical-align:top;border-bottom:1px solid var(--line-soft)}
-table.plan tr:last-child td{border-bottom:0}
-tr.locked td{background:var(--lime-tint)}
-tr.slack td{background:transparent;color:var(--muted)}
-.c-wk{width:118px;white-space:nowrap}
-.c-wk b{font:700 17px/1.1 Rubik,sans-serif;color:var(--indigo);font-variant-numeric:tabular-nums}
-.c-wk .wtime{display:block;font-size:11.5px;color:var(--muted);margin-top:4px}
-.c-wk .over{display:block;font-size:11.5px;color:var(--indigo);font-weight:600;
-  margin-top:4px;white-space:normal}
-.c-home{width:30%}
+/* -----------------------------------------------------------------------------
+   5. Chips — the narrow-screen summary bar
+
+   Hidden by default; becomes a sticky scrolling row under 900px. Each chip
+   names a current selection and scrolls to the control behind it.
+   -------------------------------------------------------------------------- */
+
+.chips{
+  display:none;
+}
+
+.chips button{
+  border:1.5px solid var(--line);
+  background:#fff;
+  color:var(--indigo);
+  border-radius:99px;
+  padding:7px 13px;
+  font:500 12.5px Poppins,sans-serif;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.chips button:hover{
+  border-color:var(--indigo-600);
+  background:var(--lime-tint);
+}
+
+
+/* -----------------------------------------------------------------------------
+   6. Results — notes, legend and actions
+   -------------------------------------------------------------------------- */
+
+/* Engine notes: what was moved, dropped, or left as work time. */
+.notes{
+  margin:0 0 18px;
+  padding:0;
+  list-style:none;
+}
+
+.notes li{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-left:3px solid var(--lime-deep);
+  border-radius:0 8px 8px 0;
+  padding:11px 15px;
+  margin-bottom:7px;
+  font-size:13.5px;
+}
+
+/* The row holding the legend and the Print / Spreadsheet buttons. */
+.bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+.legend{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.legend i{
+  display:inline-block;
+  width:9px;
+  height:9px;
+  border-radius:2px;
+  margin-right:6px;
+}
+
+/* The three row states, matching tr.locked and tr.slack in the table. */
+.k-class{
+  background:var(--indigo);
+}
+
+.k-locked{
+  background:var(--lime);
+}
+
+.k-slack{
+  background:#fff;
+  border:1.5px dashed var(--line);
+}
+
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.actions button{
+  padding:8px 14px;
+  border:1.5px solid var(--line);
+  border-radius:8px;
+  background:var(--card);
+  font:500 13px Poppins,sans-serif;
+  color:var(--indigo);
+  cursor:pointer;
+}
+
+.actions button:hover{
+  border-color:var(--indigo);
+  background:var(--lime-tint);
+}
+
+
+/* -----------------------------------------------------------------------------
+   7. Homework banner and summary line
+   -------------------------------------------------------------------------- */
+
+/* Screen-reader-only. Used for the "Done" column heading, whose cells are
+   hidden on screen. */
+.sr{
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+}
+
+/* The weekly out-of-class load. It gets a banner rather than a bullet because
+   it is the single most decision-relevant number on the page. Three levels,
+   set by app.js: calm under an hour, warn at 1-2, alert above that. */
+.homebar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:4px 12px;
+  border:1px solid var(--line);
+  border-left:4px solid var(--line);
+  border-radius:0 10px 10px 0;
+  padding:13px 17px;
+  margin-bottom:14px;
+  background:var(--card);
+}
+
+.homebar b{
+  font:700 16px/1.2 Rubik,sans-serif;
+  color:var(--indigo);
+}
+
+.homebar span{
+  font-size:13px;
+  color:var(--muted);
+}
+
+.homebar.calm{
+  border-left-color:var(--line);
+}
+
+.homebar.warn{
+  border-left-color:var(--lime-deep);
+  background:var(--lime-tint);
+}
+
+/* Alert inverts to solid indigo — the only place on the page that shouts. */
+.homebar.alert{
+  border-left-color:var(--indigo);
+  background:var(--indigo);
+}
+
+.homebar.alert b{
+  color:#fff;
+}
+
+.homebar.alert span{
+  color:#E6E2F2;
+}
+
+.summline{
+  font-size:13.5px;
+  color:var(--muted);
+  margin:0 0 16px;
+}
+
+.summline b{
+  color:var(--indigo);
+  font-weight:600;
+}
+
+
+/* -----------------------------------------------------------------------------
+   8. The plan table
+
+   One row per week: week number and session time, what is taught in class,
+   what is set for home, and a tick box that appears only when printed.
+   Under 640px the whole table restructures into cards — see the responsive
+   section.
+   -------------------------------------------------------------------------- */
+
+table.plan{
+  width:100%;
+  border-collapse:collapse;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  overflow:hidden;
+}
+
+/* No background of its own: the header sits on the table's white --card.
+   (There used to be a background:var(--bg) here, but --bg was never defined,
+   so it was dropped by the parser and never painted anything.) */
+table.plan th{
+  text-align:left;
+  font:600 11px/1.4 Rubik,sans-serif;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:11px 14px;
+  border-bottom:1.5px solid var(--line);
+}
+
+table.plan td{
+  padding:11px 14px;
+  vertical-align:top;
+  border-bottom:1px solid var(--line-soft);
+}
+
+table.plan tr:last-child td{
+  border-bottom:0;
+}
+
+/* Deadline-locked weeks: video and submission work, never compressed. */
+tr.locked td{
+  background:var(--lime-tint);
+}
+
+/* Spare weeks handed back as build and feedback time. */
+tr.slack td{
+  background:transparent;
+  color:var(--muted);
+}
+
+
+/* --- Column 1: week number and session time ------------------------------- */
+
+.c-wk{
+  width:118px;
+  white-space:nowrap;
+}
+
+.c-wk b{
+  font:700 17px/1.1 Rubik,sans-serif;
+  color:var(--indigo);
+  font-variant-numeric:tabular-nums;
+}
+
+.c-wk .wtime{
+  display:block;
+  font-size:11.5px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+/* Shown instead of .wtime when a single lesson is longer than the session.
+   white-space:normal because this one is a sentence, not a figure. */
+.c-wk .over{
+  display:block;
+  font-size:11.5px;
+  color:var(--indigo);
+  font-weight:600;
+  margin-top:4px;
+  white-space:normal;
+}
+
+
+/* --- Columns 3 and 4: at-home work, and the print-only tick --------------- */
+
+.c-home{
+  width:30%;
+}
+
 /* The tick box belongs to the printed tracker. On screen it would be a control
-   that never responds, so it exists on paper only - hidden here, restored in
+   that never responds, so it exists on paper only — hidden here, restored in
    the print block. display:none also keeps it out of the accessibility tree,
    so nobody is told about a "Done" column that holds nothing. */
-.c-done{display:none}
-.tick{display:inline-block;width:17px;height:17px;border:1.5px solid var(--line);
-  border-radius:3px;margin-top:3px}
-.li{display:flex;gap:10px;font-size:13.5px;padding:3px 0}
-.li .t{font-size:11.5px;color:var(--muted);min-width:44px;padding-top:2px;
-  font-variant-numeric:tabular-nums}
-.li.muted{color:var(--muted);font-size:13px}
-.li a{color:var(--indigo);text-decoration:none;border-bottom:1.5px solid var(--lime)}
-.li a:hover{border-bottom-color:var(--indigo)}
-.tag{display:inline-block;font:600 10px/1.6 Rubik,sans-serif;letter-spacing:.05em;
-  text-transform:uppercase;padding:0 7px;border-radius:4px;background:var(--lime-tint);
-  color:var(--lime-deep);margin-left:7px}
-.terminus{margin-top:16px;display:inline-flex;align-items:center;gap:11px;
-  background:var(--indigo);color:#fff;padding:11px 18px;border-radius:99px;
-  font:600 12.5px Rubik,sans-serif;letter-spacing:.07em}
-.terminus b{color:var(--lime)}
+.c-done{
+  display:none;
+}
 
-/* Native pickers on narrow screens: real select elements, built from the
-   radios so there is one source of truth. */
-.segsel{display:none;width:100%;padding:11px 12px;border:1.5px solid var(--line);
-  border-radius:9px;background:var(--card);font:400 14px Poppins,sans-serif;
-  color:var(--indigo)}
+.tick{
+  display:inline-block;
+  width:17px;
+  height:17px;
+  border:1.5px solid var(--line);
+  border-radius:3px;
+  margin-top:3px;
+}
 
-/* ------------------------------------------------------ secondary blocks */
-.block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px;margin-top:16px}
-.block h3{font-size:14px;margin-bottom:5px}
-.block p{margin:0 0 11px;font-size:13px}
-.block ul{margin:0;padding-left:18px;font-size:13.5px}
-.block li{margin-bottom:5px}
-.block.home{border-left:3px solid var(--lime-deep)}
-.block.home h3{color:var(--lime-deep)}
 
-/* -------------------------------------------------------- doesn't-fit state */
-.nofit{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--lime);
-  border-radius:var(--r);padding:26px}
-.nofit h2{font-size:20px;margin-bottom:9px}
-.nofit p{margin:0;font-size:14.5px}
-.fixes{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
-.fixes button{padding:10px 16px;border:0;border-radius:9px;background:var(--indigo);color:#fff;
-  font:500 13.5px Poppins,sans-serif;cursor:pointer}
-.fixes button:hover{background:var(--indigo-600)}
-.fixes button.alt{background:var(--lime);color:var(--indigo)}
-.fixes button.alt:hover{background:#CBDA6C}
+/* --- Lesson items inside a cell ------------------------------------------- */
 
-/* ------------------------------------------------------------- responsive */
+.li{
+  display:flex;
+  gap:10px;
+  font-size:13.5px;
+  padding:3px 0;
+}
+
+/* The duration, held to a fixed width so titles start on a common left edge. */
+.li .t{
+  font-size:11.5px;
+  color:var(--muted);
+  min-width:44px;
+  padding-top:2px;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Placeholder text: an empty homework cell, or a work-time week. */
+.li.muted{
+  color:var(--muted);
+  font-size:13px;
+}
+
+/* Underlined in lime rather than blue: still obviously a link, still on brand. */
+.li a{
+  color:var(--indigo);
+  text-decoration:none;
+  border-bottom:1.5px solid var(--lime);
+}
+
+.li a:hover{
+  border-bottom-color:var(--indigo);
+}
+
+.tag{
+  display:inline-block;
+  font:600 10px/1.6 Rubik,sans-serif;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  padding:0 7px;
+  border-radius:4px;
+  background:var(--lime-tint);
+  color:var(--lime-deep);
+  margin-left:7px;
+}
+
+/* Closes the table: the deadline the whole plan counts down to. */
+.terminus{
+  margin-top:16px;
+  display:inline-flex;
+  align-items:center;
+  gap:11px;
+  background:var(--indigo);
+  color:#fff;
+  padding:11px 18px;
+  border-radius:99px;
+  font:600 12.5px Rubik,sans-serif;
+  letter-spacing:.07em;
+}
+
+.terminus b{
+  color:var(--lime);
+}
+
+
+/* -----------------------------------------------------------------------------
+   9. Native pickers for narrow screens
+
+   Real <select> elements, built by app.js from the radios so there is one
+   source of truth and the picker cannot drift out of sync. Shown under 520px.
+   -------------------------------------------------------------------------- */
+
+.segsel{
+  display:none;
+  width:100%;
+  padding:11px 12px;
+  border:1.5px solid var(--line);
+  border-radius:9px;
+  background:var(--card);
+  font:400 14px Poppins,sans-serif;
+  color:var(--indigo);
+}
+
+
+/* -----------------------------------------------------------------------------
+   10. Secondary blocks — "Not included" and "Other tool options"
+   -------------------------------------------------------------------------- */
+
+.block{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:17px 19px;
+  margin-top:16px;
+}
+
+.block h3{
+  font-size:14px;
+  margin-bottom:5px;
+}
+
+.block p{
+  margin:0 0 11px;
+  font-size:13px;
+}
+
+.block ul{
+  margin:0;
+  padding-left:18px;
+  font-size:13.5px;
+}
+
+.block li{
+  margin-bottom:5px;
+}
+
+
+/* -----------------------------------------------------------------------------
+   11. The refusal state
+
+   Shown when no plan fits. The engine returns structured fixes, so this is a
+   set of buttons that apply themselves rather than a paragraph of advice.
+   -------------------------------------------------------------------------- */
+
+.nofit{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-top:4px solid var(--lime);
+  border-radius:var(--r);
+  padding:26px;
+}
+
+.nofit h2{
+  font-size:20px;
+  margin-bottom:9px;
+}
+
+.nofit p{
+  margin:0;
+  font-size:14.5px;
+}
+
+.fixes{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+
+/* The first fix is the recommended one and gets the solid indigo treatment. */
+.fixes button{
+  padding:10px 16px;
+  border:0;
+  border-radius:9px;
+  background:var(--indigo);
+  color:#fff;
+  font:500 13.5px Poppins,sans-serif;
+  cursor:pointer;
+}
+
+.fixes button:hover{
+  background:var(--indigo-600);
+}
+
+/* Alternatives after the first, in lime. */
+.fixes button.alt{
+  background:var(--lime);
+  color:var(--indigo);
+}
+
+.fixes button.alt:hover{
+  background:#CBDA6C;
+}
+
+
+/* =============================================================================
+   12. Responsive
+
+   Three steps, each doing one job:
+     900px — the control panel becomes a sticky chip bar
+     640px — the table restructures into one card per week
+     520px — segmented controls become native selects
+   ============================================================================= */
+
 @media(max-width:900px){
-  .chips{display:flex;gap:7px;overflow-x:auto;padding:11px 20px;
-    position:sticky;top:0;z-index:20;background:rgba(251,250,245,.94);
-    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  header{padding:26px 0 16px}
-  .panel{padding:18px;gap:14px 18px}
-  .c-home{width:34%}
-}
-@media(max-width:640px){
-  /* One card per week. A four-column table cannot be read at 380px. */
-  table.plan,table.plan tbody,table.plan tr,table.plan td{display:block;width:auto}
-  table.plan thead{display:none}
-  table.plan{border:0;background:transparent}
-  table.plan tr{background:var(--card);border:1px solid var(--line);
-    border-radius:var(--r);margin-bottom:9px;padding:4px 2px;position:relative}
-  table.plan tr.locked{background:var(--lime-tint);border-color:#DDE4B8}
-  table.plan td{border-bottom:0;padding:7px 14px}
-  .c-wk{width:auto;display:flex !important;align-items:baseline;gap:9px;flex-wrap:wrap}
-  .c-wk .wtime,.c-wk .over{display:inline;margin:0}
-  .c-in::before,.c-home::before{content:attr(data-label);display:block;
-    font:600 10px/1.5 Rubik,sans-serif;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--muted);margin-bottom:3px}
-}
-@media(max-width:520px){
-  .field,.field.time{flex:1 1 100%}
-  .nums > div{width:auto;flex:1}
-  .seg{display:none}
-  .segsel{display:block}
+
+  /* Sticky so the current selections stay visible while scrolling the plan. */
+  .chips{
+    display:flex;
+    gap:7px;
+    overflow-x:auto;
+    padding:11px 20px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(251,250,245,.94);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+
+  header{
+    padding:26px 0 16px;
+  }
+
+  .panel{
+    padding:18px;
+    gap:14px 18px;
+  }
+
+  .c-home{
+    width:34%;
+  }
+
 }
 
-/* ----------------------------------------------------------------- print */
-.printhead{display:none}
+@media(max-width:640px){
+
+  /* One card per week. A four-column table cannot be read at 380px. */
+  table.plan,table.plan tbody,table.plan tr,table.plan td{
+    display:block;
+    width:auto;
+  }
+
+  /* The headings go with the table layout, so the cells carry their own
+     labels instead — see the ::before rule below. */
+  table.plan thead{
+    display:none;
+  }
+
+  table.plan{
+    border:0;
+    background:transparent;
+  }
+
+  table.plan tr{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--r);
+    margin-bottom:9px;
+    padding:4px 2px;
+    position:relative;
+  }
+
+  table.plan tr.locked{
+    background:var(--lime-tint);
+    border-color:#DDE4B8;
+  }
+
+  table.plan td{
+    border-bottom:0;
+    padding:7px 14px;
+  }
+
+  /* Week number and time sit on one line at the top of the card. */
+  .c-wk{
+    width:auto;
+    display:flex !important;
+    align-items:baseline;
+    gap:9px;
+    flex-wrap:wrap;
+  }
+
+  .c-wk .wtime,.c-wk .over{
+    display:inline;
+    margin:0;
+  }
+
+  /* Replaces the lost column headers, from the data-label attribute. */
+  .c-in::before,.c-home::before{
+    content:attr(data-label);
+    display:block;
+    font:600 10px/1.5 Rubik,sans-serif;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:3px;
+  }
+
+}
+
+@media(max-width:520px){
+
+  /* Fields go full width and stack. */
+  .field,.field.time{
+    flex:1 1 100%;
+  }
+
+  .nums > div{
+    width:auto;
+    flex:1;
+  }
+
+  /* The swap: button groups out, native pickers in. */
+  .seg{
+    display:none;
+  }
+
+  .segsel{
+    display:block;
+  }
+
+}
+
+
+/* =============================================================================
+   13. Print
+
+   The printed plan is a physical tracker, so this is a real layout rather
+   than a stripped screen. Everything interactive is removed, colour drops to
+   black on white, and the tick column — hidden on screen — appears here.
+   ============================================================================= */
+
+/* Populated by app.js and shown only when printing: title and configuration,
+   since the on-screen header is hidden below. */
+.printhead{
+  display:none;
+}
+
 @media print{
-  @page{margin:12mm}
-  body{background:#fff;font-size:10pt;color:#000}
-  header,.panel,.chips,.actions,.legend,.notes,.homebar,.segsel{display:none !important}
-  .printhead{display:block;border-bottom:2.5px solid var(--indigo);padding-bottom:9px;margin-bottom:12px}
-  .printhead h1{font-size:16pt}
-  .printhead p{margin:3px 0 0;font-size:9pt;color:#000}
-  .wrap{max-width:none;padding:0}
-  .layout{display:block}
-  .summline{font-size:9pt;margin-bottom:10px}
-  table.plan{border:1px solid #000;border-radius:0}
-  table.plan th{background:#fff;color:#000;border-bottom:1.5px solid #000;padding:5px 7px;font-size:8pt}
-  table.plan td{border-bottom:1px solid #999;padding:5px 7px}
-  tr.locked td,tr.slack td{background:#fff !important}
-  tr{break-inside:avoid}
-  .c-wk b{font-size:11pt}
+
+  @page{
+    margin:12mm;
+  }
+
+  body{
+    background:#fff;
+    font-size:10pt;
+    color:#000;
+  }
+
+  /* Everything the reader cannot act on from paper.
+     NOTE: .notes and .homebar are in this list, so the printed sheet does not
+     say how much work was moved out of class. Worth revisiting. */
+  header,.panel,.chips,.actions,.legend,.notes,.homebar,.segsel{
+    display:none !important;
+  }
+
+  .printhead{
+    display:block;
+    border-bottom:2.5px solid var(--indigo);
+    padding-bottom:9px;
+    margin-bottom:12px;
+  }
+
+  .printhead h1{
+    font-size:16pt;
+  }
+
+  .printhead p{
+    margin:3px 0 0;
+    font-size:9pt;
+    color:#000;
+  }
+
+  .wrap{
+    max-width:none;
+    padding:0;
+  }
+
+  .layout{
+    display:block;
+  }
+
+  .summline{
+    font-size:9pt;
+    margin-bottom:10px;
+  }
+
+  table.plan{
+    border:1px solid #000;
+    border-radius:0;
+  }
+
+  table.plan th{
+    background:#fff;
+    color:#000;
+    border-bottom:1.5px solid #000;
+    padding:5px 7px;
+    font-size:8pt;
+  }
+
+  table.plan td{
+    border-bottom:1px solid #999;
+    padding:5px 7px;
+  }
+
+  /* Tints do not survive printing reliably, and cost ink. */
+  tr.locked td,tr.slack td{
+    background:#fff !important;
+  }
+
+  /* Never split a week across a page break. */
+  tr{
+    break-inside:avoid;
+  }
+
+  .c-wk b{
+    font-size:11pt;
+  }
+
   /* A printed plan is a tracker: the box has to be big enough for a pen.
-     This is the only place the Done column appears - see .c-done above. */
-  .tick{width:24px;height:24px;border:1.5px solid #000;border-radius:0}
-  .c-done{display:table-cell;width:38px;text-align:center}
-  .li a{border:0;color:#000;text-decoration:underline}
-  .terminus{background:#fff !important;color:#000;border:1.5px solid #000;padding:6px 12px}
-  .terminus b{color:#000}
-  .block{break-inside:avoid;border-color:#999}
+     This is the only place the Done column appears — see .c-done above. */
+  .tick{
+    width:24px;
+    height:24px;
+    border:1.5px solid #000;
+    border-radius:0;
+  }
+
+  .c-done{
+    display:table-cell;
+    width:38px;
+    text-align:center;
+  }
+
+  /* Underline properly on paper — a lime border prints as nothing useful. */
+  .li a{
+    border:0;
+    color:#000;
+    text-decoration:underline;
+  }
+
+  .terminus{
+    background:#fff !important;
+    color:#000;
+    border:1.5px solid #000;
+    padding:6px 12px;
+  }
+
+  .terminus b{
+    color:#000;
+  }
+
+  .block{
+    break-inside:avoid;
+    border-color:#999;
+  }
+
 }
