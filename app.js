@@ -243,7 +243,7 @@ function render(plan) {
       <div class="plan-foot">
         <span class="progress" id="progress"></span>
         <div class="actions">
-          <button type="button" id="printBtn">Print tracker</button>
+          <button type="button" id="printBtn">Print plan</button>
           <button type="button" id="csvBtn" class="primary">Export CSV</button>
         </div>
       </div>
