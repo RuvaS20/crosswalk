@@ -45,6 +45,12 @@ const TOOL_NAMES = {
 const AGE_LABEL = { beginner: 'Ages 8-12', junior: 'Ages 13-15', senior: 'Ages 16-18' };
 const AI_LABEL  = { none: 'no AI', integrated: 'AI included', focused: 'AI-focused' };
 
+/* Where the weekly homework figure stops being routine and starts being a
+   problem. HEAVY matches HEAVY_HOMEWORK_HOURS in the engine, which is what
+   makes the engine raise it in its notes too. */
+const HEAVY_HOMEWORK = 120;
+const LIGHT_HOMEWORK = 30;
+
 
 /* ---------------------------------------------------------------- loading */
 
@@ -181,8 +187,11 @@ function render(plan) {
       <div class="nofit">
         <h2>That's a tight fit</h2>
         <p>${esc(plan.message)}</p>
-        ${(plan.fixes || []).length ? `<div class="fixes">${
-          plan.fixes.map((f, i) =>
+        ${plan.link ? `<p class="alt-route">${esc(plan.link.note)}</p>` : ''}
+        ${(plan.fixes || []).length || plan.link ? `<div class="fixes">${plan.link
+            ? `<a class="alt" href="${esc(plan.link.url)}" target="_blank"
+                  rel="noopener">${esc(plan.link.label)}</a>` : ''}${
+          (plan.fixes || []).map((f, i) =>
             `<button type="button" data-fix="${i}" class="${i ? 'alt' : ''}">${esc(f.label)}</button>`
           ).join('')}</div>` : ''}
       </div>`;
@@ -194,34 +203,23 @@ function render(plan) {
 
   const s = plan.summary;
 
-  // The weekly home load is the single most decision-relevant number here, so
-  // it gets a banner rather than a bullet. The engine raises the same point in
-  // notes; drop it there so it is not said twice.
+  // One sentence, not three stacked blocks. Weekly homework time is the only
+  // number here a facilitator can act on: lesson counts and in-class hours
+  // follow from what they already chose, so stating them adds reading without
+  // adding a decision. The verdict underneath is what turns the figure into
+  // something they can judge.
   const home = s.homeworkMinutesPerWeek;
-  const level = home >= 120 ? 'alert' : home >= 60 ? 'warn' : 'calm';
-  const homeMsg = {
-    alert: 'That is a lot to ask of a volunteer team. More weeks, or longer ' +
-           'sessions, would bring it down.',
-    warn:  'Workable, but check it is realistic for your group.',
-    calm:  'A manageable load for most groups.'
-  }[level];
-  const notes = plan.notes.filter(n => !/outside\s+class each week/.test(n));
+  const level = home >= HEAVY_HOMEWORK ? 'heavy' : home >= LIGHT_HOMEWORK ? '' : 'light';
+  const verdict = home >= HEAVY_HOMEWORK ? 'Heavy load'
+                : home >= LIGHT_HOMEWORK ? 'Manageable load'
+                : 'Light load';
 
   out.innerHTML = `
-    ${home ? `
-      <div class="homebar ${level}">
-        <b>${hrs(home)} a week outside class</b>
-        <span>${homeMsg}</span>
-      </div>` : ''}
-
-    <p class="summline">
-      <b>${s.lessonCount}</b> lessons over <b>${s.weeksUsed}</b> weeks &middot;
-      <b>${hrs(s.inClassMinutes)}</b> in class${s.droppedMinutes
-        ? ` &middot; ${hrs(s.droppedMinutes)} left out` : ''}
-    </p>
-
-    ${notes.length ? `<ul class="notes">${
-      notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+    <p class="lede ${level}">${home
+      ? `Your ${s.weeksUsed}-week plan requires <strong>${hrs(home)}</strong> a week
+         of homework. <span class="judge">${verdict}</span>`
+      : `Your ${s.weeksUsed}-week plan fits entirely in class.
+         <span class="judge">No homework</span>`}</p>
 
     <div class="plan-card">
       <div class="plan-head">
@@ -251,7 +249,7 @@ function render(plan) {
       </div>
     </div>
 
-    ${plan.dropped.length ? `
+    ${!plan.params.core && plan.dropped.length ? `
       <div class="block">
         <h3>Not included</h3>
         <p>Optional lessons left out to fit the time. Add them back if you gain weeks.</p>
@@ -365,7 +363,9 @@ let timer = null;
 
 /**
  * Rebuilds the plan. Debounced so typing in the number fields doesn't rerender
- * on every keystroke, but fast enough that changing a week count feels direct.
+ * on every keystroke. 500ms rather than something snappier: at 160ms the plan
+ * still moved under each digit, which read as thrashing rather than response.
+ * Select changes bypass this entirely and rebuild immediately.
  */
 function update({ immediate = false, focus = false } = {}) {
   if (!data) return;
@@ -376,7 +376,7 @@ function update({ immediate = false, focus = false } = {}) {
     current = buildPlan(data, params);
     render(current);
     if (focus) $('#out').focus();
-  }, immediate ? 0 : 160);
+  }, immediate ? 0 : 500);
 }
 
 

@@ -38,6 +38,22 @@ const HEAVY_HOMEWORK_HOURS = 2;
 // Spare capacity below this is left as breathing room rather than filled.
 const MIN_SLACK_BLOCK = 20;
 
+/**
+ * The route out when a group has too little time for a full season.
+ *
+ * Both "too few weeks" and "sessions too short" are real situations rather
+ * than mistakes to correct, so each refusal names the programme built for
+ * them instead of only insisting on more time. Four 1-hour sessions plus a
+ * showcase, per technovationchallenge.org/ai-mini-technovation.
+ */
+const AI_MINI = {
+  url: 'https://technovationchallenge.org/ai-mini-technovation/',
+  label: 'Try AI Mini Technovation',
+  note: 'Try AI Mini Technovation instead: four 1-hour sessions plus a pitch ' +
+        'showcase. A free trial run of the full programme, and a way to ' +
+        'explore project-based AI curriculum with your students.'
+};
+
 
 /* ------------------------------------------------------------------ step 1 */
 
@@ -413,8 +429,9 @@ export function buildPlan(data, params) {
     return {
       status: 'refused',
       reason: 'too_short',
-      message: `${MIN_WEEKS} weeks is about the least a Technovation project needs. ` +
-               `You have ${weeks || 0}.`,
+      message: `${MIN_WEEKS} weeks is the shortest workable season. You have ` +
+               `${weeks || 0}.`,
+      link: AI_MINI,
       // Structured so the UI can offer a button that applies the fix, rather
       // than a sentence the person has to translate back into a form field.
       fixes: [{ label: `Use ${MIN_WEEKS} weeks`, set: { weeks: MIN_WEEKS } }],
@@ -425,10 +442,9 @@ export function buildPlan(data, params) {
     return {
       status: 'refused',
       reason: 'session_too_short',
-      message: 'A lesson needs a bit more room than this. Sessions under 30 minutes ' +
-               'are too short to carry one.',
-      fixes: [{ label: 'Use 45 minutes', set: { sessionLength: 45 } },
-              { label: 'Use 90 minutes', set: { sessionLength: 90 } }],
+      message: `Most lessons run for 1h. You have ${sessionLength || 0} minutes.`,
+      link: AI_MINI,
+      fixes: [{ label: 'Use 1h', set: { sessionLength: 60 } }],
       suggestions: ['Use at least 30 minutes, ideally 60-90.']
     };
   }

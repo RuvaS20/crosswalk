@@ -101,6 +101,12 @@ h1,h2,h3{
     animation:none !important;
     transition:none !important;
   }
+
+  /* A ring that cannot turn reads as broken rather than busy, so it goes and
+     the wording carries the wait on its own. */
+  .spinner{
+    display:none;
+  }
 }
 
 
@@ -256,19 +262,30 @@ header p{
 }
 
 /* Numbers are typed rather than picked, so no chevron and no room for one. */
+/* Typed rather than picked, so they read as blanks in the sentence: pale fill,
+   dashed edge, indigo text — the opposite of the solid pills either side.
+   accent-color is the standards-based lever for the spin arrows. */
 .clause input{
+  width:70px;
   padding:5px 12px;
   text-align:center;
   font-variant-numeric:tabular-nums;
-  caret-color:#fff;
+  background-color:#f8f9fa;
+  color:var(--indigo);
+  border-style:dashed;
+  caret-color:var(--indigo);
+  accent-color:var(--indigo);
+  /* The shared pill rule sets appearance:none, which drops the spinner
+     entirely in Firefox. The fill and border above still win, so restoring
+     the native widget only brings the arrows back. */
+  appearance:auto;
 }
 
-.n-wk{
-  width:58px;
-}
-
-.n-len{
-  width:64px;
+/* Chrome and Safari ship the spinner at opacity:0 and fade it in on hover.
+   Pin it visible so the field advertises that it steps. */
+.clause input::-webkit-inner-spin-button,
+.clause input::-webkit-outer-spin-button{
+  opacity:1;
 }
 
 /* appearance:none drops the native arrow, so the chevron is supplied as an
@@ -355,30 +372,19 @@ header p{
    6. Engine notes
    -------------------------------------------------------------------------- */
 
-/* Engine notes: what was moved, dropped, or left as work time. */
-.notes{
-  margin:0 0 18px;
-  padding:0;
-  list-style:none;
-}
-
-.notes li{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-left:3px solid var(--lime-deep);
-  border-radius:0 8px 8px 0;
-  padding:11px 15px;
-  margin-bottom:7px;
-  font-size:13.5px;
-}
-
 
 /* -----------------------------------------------------------------------------
-   7. Homework banner and summary line
+   7. The summary line
+
+   One sentence where there used to be three stacked blocks — a banner, a
+   count line, and a list of notes. Weekly homework time is the only figure a
+   facilitator can act on; the rest followed from what they had already chosen.
+
+   Rubik rather than Poppins: this is the one piece of prose on the page that
+   is a finding rather than an instruction, and the heading face marks it.
    -------------------------------------------------------------------------- */
 
-/* Screen-reader-only. Used for the "Done" column heading, whose cells are
-   hidden on screen. */
+/* Screen-reader-only. Used for column headings whose cells carry no text. */
 .sr{
   position:absolute;
   width:1px;
@@ -388,64 +394,91 @@ header p{
   white-space:nowrap;
 }
 
-/* The weekly out-of-class load. It gets a banner rather than a bullet because
-   it is the single most decision-relevant number on the page. Three levels,
-   set by app.js: calm under an hour, warn at 1-2, alert above that. */
-.homebar{
+.lede{
+  margin:0 0 20px;
+  font:400 18px/1.4 Rubik,sans-serif;
+  color:var(--indigo);
+  max-width:60ch;
+}
+
+.lede strong{
+  font-weight:600;
+}
+
+/* The verdict. On its own line so the eye lands on the figure first and the
+   judgement second, rather than reading them as one run of text. */
+.judge{
+  display:block;
+  margin-top:4px;
+  font:500 13px/1.4 Poppins,sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--muted);
+}
+
+/* Heavy: the figure inverts to a solid chip and the verdict takes full
+   contrast. The only escalation on the page, so it has to be unmistakable
+   without a second colour. */
+.lede.heavy strong{
+  color:#fff;
+  background:var(--indigo);
+  padding:2px 7px;
+  border-radius:4px;
+}
+
+.lede.heavy .judge{
+  color:var(--indigo);
+  font-weight:600;
+}
+
+/* Light loads say so quietly — there is nothing to act on. */
+.lede.light .judge{
+  color:var(--lime-deep);
+}
+
+
+/* -----------------------------------------------------------------------------
+   7b. Loading
+
+   The live endpoint takes about five seconds, so the first paint has to say
+   something. Shaped like the plan card that replaces it — same border, same
+   radius — so the layout does not jump when the plan arrives.
+   -------------------------------------------------------------------------- */
+
+.loading{
   display:flex;
-  flex-wrap:wrap;
-  align-items:baseline;
-  gap:4px 12px;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:13px;
+  padding:64px 24px;
   border:1px solid var(--line);
-  border-left:4px solid var(--line);
-  border-radius:0 10px 10px 0;
-  padding:13px 17px;
-  margin-bottom:14px;
+  border-radius:var(--r);
   background:var(--card);
 }
 
-.homebar b{
-  font:700 16px/1.2 Rubik,sans-serif;
-  color:var(--indigo);
+.spinner{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  border:3px solid var(--line);
+  border-top-color:var(--indigo);
+  animation:spin .8s linear infinite;
 }
 
-.homebar span{
-  font-size:13px;
-  color:var(--muted);
+@keyframes spin{
+  to{ transform:rotate(1turn); }
 }
 
-.homebar.calm{
-  border-left-color:var(--line);
+.loading h2{
+  font-size:17px;
 }
 
-.homebar.warn{
-  border-left-color:var(--lime-deep);
-  background:var(--lime-tint);
-}
-
-/* Alert inverts to solid indigo — the only place on the page that shouts. */
-.homebar.alert{
-  border-left-color:var(--indigo);
-  background:var(--indigo);
-}
-
-.homebar.alert b{
-  color:#fff;
-}
-
-.homebar.alert span{
-  color:#E6E2F2;
-}
-
-.summline{
+.loading p{
+  margin:0;
+  max-width:44ch;
   font-size:13.5px;
   color:var(--muted);
-  margin:0 0 16px;
-}
-
-.summline b{
-  color:var(--indigo);
-  font-weight:600;
 }
 
 
@@ -786,9 +819,34 @@ tr.slack td{
 }
 
 /* Alternatives after the first, in lime. */
-.fixes button.alt{
+/* The escape hatch is an <a>, not a button, because it leaves the page. It
+   takes the same shape so the two read as equal-weight choices. */
+.fixes a{
+  display:inline-flex;
+  align-items:center;
+  padding:10px 16px;
+  border-radius:9px;
+  font:500 13.5px Poppins,sans-serif;
+  text-decoration:none;
+}
+
+.fixes button.alt,
+.fixes a.alt{
   background:var(--lime);
   color:var(--indigo);
+}
+
+.fixes a.alt:hover{
+  background:#CBDA6C;
+}
+
+/* The sentence that explains where the link goes. Full width of the card —
+   the refusal above it already runs the full width, and a narrower measure
+   here made the two look unrelated. */
+.alt-route{
+  margin:14px 0 0;
+  font-size:13.5px;
+  color:var(--muted);
 }
 
 .fixes button.alt:hover{
@@ -955,10 +1013,10 @@ tr.slack td{
     color:#000;
   }
 
-  /* Everything the reader cannot act on from paper.
-     NOTE: .notes and .homebar are in this list, so the printed sheet does not
-     say how much work was moved out of class. Worth revisiting. */
-  header,.panel,.chips,.actions,.notes,.homebar,.plan-foot{
+  /* Everything the reader cannot act on from paper. The summary line stays:
+     it is one sentence and it carries the homework figure, which is exactly
+     what the printed sheet used to be missing. */
+  header,.panel,.chips,.actions,.plan-foot{
     display:none !important;
   }
 
@@ -998,9 +1056,20 @@ tr.slack td{
     display:block;
   }
 
-  .summline{
-    font-size:9pt;
+  .lede{
+    font-size:10pt;
     margin-bottom:10px;
+  }
+
+  /* The indigo chip is screen emphasis; on paper it just costs ink. */
+  .lede.heavy strong{
+    background:transparent;
+    color:#000;
+    padding:0;
+  }
+
+  .judge{
+    color:#000;
   }
 
   table.plan{

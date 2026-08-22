@@ -139,8 +139,14 @@ headings, Poppins for body.
   second clause and replaces it with what Core means; the full stop sits outside the
   collapsing span, so the line reads complete either way.
 - **Results update live.** No submit button — the engine runs locally in about a
-  millisecond, so changing weeks or session length rebuilds the plan immediately.
-  Number inputs are debounced 160ms.
+  millisecond, so a select rebuilds the plan immediately. The two number fields
+  are debounced 500ms — at 160ms the plan still moved under each digit, which read
+  as thrashing rather than response.
+- **The wait is covered.** The live endpoint takes about five seconds, so `#out`
+  ships with a spinner and a line of copy as static markup — not injected by JS,
+  which would leave the region blank until `app.js` had parsed. `render()` replaces
+  it on the first plan. Under `prefers-reduced-motion` the ring is hidden rather
+  than frozen, since a stopped spinner reads as broken.
 - **The plan is a card**: an indigo header carrying the deadline, a table of weeks,
   and a sticky footer with progress and the export buttons. In-class and at-home stay
   in separate columns so the home load can be scanned down a single column. Replaced
@@ -153,9 +159,12 @@ headings, Poppins for body.
 - **Homework is assigned to a week.** Displaced lessons attach to the week of the
   nearest in-class lesson that precedes them in curriculum order, so prerequisite
   order carries over and the plan says *when* to set the work, not just what.
-- **The weekly home load gets a banner**, not a bullet: calm under an hour, lime at
-  1–2 hours, solid indigo above that. It is the single most decision-relevant number
-  on the page.
+- **One sentence above the table**, where there used to be a banner, a count line and
+  a list of notes: *"Your 20-week plan requires **41m** a week of homework."* with a
+  verdict beneath — light, manageable, or heavy. Weekly homework time is the only
+  figure a facilitator can act on; lesson counts and in-class hours follow from what
+  they already chose. Heavy inverts the figure to a solid indigo chip; a plan needing
+  none says so instead of reporting `0m`.
 - **Core lessons stay in class.** Technovation publishes a Core Curriculum — the
   minimum set a team needs to submit. The 39 lessons across Beginner, Mobile, Web and
   AI in Action that correspond to it are marked `essential` and are never pushed to
@@ -164,6 +173,11 @@ headings, Poppins for body.
 - **A plan that doesn't fit offers buttons that fix it**, not sentences. The engine
   returns structured fixes (`{label, set:{weeks:14}}`), so "Use 14 weeks" applies
   itself and rebuilds.
+- **Too little time is a situation, not a mistake.** Below 10 weeks, or under 30
+  minutes a session, the refusal also links to AI Mini Technovation — four 1-hour
+  sessions plus a pitch showcase, free to run. It is a `link: {url, label, note}` on
+  the refusal rather than markup in the message, so the message stays escapable and
+  the engine keeps knowing nothing about the DOM.
 - **Over-long weeks say so plainly** — "30m over your session" under the lessons,
   rather than making the reader do the subtraction. Text only, in red: a filled row
   read as an error when a lesson simply being longer than one session is a note. On
@@ -175,7 +189,11 @@ headings, Poppins for body.
   `data-label`, and the tick moves to a strip at the foot of the card. The sentence
   needs no equivalent — it is selects already, and simply wraps.
 - **Defaults are 20 weeks × 90 minutes.** Earlier environment presets were removed as
-  an extra control that only ever set one value.
+  an extra control that only ever set one value. The two number fields are styled as
+  blanks in the sentence — pale fill, dashed edge, indigo text — the opposite of the
+  solid pills either side, because they are typed rather than picked. Their spin
+  arrows are pinned visible: Chrome ships them at `opacity:0` until hover, and
+  Firefox drops them entirely when `appearance:none` is set.
 - **Coding tool choice** appears only where a real choice exists: App Inventor vs
   Thunkable for 13–18 mobile, App Inventor vs Scratch for 8–12. Hidden for web apps
   (Python + Streamlit only) and for AI-focused.
@@ -191,9 +209,9 @@ headings, Poppins for body.
   work-time weeks hold no lessons to mark, so they show a dash and are left out of
   the total rather than making it unreachable.
 - **Print** produces a one-page planner. The live checkbox prints as a drawn 24px
-  square big enough for a pen, and a week already ticked on screen prints ticked. Note
-  the printed sheet omits the notes and the home-load banner, so it does not say how
-  much work was moved out of class.
+  square big enough for a pen, and a week already ticked on screen prints ticked. The
+  summary sentence prints too, so the sheet now states the weekly home load — the
+  old banner was hidden, and it never did.
 - **Download as spreadsheet** gives a CSV with a row per lesson: week, date, whether
   it is in class or at home, category, minutes, activities and link. Homework rows now
   carry their week.
@@ -203,6 +221,9 @@ headings, Poppins for body.
 ## Notes on behaviour
 
 - **Below 10 weeks the planner refuses** and says what would work instead.
+- **"Not included" is hidden under Core.** Everything Core drops is Work Time — the
+  only optional rows it has — so the section offered to add back blank time, listed
+  several times over.
 - **Out-of-class work is normal here.** The source curriculum runs ~50 hours for
   Senior Mobile, so a 90-minute weekly session cannot cover it in class. The plan
   reports the weekly home load and flags it above 2 hours.
@@ -302,6 +323,17 @@ and its age, last publish, and whether the drift baseline matches the sheet.
   `essential` landed. Worth running the sweep and recording the shortest schedule that
   works for each configuration, so the refusal messages can name a number that's
   actually achievable.
+- **Two of the three over-budget fixes do not work.** At 12 weeks × 45 minutes the
+  refusal offers "Use 17 weeks" (works), "Make sessions 90 min" (still refuses, needs
+  14) and "Drop the AI lessons" (changes nothing). `needLength` is a minutes average,
+  which is the same mistake lever 1 documents against itself — packing wastes capacity,
+  so an average understates the weeks needed. The AI fix is offered whenever `aiMode`
+  is `integrated`, without checking it helps. Cheapest correct fix: re-run `buildPlan`
+  for each candidate and only offer the ones that resolve.
+- **The minutes field has an off-step default.** `min=15 step=10` makes the valid
+  ladder 15, 25, 35 … 95, so the default 90 is not on it — the field is `:invalid` and
+  the arrows jump 90 → 95. Only `step=5` reaches both 45 and 90, which are the two
+  session lengths that actually matter.
 - **Shareable plan links.** Encode the parameters in the query string. The engine is
   already a pure function of them, so this is cheap.
 - **Season rollover runbook.** Currently undocumented.

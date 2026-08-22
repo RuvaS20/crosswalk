@@ -32,17 +32,17 @@
     <form class="panel sentence" id="controls">
 
       <p class="clause">
-        Preparing for a group of
+        Preparing a lesson plan for a group of
         <select id="age" aria-label="Age group">
           <option value="beginner">8&ndash;12</option>
           <option value="junior">13&ndash;15</option>
           <option value="senior" selected>16&ndash;18</option>
         </select>
         year olds. We have
-        <input type="number" id="weeks" value="20" min="1" max="52" class="n-wk"
+        <input type="number" id="weeks" value="20" min="1" max="52"
                aria-label="Number of weeks">
         weeks of
-        <input type="number" id="len" value="90" min="15" max="300" step="5" class="n-len"
+        <input type="number" id="len" value="90" min="15" max="300" step="10"
                aria-label="Minutes per session">
         minute sessions.
       </p>
@@ -84,7 +84,16 @@
     <div class="results">
       <!-- The plan card is rendered here by app.js; Print and Spreadsheet now
            live in its sticky footer rather than in a bar above it. -->
-      <main id="out" aria-live="polite" tabindex="-1"></main>
+      <!-- Static first paint, not injected by JS: the endpoint takes ~5s, and
+           this has to be on screen before app.js has even parsed. render()
+           replaces it on the first plan. -->
+      <main id="out" aria-live="polite" tabindex="-1">
+        <div class="loading">
+          <span class="spinner" aria-hidden="true"></span>
+          <h2>Building your plan</h2>
+          <p>Fetching the latest version of the Curriculum.</p>
+        </div>
+      </main>
     </div>
 
   </div>
