@@ -7,6 +7,37 @@ const $$ = s => [...document.querySelectorAll(s)];
 let data = null;
 let current = null;      // last built plan, for export
 
+/**
+ * Which lessons have been marked done.
+ *
+ * Keyed by lesson_id, never by week number. The plan is rebuilt on every
+ * control change and week numbers move with it, so a tick stored against
+ * "week 3" would silently reattach to whatever landed there. Stored against
+ * the lesson, it follows the lesson.
+ *
+ * A week's checkbox is derived: it shows ticked when every lesson in that
+ * week is done, and ticking it marks them all.
+ */
+const DONE_KEY = 'crosswalk.done.v1';
+let done = new Set();
+try {
+  done = new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]'));
+} catch { /* private mode, or corrupt value: start empty */ }
+
+function saveDone() {
+  try {
+    localStorage.setItem(DONE_KEY, JSON.stringify([...done]));
+  } catch { /* nothing we can do, and not worth interrupting the user */ }
+}
+
+/** Every lesson in a week, taught or set. Work-time weeks have none. */
+const weekLessons = w => [...w.lessons, ...(w.homework || [])];
+
+const weekDone = w => {
+  const ls = weekLessons(w);
+  return ls.length > 0 && ls.every(l => done.has(l.lesson_id));
+};
+
 const TOOL_NAMES = {
   app_inventor: 'App Inventor', thunkable: 'Thunkable',
   scratch: 'Scratch', python_streamlit: 'Python + Streamlit'
@@ -42,11 +73,11 @@ async function load() {
 
 function readParams() {
   return {
-    age: $('[name=age]:checked').value,
-    platform: $('[name=platform]:checked').value,
-    aiMode: $('[name=aiMode]:checked').value,
-    builder: $('[name=builder]:checked')?.value || 'auto',
-    core: $('#core').checked,
+    age: $('#age').value,
+    platform: $('#platform').value,
+    aiMode: $('#aiMode').value,
+    builder: $('#builder').value || 'auto',
+    core: $('#mode').value === 'core',
     weeks: +$('#weeks').value,
     sessionLength: +$('#len').value
   };
@@ -54,13 +85,12 @@ function readParams() {
 
 /** Applies a fix from a refusal button, then rebuilds. */
 function setParams(patch) {
-  if (patch.age)      $(`[name=age][value="${patch.age}"]`).checked = true;
-  if (patch.platform) $(`[name=platform][value="${patch.platform}"]`).checked = true;
-  if (patch.aiMode)   $(`[name=aiMode][value="${patch.aiMode}"]`).checked = true;
+  if (patch.age)      $('#age').value = patch.age;
+  if (patch.platform) $('#platform').value = patch.platform;
+  if (patch.aiMode)   $('#aiMode').value = patch.aiMode;
   if (patch.weeks)    $('#weeks').value = patch.weeks;
   if (patch.sessionLength) $('#len').value = patch.sessionLength;
-  syncPlatform();
-  renderToolChoice();
+  syncSentence();
   update({ focus: true });
 }
 
@@ -88,25 +118,22 @@ function toolChoices(params) {
 function renderToolChoice() {
   if (!data) return;
   const tools = toolChoices(readParams());
-  const field = $('#builderField');
-  const seg = $('#builderSeg');
+  const group = $('#toolGroup');
+  const sel = $('#builder');
 
-  if (!tools.length) { field.hidden = true; seg.innerHTML = ''; return; }
+  if (!tools.length) { group.hidden = true; sel.innerHTML = ''; return; }
 
-  const previous = $('[name=builder]:checked')?.value;
-  const keep = tools.includes(previous) ? previous : tools[0];
+  const keep = tools.includes(sel.value) ? sel.value : tools[0];
 
-  // Only rebuild when the option set actually changed, so a re-render never
+  // Only repopulate when the option set actually changed, so a re-render never
   // steals focus from the control someone is using.
-  const currentSet = $$('[name=builder]').map(i => i.value).join(',');
+  const currentSet = [...sel.options].map(o => o.value).join(',');
   if (currentSet !== tools.join(',')) {
-    seg.innerHTML = tools.map((t, i) => `
-      <input type="radio" name="builder" id="b${i}" value="${t}" ${t === keep ? 'checked' : ''}>
-      <label for="b${i}">${TOOL_NAMES[t] || t}</label>`).join('');
-    $$('[name=builder]').forEach(i => i.addEventListener('change', () => update()));
+    sel.innerHTML = tools
+      .map(t => `<option value="${t}">${esc(TOOL_NAMES[t] || t)}</option>`).join('');
   }
-
-  field.hidden = false;
+  sel.value = keep;
+  group.hidden = false;
 }
 
 
@@ -114,14 +141,14 @@ function renderToolChoice() {
 
 function renderChips(p) {
   const items = [
-    ['#a1', AGE_LABEL[p.age]],
+    ['#age', AGE_LABEL[p.age]],
     // Core has no platform or AI dimension, so those chips would name a
     // control that is not on screen and a choice the plan never made.
-    p.core ? ['#core', 'Core curriculum'] : null,
+    p.core ? ['#mode', 'Core curriculum'] : null,
     p.core || p.age === 'beginner' ? null
-      : ['#p1', p.platform === 'web' ? 'Web app' : 'Mobile app'],
-    p.builder !== 'auto' ? ['#builderField', TOOL_NAMES[p.builder]] : null,
-    p.core ? null : ['#m1', AI_LABEL[p.aiMode]],
+      : ['#platform', p.platform === 'web' ? 'Web app' : 'Mobile app'],
+    p.builder !== 'auto' ? ['#builder', TOOL_NAMES[p.builder]] : null,
+    p.core ? null : ['#aiMode', AI_LABEL[p.aiMode]],
     ['#weeks', `${p.weeks} weeks`],
     ['#len', `${p.sessionLength} min`]
   ].filter(Boolean);
@@ -149,8 +176,6 @@ function render(plan) {
   const out = $('#out');
 
   if (plan.status === 'refused') {
-    $('#actions').hidden = true;
-    $('#legend').hidden = true;
     $('#printhead').innerHTML = '';
     out.innerHTML = `
       <div class="nofit">
@@ -168,8 +193,6 @@ function render(plan) {
   }
 
   const s = plan.summary;
-  $('#actions').hidden = false;
-  $('#legend').hidden = false;
 
   // The weekly home load is the single most decision-relevant number here, so
   // it gets a banner rather than a bullet. The engine raises the same point in
@@ -200,19 +223,33 @@ function render(plan) {
     ${notes.length ? `<ul class="notes">${
       notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
 
-    <table class="plan">
-      <thead>
-        <tr>
-          <th class="c-wk">Week</th>
-          <th class="c-in">In class</th>
-          <th class="c-home">At home</th>
-          <th class="c-done"><span class="sr">Done</span></th>
-        </tr>
-      </thead>
-      <tbody>${plan.weeks.map(weekRow).join('')}</tbody>
-    </table>
+    <div class="plan-card">
+      <div class="plan-head">
+        <h2>Technovation Plan</h2>
+        <div class="deadline">Submissions close
+          <b class="mono">${esc(longDate(plan.deadline))}</b></div>
+      </div>
 
-    <div class="terminus">SUBMIT <b>${plan.deadline}</b></div>
+      <table class="plan">
+        <thead>
+          <tr>
+            <th class="c-wk"><span class="sr">Week</span></th>
+            <th class="c-in">In class (max ${mins(plan.params.sessionLength)})</th>
+            <th class="c-home">At home</th>
+            <th class="c-done"><span class="sr">Done</span></th>
+          </tr>
+        </thead>
+        <tbody>${phasedRows(plan.weeks)}</tbody>
+      </table>
+
+      <div class="plan-foot">
+        <span class="progress" id="progress"></span>
+        <div class="actions">
+          <button type="button" id="printBtn">Print tracker</button>
+          <button type="button" id="csvBtn" class="primary">Export CSV</button>
+        </div>
+      </div>
+    </div>
 
     ${plan.dropped.length ? `
       <div class="block">
@@ -220,11 +257,59 @@ function render(plan) {
         <p>Optional lessons left out to fit the time. Add them back if you gain weeks.</p>
         <ul>${plan.dropped.map(l => `<li>${esc(l.title)}</li>`).join('')}</ul>
       </div>` : ''}
+`;
 
-    ${altBlock(plan.alternatives)}`;
+  // The footer and the ticks are rebuilt on every render, so they are bound
+  // here rather than once at startup.
+  out.querySelectorAll('.c-done input').forEach(box =>
+    box.addEventListener('change', () => toggleWeek(+box.dataset.week, box.checked)));
+
+  $('#printBtn').addEventListener('click', () => window.print());
+  $('#csvBtn').addEventListener('click', exportCSV);
+  renderProgress();
 
   $('#printhead').innerHTML =
     `<h1>Technovation plan</h1><p>${describe(plan.params)} &middot; submissions close ${plan.deadline}</p>`;
+}
+
+/** Ticking a week marks every lesson in it, taught and set alike. */
+function toggleWeek(week, on) {
+  const w = current?.weeks.find(x => x.week === week);
+  if (!w) return;
+  weekLessons(w).forEach(l => on ? done.add(l.lesson_id) : done.delete(l.lesson_id));
+  saveDone();
+  renderProgress();
+}
+
+/* Counts only weeks that hold something. Work-time weeks have no lessons to
+   mark, so including them would put a ceiling on the count nobody can reach. */
+function renderProgress() {
+  const el = $('#progress');
+  if (!el || current?.status !== 'ok') return;
+  const markable = current.weeks.filter(w => weekLessons(w).length);
+  const complete = markable.filter(weekDone).length;
+  el.textContent = `${complete}/${markable.length} weeks complete`;
+}
+
+/**
+ * Groups the weeks into unit bands.
+ *
+ * A week takes the unit of its first lesson, and a new heading is emitted
+ * only when that changes. Weeks with no unit — work time, and the handful of
+ * rows the sheet leaves blank — continue the band above rather than breaking
+ * it, which keeps the plan from fragmenting into one-week sections.
+ */
+function phasedRows(weeks) {
+  let band = null;
+  return weeks.map(w => {
+    const unit = w.lessons.find(l => l.unit)?.unit || null;
+    let head = '';
+    if (unit && unit !== band) {
+      band = unit;
+      head = `<tr><th class="phase" colspan="4" scope="rowgroup">${esc(unit)}</th></tr>`;
+    }
+    return head + weekRow(w);
+  }).join('');
 }
 
 /**
@@ -233,12 +318,11 @@ function render(plan) {
  */
 function weekRow(w) {
   const locked = w.lessons.some(l => l.deadline_locked);
-  const cls = w.workTime ? 'slack' : locked ? 'locked' : '';
+  const cls = [w.workTime ? 'slack' : locked ? 'locked' : '',
+               w.overrun ? 'over' : ''].filter(Boolean).join(' ');
 
-  const time = w.overrun
-    ? `<span class="over">Needs ${mins(w.minutes)} &mdash; ${mins(w.overrun)}
-       more than your session</span>`
-    : `<span class="wtime">${mins(w.minutes)}</span>`;
+  const over = w.overrun
+    ? `<span class="overage">${mins(w.overrun)} over your session</span>` : '';
 
   const inClass = w.lessons.length
     ? w.lessons.map(item).join('')
@@ -248,15 +332,21 @@ function weekRow(w) {
     ? w.homework.map(item).join('')
     : '<div class="li muted">&mdash;</div>';
 
+  const ls = weekLessons(w);
+  const tick = ls.length
+    ? `<input type="checkbox" data-week="${w.week}" ${weekDone(w) ? 'checked' : ''}
+              aria-label="Mark week ${w.week} done">`
+    : '<span class="none" aria-hidden="true">&mdash;</span>';
+
   return `
     <tr class="${cls}">
       <td class="c-wk">
         <b>${w.week}</b>
-        ${time}
+        <span class="wtime">${mins(w.minutes)}</span>
       </td>
-      <td class="c-in" data-label="In class">${inClass}</td>
+      <td class="c-in" data-label="In class">${inClass}${over}</td>
       <td class="c-home" data-label="At home">${homework}</td>
-      <td class="c-done"><span class="tick" aria-hidden="true"></span></td>
+      <td class="c-done">${tick}</td>
     </tr>`;
 }
 
@@ -265,18 +355,6 @@ function item(l) {
     <div class="li">
       <span class="t">${mins(l.minutes)}</span>
       <span>${link(l)}${l.optional ? '<span class="tag">optional</span>' : ''}</span>
-    </div>`;
-}
-
-function altBlock(alts) {
-  const rows = Object.values(alts || {}).flat();
-  if (!rows.length) return '';
-  return `
-    <div class="block">
-      <h3>Other tool options</h3>
-      <p>Where a lesson exists for more than one coding tool, the plan picks one.
-         These are the versions it didn't use.</p>
-      <ul>${rows.map(a => `<li>${esc(a.title)}</li>`).join('')}</ul>
     </div>`;
 }
 
@@ -347,6 +425,16 @@ const mins = m => m >= 60
 
 const hrs = m => m >= 60 ? `${(m / 60).toFixed(m % 60 ? 1 : 0)}h` : `${m}m`;
 
+/** 2027-05-05 -> "5 May 2027", matching the deadline pill in the page header. */
+function longDate(iso) {
+  const d = new Date(iso + 'T00:00:00Z');
+  if (Number.isNaN(+d)) return iso;
+  return `${d.getUTCDate()} ` +
+         `${['January','February','March','April','May','June','July',
+             'August','September','October','November','December'][d.getUTCMonth()]} ` +
+         `${d.getUTCFullYear()}`;
+}
+
 function describe(p) {
   return [
     AGE_LABEL[p.age],
@@ -362,60 +450,27 @@ function describe(p) {
 
 /* -------------------------------------------------------------------- wiring */
 
-// The Beginner course teaches Scratch and App Inventor, so the web/mobile
-// choice does not apply. Say so rather than silently ignoring the control.
-function syncPlatform() {
-  const beginner = $('[name=age]:checked').value === 'beginner';
-  $$('[name=platform]').forEach(i => { i.disabled = beginner; });
-  $('#platHint').textContent = beginner
-    ? 'The 8–12 course uses Scratch and App Inventor, so this does not apply.'
-    : '';
-}
-
-// Core is one reduced track: no web/mobile split and no AI lessons. Hiding the
-// two controls it ignores is honest - leaving them live would let someone pick
-// "Web app, AI-focused" and get a plan that quietly disregards both.
-function syncCore() {
-  const core = $('#core').checked;
-  $('#l-plat').closest('.field').hidden = core;
-  $('#l-ai').closest('.field').hidden = core;
-}
-
 /**
- * Mirrors each segmented control into a native <select> for narrow screens.
- * Built from the radios rather than duplicated in markup, so there is still
- * one source of truth - the radios - and the picker cannot drift out of sync.
+ * Keeps the sentence grammatical as choices change.
+ *
+ * Three dependencies, each one a clause that stops making sense:
+ *   core      - a Core plan has no platform, tool or AI clause at all
+ *   beginner  - the 8-12 course is Scratch and App Inventor, so "building"
+ *               is a statement rather than a choice; it becomes static text
+ *   web/tool  - handled in renderToolChoice, which reads the data rather
+ *               than assuming which tools exist
  */
-function buildSelects() {
-  $$('.seg').forEach(seg => {
-    const first = seg.querySelector('input');
-    if (!first) return;
-    const name = first.name;
-    let sel = seg.parentElement.querySelector(`select[data-for="${name}"]`);
+function syncSentence() {
+  const core = $('#mode').value === 'core';
+  $('#customClause').hidden = core;
+  $('#coreNote').hidden = !core;
 
-    if (!sel) {
-      sel = document.createElement('select');
-      sel.className = 'segsel';
-      sel.dataset.for = name;
-      const lab = seg.getAttribute('aria-labelledby');
-      if (lab) sel.setAttribute('aria-labelledby', lab);
-      seg.insertAdjacentElement('afterend', sel);
-      sel.addEventListener('change', () => {
-        const radio = $(`[name=${name}][value="${sel.value}"]`);
-        if (!radio) return;
-        radio.checked = true;
-        radio.dispatchEvent(new Event('change', { bubbles: true }));
-      });
-    }
+  const beginner = $('#age').value === 'beginner';
+  $('#platform').hidden = beginner;
+  $('#platformStatic').hidden = !beginner;
+  if (beginner) $('#platform').value = 'mobile';
 
-    const inputs = [...seg.querySelectorAll('input')];
-    sel.innerHTML = inputs.map(i => {
-      const lbl = seg.querySelector(`label[for="${i.id}"]`);
-      return `<option value="${esc(i.value)}"${i.checked ? ' selected' : ''}>` +
-             `${esc(lbl ? lbl.textContent : i.value)}</option>`;
-    }).join('');
-    sel.disabled = inputs.every(i => i.disabled);
-  });
+  renderToolChoice();
 }
 
 $('#len').addEventListener('input', () => update());
@@ -423,30 +478,25 @@ $('#weeks').addEventListener('input', () => update());
 
 $('#controls').addEventListener('change', e => {
   if (e.target.id === 'len' || e.target.id === 'weeks') return;   // handled above
-  syncPlatform();
-  syncCore();
-  renderToolChoice();
-  buildSelects();
+  syncSentence();
   update({ immediate: true });
 });
 
 // No submit button - Enter should not reload the page.
 $('#controls').addEventListener('submit', e => e.preventDefault());
 
-$('#printBtn').addEventListener('click', () => window.print());
-
-$('#csvBtn').addEventListener('click', () => {
+function exportCSV() {
   if (current?.status !== 'ok') return;
   const { age, platform, aiMode, weeks } = current.params;
   download(`technovation-plan-${age}-${platform}-${aiMode}-${weeks}wk.csv`,
            toCSV(current), 'text/csv;charset=utf-8');
-});
+}
 
 // Land on a real plan rather than an empty screen: a first-time visitor sees
 // what the tool produces and adjusts, instead of facing a form and guessing.
 load()
   .then(() => {
-    syncPlatform(); syncCore(); renderToolChoice(); buildSelects();
+    syncSentence();
     update({ immediate: true });
   })
   .catch(err => {

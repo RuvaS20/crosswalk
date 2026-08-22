@@ -41,6 +41,10 @@
   --line-soft:#F0EEF6;      /* lighter divider, used between table rows */
 
   --r:12px;                 /* the one corner radius for cards and panels */
+
+  /* The overage note. Text only — no fills — so it needs to hold up on
+     white, where it measures 5.25:1. */
+  --danger:#d90429;
 }
 
 
@@ -50,6 +54,14 @@
 
 *{
   box-sizing:border-box;
+}
+
+/* The hidden attribute is how app.js collapses parts of the sentence, but the
+   browser's [hidden]{display:none} is a UA rule and loses to any author
+   display declaration — .sub-group{display:inline-flex} silently beat it.
+   This makes the attribute mean what it says, everywhere. */
+[hidden]{
+  display:none !important;
 }
 
 html{
@@ -115,28 +127,21 @@ header{
 
 /* The logo SVG is a hard-cornered square; the radius here is what rounds it. */
 .brandmark .logo{
-  width:26px;
-  height:26px;
-  border-radius:7px;
+  width:40px;
+  height:40px;
+  border-radius:0px 12px 0px 12px;
   flex:none;
   display:block;
 }
 
-.brandmark span{
-  font:600 12px/1 Rubik,sans-serif;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  color:var(--muted);
-}
-
 /* Fluid between 30px and 46px so the title never wraps awkwardly on the way. */
-header h1{
+.header-title{
   font-size:clamp(30px,4.4vw,46px);
   font-weight:700;
   letter-spacing:-.025em;
 }
 
-header h1 em{
+.header-title em{
   font-style:italic;
   color:var(--lime-deep);
 }
@@ -176,172 +181,145 @@ header p{
 
 
 /* -----------------------------------------------------------------------------
-   4. Controls
+   4. Controls — the sentence card
 
-   A horizontal bar rather than a sidebar: the controls are a header for the
-   plan, not something competing with it for width.
+   The form reads as a sentence a facilitator completes about their group,
+   rather than a stack of labelled fields. Every value is a real <select> or
+   <input>, so nothing is lost for keyboard or screen-reader users — it is
+   still a form, just one that also reads as prose.
+
+   Dark pills: a control shows only its chosen value, so a filled indigo pill
+   is "your answer" and the surrounding text is the question. Values that are
+   fixed rather than chosen render as outline pills (.static-text), which look
+   related but clearly are not interactive.
    -------------------------------------------------------------------------- */
 
 .panel{
   background:var(--card);
   border:1px solid var(--line);
-  border-radius:var(--r);
-  padding:20px 22px;
+  border-radius:20px;
+  padding:28px 32px;
   margin-bottom:28px;
-  display:flex;
-  flex-wrap:wrap;
-  gap:16px 22px;
-  align-items:flex-start;
 }
 
-/* Fields size to their content rather than sharing the row equally, so related
-   controls sit next to each other instead of being pushed to the far edges. */
-.field{
+.sentence{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* line-height carries the pills: they are taller than the text around them,
+   so wrapped lines need the room or the rows collide. */
+.clause{
   margin:0;
-  flex:0 1 auto;
-}
-
-.field > label{
-  display:block;
-  font:600 11px/1 Rubik,sans-serif;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin-bottom:9px;
-}
-
-
-/* --- Segmented controls -----------------------------------------------------
-   Radio inputs styled as a button group. The input is visually hidden but
-   still focusable and still the source of truth; the <label> is what you see.
-   Below 520px these are swapped for native <select> pickers — see .segsel. */
-
-.seg{
+  font-size:17px;
+  line-height:1.95;
+  color:var(--indigo);
   display:flex;
   flex-wrap:wrap;
-  gap:6px;
+  align-items:center;
+  gap:6px 7px;
 }
 
-/* Hidden without display:none, which would take it out of the tab order. */
-.seg input{
-  position:absolute;
-  opacity:0;
-  width:1px;
-  height:1px;
+/* The second clause is the one Core collapses, so it is set apart. */
+.clause.secondary{
+  background:var(--paper);
+  border-radius:16px;
+  padding:14px 18px;
 }
 
-.seg label{
-  flex:1 1 auto;
-  text-align:center;
-  padding:9px 11px;
-  border:1.5px solid var(--line);
-  border-radius:8px;
-  font-size:13px;
+/* Keeps "with App Inventor" together when the sentence wraps, instead of
+   stranding the preposition at the end of a line. */
+.sub-group{
+  display:inline-flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px 7px;
+}
+
+
+/* --- The pills ---------------------------------------------------------- */
+
+.clause select,
+.clause input{
+  font-family:Poppins,system-ui,sans-serif;
+  font-size:14px;
   font-weight:500;
   cursor:pointer;
-  background:#fff;
-  color:var(--indigo);
-  transition:background .14s,border-color .14s,color .14s;
-  white-space:nowrap;
-}
-
-.seg label:hover{
-  border-color:var(--indigo-600);
-  background:var(--lime-tint);
-}
-
-.seg input:checked + label{
-  background:var(--indigo);
-  border-color:var(--indigo);
+  appearance:none;
+  background-color:var(--indigo);
   color:#fff;
+  border:2px solid var(--indigo);
+  border-radius:99px;
+  padding:5px 30px 5px 14px;
+  transition:transform .18s,box-shadow .18s;
 }
 
-/* The ring has to be drawn on the label, since the input itself is invisible. */
-.seg input:focus-visible + label{
+/* Numbers are typed rather than picked, so no chevron and no room for one. */
+.clause input{
+  padding:5px 12px;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  caret-color:#fff;
+}
+
+.n-wk{
+  width:58px;
+}
+
+.n-len{
+  width:64px;
+}
+
+/* appearance:none drops the native arrow, so the chevron is supplied as an
+   inline SVG data URI — white, to sit on the indigo pill. */
+.clause select{
+  background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px top 55%;
+  background-size:9px auto;
+}
+
+.clause select:hover,
+.clause input:hover{
+  transform:translateY(-1px);
+  box-shadow:0 4px 8px rgba(29,19,73,.15);
+}
+
+/* outline-offset leaves a gap of the card behind the pill, so the site's
+   usual indigo ring stays visible even against an indigo fill. */
+.clause select:focus-visible,
+.clause input:focus-visible{
   outline:2.5px solid var(--indigo);
   outline-offset:2px;
 }
 
-/* Disabled for Beginner, where the mobile/web choice does not apply. */
-.seg input:disabled + label{
-  opacity:.42;
-  cursor:not-allowed;
-}
-
-
-/* --- Number inputs: weeks and session length ------------------------------ */
-
-.nums{
-  display:flex;
-  gap:9px;
-}
-
-.nums > div{
-  width:86px;
-}
-
-.nums input{
-  width:100%;
-  padding:10px;
-  border:1.5px solid var(--line);
-  border-radius:8px;
-  font:600 15px/1 Poppins,sans-serif;
-  font-variant-numeric:tabular-nums;
+/* The curriculum switch. Lime rather than indigo because it changes what the
+   rest of the sentence means, instead of answering one more question. */
+.clause select.mode{
+  background-color:var(--lime);
+  border-color:var(--lime);
   color:var(--indigo);
-  background:#fff;
+  background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231D1349%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
 }
 
-.nums input:focus{
-  outline:2.5px solid var(--indigo);
-  outline-offset:1px;
-  border-color:var(--indigo);
+/* The Core explainer. It is part of the sentence, not a note about it, so it
+   inherits the clause's size and colour and reads continuously with "We will
+   follow". The only job here is letting it shrink and wrap in the flex row
+   rather than pushing the clause wider. */
+.aside{
+  flex:0 1 auto;
 }
 
-.hint{
-  font-size:12px;
-  color:var(--muted);
-  margin:7px 0 0;
-}
-
-
-/* --- Core Curriculum checkbox ------------------------------------------------
-   Core is a whole-curriculum switch rather than one more dimension, so it
-   reads as a sentence you agree with rather than a segmented control. */
-
-.corechk{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  margin-top:22px;
-  padding:9px 13px;
-  border:1.5px solid var(--line);
-  border-radius:8px;
-  background:#fff;
-  cursor:pointer;
-  font-size:13px;
+/* A value the facilitator did not choose: 8-12 only builds mobile, so it is
+   stated rather than offered. Outline, muted, no pointer. */
+.static-text{
+  border:2px solid var(--line);
+  border-radius:99px;
+  padding:5px 14px;
+  font-size:14px;
   font-weight:500;
-  color:var(--indigo);
-  white-space:nowrap;
-}
-
-.corechk:hover{
-  border-color:var(--indigo-600);
-  background:var(--lime-tint);
-}
-
-.corechk input{
-  width:16px;
-  height:16px;
-  accent-color:var(--indigo);
-  cursor:pointer;
-  flex:none;
-}
-
-/* Fills like a checked segment, so the two control styles agree. */
-.corechk:has(input:checked){
-  background:var(--indigo);
-  border-color:var(--indigo);
-  color:#fff;
+  color:var(--muted);
 }
 
 
@@ -374,7 +352,7 @@ header p{
 
 
 /* -----------------------------------------------------------------------------
-   6. Results — notes, legend and actions
+   6. Engine notes
    -------------------------------------------------------------------------- */
 
 /* Engine notes: what was moved, dropped, or left as work time. */
@@ -392,67 +370,6 @@ header p{
   padding:11px 15px;
   margin-bottom:7px;
   font-size:13.5px;
-}
-
-/* The row holding the legend and the Print / Spreadsheet buttons. */
-.bar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  flex-wrap:wrap;
-  margin-bottom:16px;
-}
-
-.legend{
-  display:flex;
-  gap:16px;
-  flex-wrap:wrap;
-  font-size:12px;
-  color:var(--muted);
-}
-
-.legend i{
-  display:inline-block;
-  width:9px;
-  height:9px;
-  border-radius:2px;
-  margin-right:6px;
-}
-
-/* The three row states, matching tr.locked and tr.slack in the table. */
-.k-class{
-  background:var(--indigo);
-}
-
-.k-locked{
-  background:var(--lime);
-}
-
-.k-slack{
-  background:#fff;
-  border:1.5px dashed var(--line);
-}
-
-.actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.actions button{
-  padding:8px 14px;
-  border:1.5px solid var(--line);
-  border-radius:8px;
-  background:var(--card);
-  font:500 13px Poppins,sans-serif;
-  color:var(--indigo);
-  cursor:pointer;
-}
-
-.actions button:hover{
-  border-color:var(--indigo);
-  background:var(--lime-tint);
 }
 
 
@@ -533,121 +450,165 @@ header p{
 
 
 /* -----------------------------------------------------------------------------
-   8. The plan table
+   8. The plan card
 
-   One row per week: week number and session time, what is taught in class,
-   what is set for home, and a tick box that appears only when printed.
-   Under 640px the whole table restructures into cards — see the responsive
-   section.
+   One bordered card holding a header, the week table, and a sticky footer.
+   Columns stay split — In class and At home side by side — so a facilitator
+   can scan down the At home column and see the load building. Under 768px
+   every cell goes full width and the row becomes a stacked card.
    -------------------------------------------------------------------------- */
+
+.plan-card{
+  border:2px solid var(--indigo);
+  border-radius:var(--r);
+  background:var(--card);
+  margin-top:4px;
+  /* No overflow:hidden — it would break position:sticky on the footer. */
+}
+
+.plan-head{
+  background:var(--indigo);
+  color:#fff;
+  padding:20px 24px;
+  text-align:center;
+  border-radius:10px 10px 0 0;
+}
+
+.plan-head h2{
+  margin:0;
+  color:var(--lime);
+  font-size:19px;
+}
+
+/* Reuses the .deadline pill from the page header so the same fact is stated
+   the same way in both places. Its indigo fill matches the header behind it,
+   so what reads is the lime date chip. */
+.plan-head .deadline{
+  margin-top:11px;
+}
+
+
+/* --- The table ------------------------------------------------------------ */
 
 table.plan{
   width:100%;
   border-collapse:collapse;
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:var(--r);
-  overflow:hidden;
+  text-align:left;
 }
 
-/* No background of its own: the header sits on the table's white --card.
-   (There used to be a background:var(--bg) here, but --bg was never defined,
-   so it was dropped by the parser and never painted anything.) */
-table.plan th{
-  text-align:left;
+table.plan thead th{
+  background:var(--card);
+  color:var(--muted);
   font:600 11px/1.4 Rubik,sans-serif;
   letter-spacing:.08em;
   text-transform:uppercase;
-  color:var(--muted);
-  padding:11px 14px;
-  border-bottom:1.5px solid var(--line);
+  padding:11px 20px;
+  border-bottom:1px solid var(--line);
 }
 
-table.plan td{
-  padding:11px 14px;
-  vertical-align:top;
+table.plan tr{
   border-bottom:1px solid var(--line-soft);
 }
 
-table.plan tr:last-child td{
-  border-bottom:0;
+table.plan td{
+  padding:14px 20px;
+  vertical-align:top;
 }
 
-/* Deadline-locked weeks: video and submission work, never compressed. */
-tr.locked td{
+/* Unit bands. The heading is a <th scope="rowgroup"> spanning the row, so the
+   grouping is announced rather than only drawn. */
+th.phase{
   background:var(--lime-tint);
+  color:var(--indigo);
+  font:600 11px/1.4 Rubik,sans-serif;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:10px 20px;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  text-align:left;
 }
 
 /* Spare weeks handed back as build and feedback time. */
 tr.slack td{
-  background:transparent;
   color:var(--muted);
 }
 
 
-/* --- Column 1: week number and session time ------------------------------- */
+/* --- Column 1: week number and total time --------------------------------- */
 
 .c-wk{
-  width:118px;
-  white-space:nowrap;
+  width:86px;
+  text-align:center;
+  background:var(--paper);
+  border-right:1px solid var(--line-soft);
 }
 
 .c-wk b{
-  font:700 17px/1.1 Rubik,sans-serif;
+  display:block;
+  font:700 26px/1 Rubik,sans-serif;
   color:var(--indigo);
   font-variant-numeric:tabular-nums;
+  margin-bottom:4px;
 }
 
 .c-wk .wtime{
   display:block;
-  font-size:11.5px;
+  font-size:11px;
   color:var(--muted);
-  margin-top:4px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
 }
 
-/* Shown instead of .wtime when a single lesson is longer than the session.
-   white-space:normal because this one is a sentence, not a figure. */
-.c-wk .over{
+
+/* --- Over-capacity weeks -------------------------------------------------- */
+
+/* No row or week-cell fill: a whole pink row for a lesson that is simply
+   longer than one session reads as an error, when it is really a note. The
+   red line under the lessons carries it, and on white it clears 4.5:1. */
+.overage{
   display:block;
-  font-size:11.5px;
-  color:var(--indigo);
+  margin-top:8px;
+  font-size:12px;
   font-weight:600;
-  margin-top:4px;
-  white-space:normal;
+  color:var(--danger);
 }
 
 
-/* --- Columns 3 and 4: at-home work, and the print-only tick --------------- */
+/* --- Column 4: the done tick ---------------------------------------------- */
 
-.c-home{
-  width:30%;
-}
-
-/* The tick box belongs to the printed tracker. On screen it would be a control
-   that never responds, so it exists on paper only — hidden here, restored in
-   the print block. display:none also keeps it out of the accessibility tree,
-   so nobody is told about a "Done" column that holds nothing. */
 .c-done{
-  display:none;
+  width:76px;
+  text-align:center;
+  vertical-align:middle;
+  border-left:1px dashed var(--line);
 }
 
-.tick{
-  display:inline-block;
-  width:17px;
-  height:17px;
-  border:1.5px solid var(--line);
-  border-radius:3px;
-  margin-top:3px;
+.c-done input{
+  width:22px;
+  height:22px;
+  accent-color:var(--indigo);
+  cursor:pointer;
+}
+
+/* Work-time weeks hold no lessons, so there is nothing to mark done. */
+.c-done .none{
+  color:var(--line);
 }
 
 
 /* --- Lesson items inside a cell ------------------------------------------- */
+
+.c-home{
+  width:30%;
+}
 
 .li{
   display:flex;
   gap:10px;
   font-size:13.5px;
   padding:3px 0;
+  align-items:baseline;
 }
 
 /* The duration, held to a fixed width so titles start on a common left edge. */
@@ -657,6 +618,7 @@ tr.slack td{
   min-width:44px;
   padding-top:2px;
   font-variant-numeric:tabular-nums;
+  white-space:nowrap;
 }
 
 /* Placeholder text: an empty homework cell, or a work-time week. */
@@ -688,46 +650,63 @@ tr.slack td{
   margin-left:7px;
 }
 
-/* Closes the table: the deadline the whole plan counts down to. */
-.terminus{
-  margin-top:16px;
-  display:inline-flex;
+
+/* --- The sticky footer ---------------------------------------------------- */
+
+.plan-foot{
+  position:sticky;
+  bottom:0;
+  z-index:10;
+  background:var(--lime);
+  border-top:2px solid var(--indigo);
+  border-radius:0 0 10px 10px;
+  padding:13px 20px;
+  display:flex;
+  justify-content:space-between;
   align-items:center;
-  gap:11px;
-  background:var(--indigo);
-  color:#fff;
-  padding:11px 18px;
-  border-radius:99px;
-  font:600 12.5px Rubik,sans-serif;
-  letter-spacing:.07em;
+  gap:14px;
+  flex-wrap:wrap;
+  box-shadow:0 -10px 20px rgba(0,0,0,.05);
 }
 
-.terminus b{
+.plan-foot .progress{
+  font:600 14px/1.3 Rubik,sans-serif;
+  color:var(--indigo);
+  font-variant-numeric:tabular-nums;
+}
+
+.plan-foot .actions{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+}
+
+.plan-foot button{
+  padding:8px 16px;
+  border-radius:99px;
+  border:2px solid var(--indigo);
+  background:transparent;
+  color:var(--indigo);
+  font:500 13px Poppins,sans-serif;
+  cursor:pointer;
+}
+
+.plan-foot button:hover{
+  background:var(--card);
+}
+
+.plan-foot button.primary{
+  background:var(--indigo);
   color:var(--lime);
 }
 
-
-/* -----------------------------------------------------------------------------
-   9. Native pickers for narrow screens
-
-   Real <select> elements, built by app.js from the radios so there is one
-   source of truth and the picker cannot drift out of sync. Shown under 520px.
-   -------------------------------------------------------------------------- */
-
-.segsel{
-  display:none;
-  width:100%;
-  padding:11px 12px;
-  border:1.5px solid var(--line);
-  border-radius:9px;
-  background:var(--card);
-  font:400 14px Poppins,sans-serif;
-  color:var(--indigo);
+.plan-foot button.primary:hover{
+  background:var(--indigo-600);
 }
 
 
 /* -----------------------------------------------------------------------------
-   10. Secondary blocks — "Not included" and "Other tool options"
+   9. Secondary blocks — "Not included" and "Other tool options"
    -------------------------------------------------------------------------- */
 
 .block{
@@ -760,7 +739,7 @@ tr.slack td{
 
 
 /* -----------------------------------------------------------------------------
-   11. The refusal state
+   10. The refusal state
 
    Shown when no plan fits. The engine returns structured fixes, so this is a
    set of buttons that apply themselves rather than a paragraph of advice.
@@ -818,12 +797,11 @@ tr.slack td{
 
 
 /* =============================================================================
-   12. Responsive
+   11. Responsive
 
-   Three steps, each doing one job:
-     900px — the control panel becomes a sticky chip bar
+   Two steps, each doing one job:
+     900px — the chip bar appears, and the sentence tightens
      640px — the table restructures into one card per week
-     520px — segmented controls become native selects
    ============================================================================= */
 
 @media(max-width:900px){
@@ -847,8 +825,21 @@ tr.slack td{
   }
 
   .panel{
-    padding:18px;
-    gap:14px 18px;
+    padding:18px 20px;
+  }
+
+  /* The sentence steps down a size and loses some of the line-height that
+     the pills needed at desktop width, so it stays a paragraph rather than
+     a very tall column of wrapped fragments. */
+  .clause{
+    font-size:16px;
+    line-height:1.9;
+  }
+
+  .clause select,
+  .clause input,
+  .static-text{
+    font-size:13.5px;
   }
 
   .c-home{
@@ -857,56 +848,56 @@ tr.slack td{
 
 }
 
-@media(max-width:640px){
+@media(max-width:768px){
 
-  /* One card per week. A four-column table cannot be read at 380px. */
-  table.plan,table.plan tbody,table.plan tr,table.plan td{
+  /* One card per week. Four columns cannot be read at phone width, so every
+     cell goes full width and the row becomes the card. */
+  table.plan,table.plan tbody{
     display:block;
-    width:auto;
+    width:100%;
   }
 
-  /* The headings go with the table layout, so the cells carry their own
-     labels instead — see the ::before rule below. */
   table.plan thead{
     display:none;
   }
 
-  table.plan{
-    border:0;
-    background:transparent;
-  }
-
   table.plan tr{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:var(--r);
-    margin-bottom:9px;
-    padding:4px 2px;
+    display:flex;
+    flex-wrap:wrap;
     position:relative;
-  }
-
-  table.plan tr.locked{
-    background:var(--lime-tint);
-    border-color:#DDE4B8;
+    border-bottom:1px solid var(--line);
   }
 
   table.plan td{
-    border-bottom:0;
-    padding:7px 14px;
+    width:100%;
+    padding:10px 18px;
   }
 
-  /* Week number and time sit on one line at the top of the card. */
+  th.phase{
+    display:block;
+    width:100%;
+  }
+
+  /* Week number and time become a header strip across the top of the card. */
   .c-wk{
-    width:auto;
-    display:flex !important;
+    width:100%;
+    text-align:left;
+    display:flex;
     align-items:baseline;
-    gap:9px;
-    flex-wrap:wrap;
+    gap:11px;
+    border-right:0;
+    border-bottom:1px solid var(--line-soft);
+    padding:11px 18px;
   }
 
-  .c-wk .wtime,.c-wk .over{
+  .c-wk b{
     display:inline;
+    font-size:19px;
     margin:0;
+  }
+
+  .c-wk .wtime{
+    display:inline;
   }
 
   /* Replaces the lost column headers, from the data-label attribute. */
@@ -920,34 +911,26 @@ tr.slack td{
     margin-bottom:3px;
   }
 
-}
-
-@media(max-width:520px){
-
-  /* Fields go full width and stack. */
-  .field,.field.time{
-    flex:1 1 100%;
+  /* The tick moves to its own strip at the foot of the card. */
+  .c-done{
+    width:100%;
+    text-align:left;
+    border-left:0;
+    border-top:1px dashed var(--line);
+    background:var(--paper);
+    padding:10px 18px;
   }
 
-  .nums > div{
-    width:auto;
-    flex:1;
-  }
-
-  /* The swap: button groups out, native pickers in. */
-  .seg{
-    display:none;
-  }
-
-  .segsel{
-    display:block;
+  .plan-foot{
+    justify-content:center;
+    text-align:center;
   }
 
 }
 
 
 /* =============================================================================
-   13. Print
+   12. Print
 
    The printed plan is a physical tracker, so this is a real layout rather
    than a stripped screen. Everything interactive is removed, colour drops to
@@ -975,8 +958,18 @@ tr.slack td{
   /* Everything the reader cannot act on from paper.
      NOTE: .notes and .homebar are in this list, so the printed sheet does not
      say how much work was moved out of class. Worth revisiting. */
-  header,.panel,.chips,.actions,.legend,.notes,.homebar,.segsel{
+  header,.panel,.chips,.actions,.notes,.homebar,.plan-foot{
     display:none !important;
+  }
+
+  /* The card border and its indigo header are screen furniture; on paper the
+     printhead does that job. */
+  .plan-card{
+    border:0;
+  }
+
+  .plan-head{
+    display:none;
   }
 
   .printhead{
@@ -1029,7 +1022,7 @@ tr.slack td{
   }
 
   /* Tints do not survive printing reliably, and cost ink. */
-  tr.locked td,tr.slack td{
+  tr.slack td{
     background:#fff !important;
   }
 
@@ -1038,23 +1031,52 @@ tr.slack td{
     break-inside:avoid;
   }
 
+  .c-wk{
+    background:#fff !important;
+    border-right:1px solid #999;
+  }
+
   .c-wk b{
     font-size:11pt;
   }
 
-  /* A printed plan is a tracker: the box has to be big enough for a pen.
-     This is the only place the Done column appears — see .c-done above. */
-  .tick{
+  /* Red does not survive a mono printer, so the note drops to plain weight. */
+  .overage{
+    color:#000;
+  }
+
+  th.phase{
+    background:#fff;
+    border-top:1.5px solid #000;
+    border-bottom:1px solid #000;
+    font-size:8pt;
+  }
+
+  /* A printed plan is a tracker, so the box has to be big enough for a pen.
+     The live checkbox prints as a tiny control, so it is replaced by a drawn
+     square — and a week already ticked on screen prints ticked. */
+  .c-done{
+    width:42px;
+    text-align:center;
+    border-left:1px solid #999;
+  }
+
+  .c-done input{
+    appearance:none;
     width:24px;
     height:24px;
     border:1.5px solid #000;
     border-radius:0;
+    background:#fff;
   }
 
-  .c-done{
-    display:table-cell;
-    width:38px;
+  .c-done input:checked::after{
+    content:"\2713";
+    display:block;
+    font-size:19px;
+    line-height:22px;
     text-align:center;
+    color:#000;
   }
 
   /* Underline properly on paper — a lime border prints as nothing useful. */
@@ -1062,17 +1084,6 @@ tr.slack td{
     border:0;
     color:#000;
     text-decoration:underline;
-  }
-
-  .terminus{
-    background:#fff !important;
-    color:#000;
-    border:1.5px solid #000;
-    padding:6px 12px;
-  }
-
-  .terminus b{
-    color:#000;
   }
 
   .block{

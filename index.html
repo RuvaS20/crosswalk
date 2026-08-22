@@ -19,80 +19,71 @@
 
   <header>
     <div class="brandmark">
-      <img class="logo" src="technovation_logo_svg.svg" alt="" width="26" height="26">
-      <span>Technovation</span>
+      <img class="logo" src="technovation_logo_svg.svg" alt="">
+      <h1 class="header-title">Technovation <em>session planner</em></h1>
     </div>
-    <h1>Technovation <em>session planner</em></h1>
-    <p>Tell us how much time your group actually has. You'll get the lessons to cover each week.</p>
-    <div class="deadline">Submissions close <b class="mono">5 May 2027</b></div>
   </header>
 
   <div class="layout">
 
-    <form class="panel" id="controls">
-      <div class="field">
-        <label id="l-age">Age group</label>
-        <div class="seg" role="radiogroup" aria-labelledby="l-age">
-          <input type="radio" name="age" id="a1" value="beginner"><label for="a1">8–12</label>
-          <input type="radio" name="age" id="a2" value="junior"><label for="a2">13–15</label>
-          <input type="radio" name="age" id="a3" value="senior" checked><label for="a3">16–18</label>
-        </div>
-      </div>
+    <!-- The controls read as a sentence: a facilitator describes their group
+         and the plan follows. Every value is a real form control, so keyboard
+         and screen-reader users get the same thing, just spoken as a form. -->
+    <form class="panel sentence" id="controls">
 
-      <div class="field time">
-        <label>Time available</label>
-        <div class="nums">
-          <div><input type="number" id="weeks" value="20" min="1" max="52" aria-label="Number of weeks">
-            <p class="hint">weeks</p></div>
-          <div><input type="number" id="len" value="90" min="15" max="300" step="5" aria-label="Minutes per session">
-            <p class="hint">minutes each</p></div>
-        </div>
-      </div>
+      <p class="clause">
+        Preparing for a group of
+        <select id="age" aria-label="Age group">
+          <option value="beginner">8&ndash;12</option>
+          <option value="junior">13&ndash;15</option>
+          <option value="senior" selected>16&ndash;18</option>
+        </select>
+        year olds. We have
+        <input type="number" id="weeks" value="20" min="1" max="52" class="n-wk"
+               aria-label="Number of weeks">
+        weeks of
+        <input type="number" id="len" value="90" min="15" max="300" step="5" class="n-len"
+               aria-label="Minutes per session">
+        minute sessions.
+      </p>
 
-      <div class="field">
-        <label id="l-plat">What they'll build</label>
-        <div class="seg" role="radiogroup" aria-labelledby="l-plat">
-          <input type="radio" name="platform" id="p1" value="mobile" checked><label for="p1">Mobile app</label>
-          <input type="radio" name="platform" id="p2" value="web"><label for="p2">Web app</label>
-        </div>
-        <p class="hint" id="platHint"></p>
-      </div>
+      <p class="clause secondary">
+        We will follow
+        <select id="mode" class="mode" aria-label="Curriculum">
+          <option value="custom" selected>a Custom plan</option>
+          <option value="core">the Core Curriculum</option>
+        </select>
 
-      <div class="field" id="builderField" hidden>
-        <label id="l-build">Coding tool</label>
-        <div class="seg" id="builderSeg" role="radiogroup" aria-labelledby="l-build"></div>
-      </div>
+        <span class="sub-group" id="customClause">
+          building
+          <select id="platform" aria-label="What they will build">
+            <option value="mobile" selected>Mobile apps</option>
+            <option value="web">Web apps</option>
+          </select>
+          <span class="static-text" id="platformStatic" hidden>Mobile apps</span>
 
-      <div class="field">
-        <label id="l-ai">AI</label>
-        <div class="seg" role="radiogroup" aria-labelledby="l-ai">
-          <input type="radio" name="aiMode" id="m1" value="none"><label for="m1">None</label>
-          <input type="radio" name="aiMode" id="m2" value="integrated" checked><label for="m2">Included</label>
-          <input type="radio" name="aiMode" id="m3" value="focused"><label for="m3">AI-focused</label>
-        </div>
-      </div>
+          <span class="sub-group" id="toolGroup" hidden>
+            with
+            <select id="builder" aria-label="Coding tool"></select>
+          </span>
 
-      <div class="field">
-        <label class="corechk">
-          <input type="checkbox" id="core">
-          Use the Core Curriculum (short on time)
-        </label>
-      </div>
+          and AI topics
+          <select id="aiMode" aria-label="AI">
+            <option value="none">omitted</option>
+            <option value="integrated" selected>included</option>
+            <option value="focused">as the focus</option>
+          </select></span><!--
+     Continues the same sentence in place of the custom clause: exactly one of
+     these two is ever visible, so the line stays complete either way.
+  --><span class="aside" id="coreNote" hidden>for groups short on time: all the
+          lessons necessary to submit a project</span>.
+      </p>
 
     </form>
 
     <div class="results">
-      <div class="bar">
-        <div class="legend" id="legend" hidden>
-          <span><i class="k-class"></i>Lesson week</span>
-          <span><i class="k-locked"></i>Videos &amp; submission</span>
-          <span><i class="k-slack"></i>Work time</span>
-        </div>
-        <div class="actions" id="actions" hidden>
-          <button type="button" id="printBtn">Print</button>
-          <button type="button" id="csvBtn">Spreadsheet</button>
-        </div>
-      </div>
+      <!-- The plan card is rendered here by app.js; Print and Spreadsheet now
+           live in its sticky footer rather than in a bar above it. -->
       <main id="out" aria-live="polite" tabindex="-1"></main>
     </div>
 

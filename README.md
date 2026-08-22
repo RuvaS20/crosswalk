@@ -129,13 +129,27 @@ headings, Poppins for body.
 
 ## What the page does
 
+- **The controls read as a sentence.** "Preparing for a group of *16–18* year olds.
+  We have *20* weeks of *90* minute sessions." Every value is a real `<select>` or
+  `<input>` styled as a filled pill, so nothing is lost for keyboard or screen-reader
+  users — it is still a form, just one that also reads as prose. Values that are fixed
+  rather than chosen render as outline pills: 8–12 only builds mobile, so "Mobile apps"
+  is stated rather than offered.
+- **The sentence stays grammatical.** Choosing the Core Curriculum collapses the whole
+  second clause and replaces it with what Core means; the full stop sits outside the
+  collapsing span, so the line reads complete either way.
 - **Results update live.** No submit button — the engine runs locally in about a
   millisecond, so changing weeks or session length rebuilds the plan immediately.
   Number inputs are debounced 160ms.
-- **The plan is a table**, one row per week: week number and session time, what's
-  taught in class, and what's set for home. Replaced an earlier collapsible timeline —
-  a facilitator needs to scan a whole season at once, and accordions hide exactly the
-  thing they came for.
+- **The plan is a card**: an indigo header carrying the deadline, a table of weeks,
+  and a sticky footer with progress and the export buttons. In-class and at-home stay
+  in separate columns so the home load can be scanned down a single column. Replaced
+  an earlier collapsible timeline — a facilitator needs to scan a whole season at
+  once, and accordions hide exactly the thing they came for.
+- **Weeks are banded by unit.** A week takes the `unit` of its first lesson, and a
+  heading appears only when that changes. Weeks with no unit — work time, and the rows
+  the sheet leaves blank — continue the band above rather than breaking it, which stops
+  the plan fragmenting into one-week sections.
 - **Homework is assigned to a week.** Displaced lessons attach to the week of the
   nearest in-class lesson that precedes them in curriculum order, so prerequisite
   order carries over and the plan says *when* to set the work, not just what.
@@ -150,13 +164,16 @@ headings, Poppins for body.
 - **A plan that doesn't fit offers buttons that fix it**, not sentences. The engine
   returns structured fixes (`{label, set:{weeks:14}}`), so "Use 14 weeks" applies
   itself and rebuilds.
-- **Over-long weeks say so plainly** — "Needs 1h 30m — 30m more than your session"
-  rather than making the reader do the subtraction.
+- **Over-long weeks say so plainly** — "30m over your session" under the lessons,
+  rather than making the reader do the subtraction. Text only, in red: a filled row
+  read as an error when a lesson simply being longer than one session is a note. On
+  white the red clears 4.5:1; on the tint it did not.
 - **The page loads with a real plan already rendered**, so a first-time visitor sees
   what the tool produces rather than an empty screen.
-- **On mobile** the table stacks to one card per week, and the segmented controls
-  become native `<select>` pickers built from the radios — one source of truth, so
-  the picker cannot drift out of sync.
+- **On mobile** the table stacks to one card per week: the week number becomes a
+  header strip, the two content columns go full width and label themselves from
+  `data-label`, and the tick moves to a strip at the foot of the card. The sentence
+  needs no equivalent — it is selects already, and simply wraps.
 - **Defaults are 20 weeks × 90 minutes.** Earlier environment presets were removed as
   an extra control that only ever set one value.
 - **Coding tool choice** appears only where a real choice exists: App Inventor vs
@@ -166,11 +183,17 @@ headings, Poppins for body.
   two on the site. Rows taught to both divisions carry a `url_junior` alongside `url`,
   and the engine swaps them by age. Rows that exist under only one division — Lean
   Canvas, User Adoption Plan — are left alone, since rewriting them would 404.
-- **Print** produces a one-page planner with a 24px tick box beside every week, so it
-  works as a physical tracker. The tick column is print-only: on screen it would be a
-  control that never responds, so `.c-done` is hidden there and restored in the print
-  block. Note the printed sheet omits the notes and the home-load banner, so it does
-  not say how much work was moved out of class.
+- **Progress is tracked and saved.** Each week carries a checkbox; ticking it marks
+  every lesson in that week. State lives in `localStorage` under `crosswalk.done.v1`,
+  **keyed by `lesson_id` and never by week number** — the plan is rebuilt on every
+  control change and weeks move with it, so a tick stored against "week 3" would
+  silently reattach to whatever landed there. The footer counts weeks complete;
+  work-time weeks hold no lessons to mark, so they show a dash and are left out of
+  the total rather than making it unreachable.
+- **Print** produces a one-page planner. The live checkbox prints as a drawn 24px
+  square big enough for a pen, and a week already ticked on screen prints ticked. Note
+  the printed sheet omits the notes and the home-load banner, so it does not say how
+  much work was moved out of class.
 - **Download as spreadsheet** gives a CSV with a row per lesson: week, date, whether
   it is in class or at home, category, minutes, activities and link. Homework rows now
   carry their week.
