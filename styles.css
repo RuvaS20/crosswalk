@@ -385,35 +385,13 @@ header p{
   font-weight:600;
 }
 
-/* The verdict. On its own line so the eye lands on the figure first and the
-   judgement second, rather than reading them as one run of text. */
-.judge{
-  display:block;
-  margin-top:4px;
-  font:500 13px/1.4 Poppins,sans-serif;
-  text-transform:uppercase;
-  letter-spacing:.05em;
-  color:var(--muted);
-}
-
-/* Heavy: the figure inverts to a solid chip and the verdict takes full
-   contrast. The only escalation on the page, so it has to be unmistakable
-   without a second colour. */
+/* Heavy: the figure inverts to a solid chip. The only escalation on the page,
+   so it has to be unmistakable without a second colour. */
 .lede.heavy strong{
   color:#fff;
   background:var(--indigo);
   padding:2px 7px;
   border-radius:4px;
-}
-
-.lede.heavy .judge{
-  color:var(--indigo);
-  font-weight:600;
-}
-
-/* Light loads say so quietly — there is nothing to act on. */
-.lede.light .judge{
-  color:var(--lime-deep);
 }
 
 /* The overrun banner. Same shape as the summary sentence, in the red the
@@ -426,10 +404,6 @@ header p{
 .lede.over-note strong{
   color:var(--danger);
   font-weight:600;
-}
-
-.lede.over-note .judge{
-  color:var(--muted);
 }
 
 
@@ -865,10 +839,14 @@ tr.slack td{
 
    Two steps, each doing one job:
      900px — the sentence tightens
-     640px — the table restructures into one card per week
+     768px — the table restructures into one card per week
+
+   Both are scoped to `screen` deliberately. A4 inside 12mm margins is 703 CSS
+   pixels, so an unscoped max-width query fires on paper too — which silently
+   gave the printed sheet the phone layout, one stacked card per week.
    ============================================================================= */
 
-@media(max-width:900px){
+@media screen and (max-width:900px){
 
   header{
     padding:26px 0 16px;
@@ -898,7 +876,7 @@ tr.slack td{
 
 }
 
-@media(max-width:768px){
+@media screen and (max-width:768px){
 
   /* One card per week. Four columns cannot be read at phone width, so every
      cell goes full width and the row becomes the card. */
@@ -1001,7 +979,7 @@ tr.slack td{
 
   body{
     background:#fff;
-    font-size:10pt;
+    font-size:9pt;
     color:#000;
   }
 
@@ -1024,13 +1002,13 @@ tr.slack td{
 
   .printhead{
     display:block;
-    border-bottom:2.5px solid var(--indigo);
-    padding-bottom:9px;
-    margin-bottom:12px;
+    border-bottom:2px solid var(--indigo);
+    padding-bottom:6px;
+    margin-bottom:9px;
   }
 
   .printhead h1{
-    font-size:16pt;
+    font-size:14pt;
   }
 
   .printhead p{
@@ -1049,8 +1027,8 @@ tr.slack td{
   }
 
   .lede{
-    font-size:10pt;
-    margin-bottom:10px;
+    font-size:9pt;
+    margin-bottom:6px;
   }
 
   /* The indigo chip is screen emphasis; on paper it just costs ink, and red
@@ -1065,10 +1043,6 @@ tr.slack td{
     color:#000;
   }
 
-  .judge{
-    color:#000;
-  }
-
   table.plan{
     border:1px solid #000;
     border-radius:0;
@@ -1078,13 +1052,51 @@ tr.slack td{
     background:#fff;
     color:#000;
     border-bottom:1.5px solid #000;
-    padding:5px 7px;
-    font-size:8pt;
+    padding:3px 6px;
+    font-size:7pt;
   }
 
   table.plan td{
     border-bottom:1px solid #999;
-    padding:5px 7px;
+    padding:4px 6px;
+  }
+
+  /* Column widths have to be stated for print: the screen values are relative
+     to a viewport the printer does not have. */
+  .c-wk{
+    width:52px;
+  }
+
+  .c-in{
+    width:auto;
+  }
+
+  .c-home{
+    width:32%;
+  }
+
+  /* Lesson rows carry most of the page, so this is where compactness pays. */
+  .li{
+    font-size:8pt;
+    padding:1px 0;
+    gap:6px;
+  }
+
+  .li .t{
+    font-size:7pt;
+    min-width:32px;
+    padding-top:0;
+  }
+
+  .tag{
+    font-size:6.5pt;
+    padding:0 4px;
+    margin-left:4px;
+  }
+
+  .overage{
+    font-size:7pt;
+    margin-top:3px;
   }
 
   /* Tints do not survive printing reliably, and cost ink. */
@@ -1103,7 +1115,12 @@ tr.slack td{
   }
 
   .c-wk b{
-    font-size:11pt;
+    font-size:10pt;
+    margin-bottom:1px;
+  }
+
+  .c-wk .wtime{
+    font-size:7pt;
   }
 
   /* Red does not survive a mono printer, so the note drops to plain weight. */
@@ -1115,23 +1132,25 @@ tr.slack td{
     background:#fff;
     border-top:1.5px solid #000;
     border-bottom:1px solid #000;
-    font-size:8pt;
+    font-size:7pt;
+    padding:3px 6px;
   }
 
   /* A printed plan is a tracker, so the box has to be big enough for a pen.
      The live checkbox prints as a tiny control, so it is replaced by a drawn
      square — and a week already ticked on screen prints ticked. */
   .c-done{
-    width:42px;
+    display:table-cell;
+    width:34px;
     text-align:center;
     border-left:1px solid #999;
   }
 
   .c-done input{
     appearance:none;
-    width:24px;
-    height:24px;
-    border:1.5px solid #000;
+    width:18px;
+    height:18px;
+    border:1.25px solid #000;
     border-radius:0;
     background:#fff;
   }
@@ -1139,8 +1158,8 @@ tr.slack td{
   .c-done input:checked::after{
     content:"\2713";
     display:block;
-    font-size:19px;
-    line-height:22px;
+    font-size:14px;
+    line-height:16px;
     text-align:center;
     color:#000;
   }

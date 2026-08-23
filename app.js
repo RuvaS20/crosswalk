@@ -46,10 +46,9 @@ const AGE_LABEL = { beginner: 'Ages 8-12', junior: 'Ages 13-15', senior: 'Ages 1
 const AI_LABEL  = { none: 'no AI', integrated: 'AI included', focused: 'AI-focused' };
 
 /* Where the weekly homework figure stops being routine and starts being a
-   problem. HEAVY matches HEAVY_HOMEWORK_HOURS in the engine, which is what
-   makes the engine raise it in its notes too. */
+   problem. Matches HEAVY_HOMEWORK_HOURS in the engine, which is what makes
+   the engine raise the same point in its notes. */
 const HEAVY_HOMEWORK = 120;
-const LIGHT_HOMEWORK = 30;
 
 
 /* ---------------------------------------------------------------- loading */
@@ -184,22 +183,15 @@ function render(plan) {
   // One sentence, not three stacked blocks. Weekly homework time is the only
   // number here a facilitator can act on: lesson counts and in-class hours
   // follow from what they already chose, so stating them adds reading without
-  // adding a decision. The verdict underneath is what turns the figure into
-  // something they can judge.
+  // adding a decision.
   const home = s.homeworkMinutesPerWeek;
-  const level = home >= HEAVY_HOMEWORK ? 'heavy' : home >= LIGHT_HOMEWORK ? '' : 'light';
-  const verdict = home >= HEAVY_HOMEWORK ? 'Heavy load'
-                : home >= LIGHT_HOMEWORK ? 'Manageable load'
-                : 'Light load';
+  const level = home >= HEAVY_HOMEWORK ? 'heavy' : '';
 
   // Weeks holding a lesson longer than the session. packWeeks flags each one
   // individually, but a single row saying "30m over" does not tell you that
   // most of your season is in the same state - the pattern only shows if you
   // read every row. Said once, up front, it becomes a fact about the plan.
   const over = plan.weeks.filter(w => w.overrun).length;
-  const spread = plan.weeks.flatMap(w => w.lessons.map(l => l.minutes))
-                           .sort((a, b) => a - b);
-  const at = f => spread[Math.min(spread.length - 1, Math.floor(spread.length * f))];
 
   out.innerHTML = `
     <p class="lede ${level}">${home
@@ -375,25 +367,66 @@ function update({ immediate = false, focus = false } = {}) {
 
 /* ---------------------------------------------------------------- exporting */
 
+/**
+ * The plan as a spreadsheet, one row per lesson.
+ *
+ * Opens with the same heading the printed sheet carries - title, configuration,
+ * and the homework figure - because a file arriving in someone's inbox has to
+ * say what it is. The filename cannot carry that, and it is the first thing
+ * lost when the file is renamed or pasted into another sheet.
+ *
+ * Column names avoid the collision the old layout had: "In class" was both a
+ * heading and a value in the neighbouring column, meaning two different things
+ * a cell apart. "Taught" now answers where, and "Activities" answers what.
+ */
 function toCSV(plan) {
-  const rows = [['Week', 'Date', 'Where', 'Category', 'Lesson', 'Minutes',
-                 'In class', 'Out of class', 'Link']];
+  // A title row of one cell. CSV has no notion of a merged cell, so the nearest
+  // equivalent is a row whose remaining columns are absent: every spreadsheet
+  // then lets the text overflow across the empty ones, which reads as a heading
+  // spanning the table.
+  const rows = [
+    ['Technovation plan'],
+    [],
+    ['Week', 'Taught', 'Lesson', 'Mins', 'Topic', 'Activities', 'Link', 'Completed']
+  ];
+
+  // Ticked on the page carries through to the file, so an exported plan is a
+  // snapshot of progress rather than a blank tracker every time.
+  const tick = l => done.has(l.lesson_id) ? '\u2713' : '';
+
+
   plan.weeks.forEach(w => {
     if (w.workTime) {
-      rows.push([w.week, w.date, 'In class', 'Work Time',
-                 'Work Time', w.minutes, '', '', '']);
+      rows.push([w.week, 'In class', 'Work Time', w.minutes, 'Work Time', '', '', '']);
       return;
     }
-    w.lessons.forEach(l => rows.push([w.week, w.date, 'In class', l.category, l.title,
-      l.minutes, l.in_class || '', l.out_of_class || '', l.url || '']));
-    (w.homework || []).forEach(l => rows.push([w.week, w.date, 'At home', l.category,
-      l.title, l.minutes, '', l.out_of_class || '', l.url || '']));
+
+    // Most lessons carry only in_class activities. Passing out_of_class alone
+    // for a homework row therefore emptied it - the instructions existed and
+    // the export threw them away. Each row prefers its own side, then falls
+    // back to the other.
+    w.lessons.forEach(l => rows.push([
+      w.week, 'In class', l.title, l.minutes, l.category,
+      l.in_class || l.out_of_class || '', l.url || '', tick(l)
+    ]));
+
+    (w.homework || []).forEach(l => rows.push([
+      w.week, 'At home', l.title, l.minutes, l.category,
+      l.out_of_class || l.in_class || '', l.url || '', tick(l)
+    ]));
   });
 
-  return rows.map(r => r.map(cell => {
-    const v = String(cell ?? '').replace(/\r?\n/g, ' ');
-    return /[",]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  const body = rows.map(r => r.map(cell => {
+    // Line breaks are kept rather than flattened: a quoted field may span
+    // lines, so "Activity 1: ...\nActivity 2: ..." lands as two lines in one
+    // cell instead of one unreadable run.
+    const v = String(cell ?? '').replace(/\r\n?/g, '\n');
+    return /["\n,]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
   }).join(',')).join('\r\n');
+
+  // Byte order mark: without it Excel on Windows reads the file as Latin-1 and
+  // renders every curly apostrophe and en dash as mojibake.
+  return '\ufeff' + body;
 }
 
 function download(name, text, type) {
@@ -428,6 +461,7 @@ function longDate(iso) {
          `${d.getUTCFullYear()}`;
 }
 
+/** The configuration in words, for the print header. */
 function describe(p) {
   return [
     AGE_LABEL[p.age],
