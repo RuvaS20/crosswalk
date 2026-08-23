@@ -167,11 +167,11 @@ headings, Poppins for body.
   nearest in-class lesson that precedes them in curriculum order, so prerequisite
   order carries over and the plan says *when* to set the work, not just what.
 - **One sentence above the table**, where there used to be a banner, a count line and
-  a list of notes: *"Your 20-week plan requires **41m** a week of homework."* with a
-  verdict beneath — light, manageable, or heavy. Weekly homework time is the only
-  figure a facilitator can act on; lesson counts and in-class hours follow from what
-  they already chose. Heavy inverts the figure to a solid indigo chip; a plan needing
-  none says so instead of reporting `0m`.
+  a list of notes: *"Your 20-week plan requires an average of **41m** a week of
+  homework."* Weekly homework time is the only figure a facilitator can act on; lesson
+  counts and in-class hours follow from what they already chose. Above two hours the
+  figure inverts to a solid indigo chip — the only escalation on the page, and it
+  needs no words. A plan needing no homework says so rather than reporting `0m`.
 - **Core lessons stay in class.** Technovation publishes a Core Curriculum — the
   minimum set a team needs to submit. The 39 lessons across Beginner, Mobile, Web and
   AI in Action that correspond to it are marked `essential` and are never pushed to
@@ -200,6 +200,13 @@ headings, Poppins for body.
   rather than making the reader do the subtraction. Text only, in red: a filled row
   read as an error when a lesson simply being longer than one session is a note. On
   white the red clears 4.5:1; on the tint it did not.
+- **And the plan says how many of them there are.** A second line under the summary:
+  *"**16 of 20 weeks** hold a lesson longer than your 30 minute sessions."* Each week
+  was already flagged individually, but the pattern only showed if you read every row
+  — so a facilitator with a 30-minute slot got a complete-looking plan where most
+  weeks quietly did not fit. Said once, up front, it becomes a fact about the plan
+  rather than a footnote on each week. It is not a refusal: a fixed timetable is a
+  real constraint, and some groups will run a lesson across two meetings themselves.
 - **The page loads with a real plan already rendered**, so a first-time visitor sees
   what the tool produces rather than an empty screen.
 - **On mobile** the table stacks to one card per week: the week number becomes a
@@ -233,13 +240,30 @@ headings, Poppins for body.
   silently reattach to whatever landed there. The footer counts weeks complete;
   work-time weeks hold no lessons to mark, so they show a dash and are left out of
   the total rather than making it unreachable.
-- **Print** produces a one-page planner. The live checkbox prints as a drawn 24px
-  square big enough for a pen, and a week already ticked on screen prints ticked. The
-  summary sentence prints too, so the sheet now states the weekly home load — the
-  old banner was hidden, and it never did.
-- **Download as spreadsheet** gives a CSV with a row per lesson: week, date, whether
-  it is in class or at home, category, minutes, activities and link. Homework rows now
-  carry their week.
+- **Print** produces a compact one-page planner: 9pt body, 4px cell padding, stated
+  column widths. The live checkbox prints as a drawn square, and a week already ticked
+  on screen prints ticked. The summary sentence prints too, so the sheet states the
+  weekly home load — the old banner was hidden, and it never did.
+- **The responsive breakpoints are scoped to `screen`, and must stay that way.** A4
+  inside 12mm margins is 703 CSS pixels, so an unscoped `max-width: 768px` fires on
+  paper as well — which silently gave every printed sheet the phone layout, one
+  stacked card per week instead of a table. US Letter is 725px and was affected too.
+- **Download as spreadsheet** gives a title row, a blank row, then one row per
+  lesson: `Week, Taught, Lesson, Mins, Topic, Activities, Link, Completed`. Ticks made
+  on the page carry through, so an export is a snapshot of progress rather than a
+  blank tracker. Three things it used to get wrong:
+    - **Homework rows arrived empty.** 125 of 188 lessons carry only `in_class`
+      activities, and the homework row passed `out_of_class` alone — so 10 of 13
+      homework rows in the default plan exported with no instructions at all. Each row
+      now prefers its own side and falls back to the other.
+    - **Excel mangled the text.** No byte order mark, so Windows read the file as
+      Latin-1 and turned every curly apostrophe into `â€™`. One character fixes it.
+    - **Activities ran together.** Newlines were flattened to spaces, turning two
+      activities into one unreadable line. A quoted CSV field may span lines, so they
+      are kept — each activity lands on its own line inside the cell.
+  The columns also no longer collide: "In class" used to be both a heading and a value
+  in the column beside it, meaning two different things a cell apart. `Taught` answers
+  where, `Activities` answers what.
 - **Lesson links open the public curriculum.** Verified: lesson pages on
   technovationchallenge.org are readable without an account.
 
@@ -357,6 +381,22 @@ and its age, last publish, and whether the drift baseline matches the sheet.
 - **Nothing keeps the current selections visible** while scrolling a 20-week plan now
   that the chip row is gone. The printed header states the configuration; the screen
   does not, once the form scrolls away.
+- **Session length is a stepped control dressed as a continuous one.** The minutes
+  field steps by 5 from 15 to 300, but extra minutes only change the plan when they
+  cross a *pairing* threshold — the point where two consecutive lessons fit in one
+  week. Senior mobile durations cluster at 30, 45 and 60, so 30 and 45 produce an
+  identical plan (20 lessons in class either way), and the real steps are 60 (two 30s
+  fit), 90 (45+45) and 120 (60+60). Typing 50 or 55 does nothing at all. Either snap
+  the control to the values that differ, or say when a change had no effect.
+- **Splitting long lessons across weeks** is the real fix for short sessions, and the
+  biggest open question here. `packWeeks` deliberately refuses to, arguing it "would
+  misrepresent the curriculum" — so this needs Technovation's view on whether a
+  120-minute lesson may legitimately run over two meetings, not just an engineering
+  decision.
+- **The CSV no longer identifies itself.** With the configuration line removed, a file
+  in someone's Downloads says only "Technovation plan" — nothing distinguishes a 16–18
+  mobile plan from an 8–12 one. That lives solely in the filename now, which is the
+  first thing lost when a file is renamed or pasted into another sheet.
 - **Season rollover runbook.** Currently undocumented.
 - **Missing prerequisites.** Nothing requires *Planning your Project* or *Market
   Research*, both of which look like real dependencies for later work.
