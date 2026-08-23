@@ -46,6 +46,12 @@ const MIN_SLACK_BLOCK = 20;
  * them instead of only insisting on more time. Four 1-hour sessions plus a
  * showcase, per technovationchallenge.org/ai-mini-technovation.
  */
+const CORE_CURRICULUM = {
+  url: 'https://technovationchallenge.org/courses/technovation-girls-core-curriculum/',
+  label: 'See the Core Curriculum',
+  note: 'The Core Curriculum is built for a shorter season and would fit.'
+};
+
 const AI_MINI = {
   url: 'https://technovationchallenge.org/ai-mini-technovation/',
   label: 'Try AI Mini Technovation',
@@ -470,23 +476,25 @@ export function buildPlan(data, params) {
   const fit = fitToBudget(resolved, weeks, sessionLength);
 
   if (!fit.ok) {
-    const suggestions = [];
-    const fixes = [];
-    if (fit.needWeeks) {
-      suggestions.push(`Extend to ${fit.needWeeks} weeks.`);
-      fixes.push({ label: `Use ${fit.needWeeks} weeks`, set: { weeks: fit.needWeeks } });
-    }
-    if (fit.needLength && fit.needLength <= 300) {
-      suggestions.push(`Or lengthen sessions to ${fit.needLength} minutes.`);
-      fixes.push({ label: `Make sessions ${fit.needLength} min`,
-                   set: { sessionLength: fit.needLength } });
-    }
-    if (params.aiMode === 'integrated') {
-      suggestions.push('Or switch to No AI, which removes the AI lessons.');
-      fixes.push({ label: 'Drop the AI lessons', set: { aiMode: 'none' } });
-    }
+    // No fix buttons here. The three we used to offer were derived from
+    // needLength, a minutes average - the same estimate lever 1 documents as
+    // understating what packing really needs - and two of the three did not
+    // resolve the refusal when clicked. The week count in the message is the
+    // useful part, and the facilitator can type it.
+    //
+    // What is offered instead is a different programme. Core first, but only
+    // when it genuinely fits these same weeks and minutes: suggesting it
+    // otherwise would just move the refusal.
+    const coreFits = !params.core &&
+                     buildPlan(data, { ...params, core: true }).status === 'ok';
+
     return {
-      status: 'refused', reason: fit.reason, message: fit.detail, fixes, suggestions
+      status: 'refused',
+      reason: fit.reason,
+      message: fit.detail,
+      link: coreFits ? CORE_CURRICULUM : AI_MINI,
+      fixes: [],
+      suggestions: []
     };
   }
 

@@ -11,8 +11,6 @@
 </head>
 <body>
 
-<div class="chips" id="chips" role="group" aria-label="Current selections"></div>
-
 <div class="wrap">
 
   <div class="printhead" id="printhead" aria-hidden="true"></div>
@@ -42,7 +40,7 @@
         <input type="number" id="weeks" value="20" min="1" max="52"
                aria-label="Number of weeks">
         weeks of
-        <input type="number" id="len" value="90" min="15" max="300" step="10"
+        <input type="number" id="len" value="90" min="15" max="300" step="5"
                aria-label="Minutes per session">
         minute sessions.
       </p>
@@ -52,6 +50,7 @@
         <select id="mode" class="mode" aria-label="Curriculum">
           <option value="custom" selected>a Custom plan</option>
           <option value="core">the Core Curriculum</option>
+          <option value="ai">the AI in Action course</option>
         </select>
 
         <span class="sub-group" id="customClause">
@@ -71,12 +70,14 @@
           <select id="aiMode" aria-label="AI">
             <option value="none">omitted</option>
             <option value="integrated" selected>included</option>
-            <option value="focused">as the focus</option>
           </select></span><!--
      Continues the same sentence in place of the custom clause: exactly one of
      these two is ever visible, so the line stays complete either way.
   --><span class="aside" id="coreNote" hidden>for groups short on time: all the
-          lessons necessary to submit a project</span>.
+          lessons necessary to submit a project</span><!--
+  --><span class="aside" id="aiNote" hidden>for teams building an AI-powered
+          digital solution</span><span
+          class="stop">.</span>
       </p>
 
     </form>

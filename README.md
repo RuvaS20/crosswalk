@@ -135,9 +135,16 @@ headings, Poppins for body.
   users — it is still a form, just one that also reads as prose. Values that are fixed
   rather than chosen render as outline pills: 8–12 only builds mobile, so "Mobile apps"
   is stated rather than offered.
-- **The sentence stays grammatical.** Choosing the Core Curriculum collapses the whole
-  second clause and replaces it with what Core means; the full stop sits outside the
-  collapsing span, so the line reads complete either way.
+- **The sentence stays grammatical.** Core and AI in Action each collapse the whole
+  second clause and replace it with what that course means; the full stop sits outside
+  the collapsing spans, so the line reads complete whichever is chosen.
+- **The curriculum select carries all three courses** — a Custom plan, the Core
+  Curriculum, the AI in Action course — because `filterLessons` routes on all three
+  before it looks at age or platform. AI in Action used to hide inside the AI control
+  as "as the focus", which both obscured that it is a separate course and left the
+  sentence promising a platform choice it ignores: mobile and web return the identical
+  32 lessons. The AI control is left with what it actually governs, omitted or
+  included.
 - **Results update live.** No submit button — the engine runs locally in about a
   millisecond, so a select rebuilds the plan immediately. The two number fields
   are debounced 500ms — at 160ms the plan still moved under each digit, which read
@@ -170,14 +177,25 @@ headings, Poppins for body.
   AI in Action that correspond to it are marked `essential` and are never pushed to
   homework. The video and submission tail is already protected by `deadline_locked`, so
   between them the non-negotiable work always happens in the room.
-- **A plan that doesn't fit offers buttons that fix it**, not sentences. The engine
-  returns structured fixes (`{label, set:{weeks:14}}`), so "Use 14 weeks" applies
-  itself and rebuilds.
-- **Too little time is a situation, not a mistake.** Below 10 weeks, or under 30
-  minutes a session, the refusal also links to AI Mini Technovation — four 1-hour
+- **A plan that doesn't fit offers a button that fixes it**, not a sentence. The
+  engine returns structured fixes (`{label, set:{weeks:10}}`), so "Use 10 weeks"
+  applies itself and rebuilds.
+- **Except when it can't.** The over-budget refusal offers no fixes at all. The three
+  it used to — more weeks, longer sessions, drop the AI lessons — were derived from a
+  minutes average, and two of them did not resolve the refusal when clicked. The week
+  count in the message is the useful part and a facilitator can type it.
+- **Too little time is a situation, not a mistake.** Every refusal carries a route to
+  a different programme instead. Over budget offers the Core Curriculum when Core
+  genuinely fits those same weeks and minutes, and AI Mini Technovation otherwise;
+  below 10 weeks or under 30 minutes a session goes straight to AI Mini — four 1-hour
   sessions plus a pitch showcase, free to run. It is a `link: {url, label, note}` on
   the refusal rather than markup in the message, so the message stays escapable and
   the engine keeps knowing nothing about the DOM.
+- **Core rarely rescues an over-budget plan**, and the refusal only offers it when it
+  actually helps. Core cuts content, but week count is driven by lesson granularity —
+  22 of the 40 senior mobile lessons run longer than 45 minutes and `packWeeks` gives
+  each its own week regardless. Core's floor is 17 weeks at 45 minutes, the same as
+  Custom's; it only wins at 90 minutes, where two lessons can share a week.
 - **Over-long weeks say so plainly** — "30m over your session" under the lessons,
   rather than making the reader do the subtraction. Text only, in red: a filled row
   read as an error when a lesson simply being longer than one session is a note. On
@@ -187,7 +205,8 @@ headings, Poppins for body.
 - **On mobile** the table stacks to one card per week: the week number becomes a
   header strip, the two content columns go full width and label themselves from
   `data-label`, and the tick moves to a strip at the foot of the card. The sentence
-  needs no equivalent — it is selects already, and simply wraps.
+  needs no equivalent — it is selects already, and simply wraps. There is no sticky
+  summary bar; a chip row was tried and removed as one more thing to scroll past.
 - **Defaults are 20 weeks × 90 minutes.** Earlier environment presets were removed as
   an extra control that only ever set one value. The two number fields are styled as
   blanks in the sentence — pale fill, dashed edge, indigo text — the opposite of the
@@ -196,7 +215,13 @@ headings, Poppins for body.
   Firefox drops them entirely when `appearance:none` is set.
 - **Coding tool choice** appears only where a real choice exists: App Inventor vs
   Thunkable for 13–18 mobile, App Inventor vs Scratch for 8–12. Hidden for web apps
-  (Python + Streamlit only) and for AI-focused.
+  (Python + Streamlit only), and absent entirely under Core or AI in Action, which
+  collapse the clause it lives in.
+- **8–12 on AI in Action gets a caution** in the plan header: AI is a harder concept
+  and Technovation advises discretion with younger groups, and the course has no 8–12
+  rows, so `filterLessons` maps beginner to the 13–15 track. Note that Technovation's
+  published age recommendation of 13–18 is for AI Mini Technovation, a different
+  programme; the AI in Action page says all ages.
 - **Junior teams get junior links.** Mobile and Web are one course in the sheet but
   two on the site. Rows taught to both divisions carry a `url_junior` alongside `url`,
   and the engine swaps them by age. Rows that exist under only one division — Lean
@@ -323,19 +348,15 @@ and its age, last publish, and whether the drift baseline matches the sheet.
   `essential` landed. Worth running the sweep and recording the shortest schedule that
   works for each configuration, so the refusal messages can name a number that's
   actually achievable.
-- **Two of the three over-budget fixes do not work.** At 12 weeks × 45 minutes the
-  refusal offers "Use 17 weeks" (works), "Make sessions 90 min" (still refuses, needs
-  14) and "Drop the AI lessons" (changes nothing). `needLength` is a minutes average,
-  which is the same mistake lever 1 documents against itself — packing wastes capacity,
-  so an average understates the weeks needed. The AI fix is offered whenever `aiMode`
-  is `integrated`, without checking it helps. Cheapest correct fix: re-run `buildPlan`
-  for each candidate and only offer the ones that resolve.
-- **The minutes field has an off-step default.** `min=15 step=10` makes the valid
-  ladder 15, 25, 35 … 95, so the default 90 is not on it — the field is `:invalid` and
-  the arrows jump 90 → 95. Only `step=5` reaches both 45 and 90, which are the two
-  session lengths that actually matter.
 - **Shareable plan links.** Encode the parameters in the query string. The engine is
   already a pure function of them, so this is cheap.
+- **`needLength` is now dead weight.** `fitToBudget` still computes it, but nothing
+  reads it since the over-budget fixes went. Either delete it or fix it properly — pack
+  at candidate session lengths instead of averaging — if the session-length suggestion
+  is ever wanted back.
+- **Nothing keeps the current selections visible** while scrolling a 20-week plan now
+  that the chip row is gone. The printed header states the configuration; the screen
+  does not, once the form scrolls away.
 - **Season rollover runbook.** Currently undocumented.
 - **Missing prerequisites.** Nothing requires *Planning your Project* or *Market
   Research*, both of which look like real dependencies for later work.

@@ -78,12 +78,17 @@ async function load() {
 /* ------------------------------------------------------------------ state */
 
 function readParams() {
+  // The curriculum select picks the course. Core and AI in Action are both
+  // whole-course choices in the engine - filterLessons routes on them before
+  // it looks at anything else - so they belong together here rather than one
+  // of them hiding inside the AI control.
+  const mode = $('#mode').value;
   return {
     age: $('#age').value,
     platform: $('#platform').value,
-    aiMode: $('#aiMode').value,
+    aiMode: mode === 'ai' ? 'focused' : $('#aiMode').value,
     builder: $('#builder').value || 'auto',
-    core: $('#mode').value === 'core',
+    core: mode === 'core',
     weeks: +$('#weeks').value,
     sessionLength: +$('#len').value
   };
@@ -93,7 +98,9 @@ function readParams() {
 function setParams(patch) {
   if (patch.age)      $('#age').value = patch.age;
   if (patch.platform) $('#platform').value = patch.platform;
-  if (patch.aiMode)   $('#aiMode').value = patch.aiMode;
+  if (patch.aiMode === 'focused') $('#mode').value = 'ai';
+  else if (patch.aiMode)          { $('#mode').value = 'custom';
+                                    $('#aiMode').value = patch.aiMode; }
   if (patch.weeks)    $('#weeks').value = patch.weeks;
   if (patch.sessionLength) $('#len').value = patch.sessionLength;
   syncSentence();
@@ -143,37 +150,8 @@ function renderToolChoice() {
 }
 
 
-/* --------------------------------------------------------------- chips */
-
-function renderChips(p) {
-  const items = [
-    ['#age', AGE_LABEL[p.age]],
-    // Core has no platform or AI dimension, so those chips would name a
-    // control that is not on screen and a choice the plan never made.
-    p.core ? ['#mode', 'Core curriculum'] : null,
-    p.core || p.age === 'beginner' ? null
-      : ['#platform', p.platform === 'web' ? 'Web app' : 'Mobile app'],
-    p.builder !== 'auto' ? ['#builder', TOOL_NAMES[p.builder]] : null,
-    p.core ? null : ['#aiMode', AI_LABEL[p.aiMode]],
-    ['#weeks', `${p.weeks} weeks`],
-    ['#len', `${p.sessionLength} min`]
-  ].filter(Boolean);
-
-  $('#chips').innerHTML = items
-    .map(([t, label]) => `<button type="button" data-target="${t}">${esc(label)}</button>`)
-    .join('');
-}
-
-// Tapping a chip takes you to the control it stands for.
-$('#chips').addEventListener('click', e => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  const el = $(btn.dataset.target);
-  if (!el) return;
-  const field = el.closest('.field') || el;
-  field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  setTimeout(() => (el.focus ? el.focus() : null), 320);
-});
+/** Core and AI in Action are whole-course choices: nothing after them applies. */
+const standalone = p => p.core || p.aiMode === 'focused';
 
 
 /* --------------------------------------------------------------- rendering */
@@ -226,6 +204,8 @@ function render(plan) {
         <h2>Technovation Plan</h2>
         <div class="deadline">Submissions close
           <b class="mono">${esc(longDate(plan.deadline))}</b></div>
+        ${plan.params.age === 'beginner' && plan.params.aiMode === 'focused' ? `
+          <p class="head-note">Technovation recommends the 'AI in Action' course for ages 13–18. Use your judgment with younger groups.</p>` : ''}
       </div>
 
       <table class="plan">
@@ -372,7 +352,6 @@ function update({ immediate = false, focus = false } = {}) {
   clearTimeout(timer);
   timer = setTimeout(() => {
     const params = readParams();
-    renderChips(params);
     current = buildPlan(data, params);
     render(current);
     if (focus) $('#out').focus();
@@ -439,10 +418,11 @@ function describe(p) {
   return [
     AGE_LABEL[p.age],
     p.core ? 'Core curriculum' : null,
-    p.core || p.age === 'beginner' ? null
+    p.aiMode === 'focused' ? 'AI in Action' : null,
+    standalone(p) || p.age === 'beginner' ? null
       : (p.platform === 'web' ? 'web app' : 'mobile app'),
     p.builder !== 'auto' ? TOOL_NAMES[p.builder] : null,
-    p.core ? null : AI_LABEL[p.aiMode],
+    standalone(p) ? null : AI_LABEL[p.aiMode],
     `${p.weeks} weeks &times; ${p.sessionLength} min`
   ].filter(Boolean).join(' &middot; ');
 }
@@ -461,9 +441,13 @@ function describe(p) {
  *               than assuming which tools exist
  */
 function syncSentence() {
-  const core = $('#mode').value === 'core';
-  $('#customClause').hidden = core;
-  $('#coreNote').hidden = !core;
+  // Core and AI in Action each replace the rest of the sentence: neither takes
+  // a platform, a tool or an AI setting, and AI in Action ignores platform
+  // outright - mobile and web return the same 32 lessons.
+  const mode = $('#mode').value;
+  $('#customClause').hidden = mode !== 'custom';
+  $('#coreNote').hidden = mode !== 'core';
+  $('#aiNote').hidden = mode !== 'ai';
 
   const beginner = $('#age').value === 'beginner';
   $('#platform').hidden = beginner;

@@ -234,6 +234,13 @@ header p{
   padding:14px 18px;
 }
 
+/* The closing full stop. A bare "." after the span is its own flex item, so
+   the row gap opens a space in front of it — the negative margin cancels
+   exactly that gap and closes the sentence properly. */
+.clause .stop{
+  margin-left:-7px;
+}
+
 /* Keeps "with App Inventor" together when the sentence wraps, instead of
    stranding the preposition at the end of a line. */
 .sub-group{
@@ -341,40 +348,12 @@ header p{
 
 
 /* -----------------------------------------------------------------------------
-   5. Chips — the narrow-screen summary bar
-
-   Hidden by default; becomes a sticky scrolling row under 900px. Each chip
-   names a current selection and scrolls to the control behind it.
-   -------------------------------------------------------------------------- */
-
-.chips{
-  display:none;
-}
-
-.chips button{
-  border:1.5px solid var(--line);
-  background:#fff;
-  color:var(--indigo);
-  border-radius:99px;
-  padding:7px 13px;
-  font:500 12.5px Poppins,sans-serif;
-  cursor:pointer;
-  white-space:nowrap;
-}
-
-.chips button:hover{
-  border-color:var(--indigo-600);
-  background:var(--lime-tint);
-}
-
-
-/* -----------------------------------------------------------------------------
-   6. Engine notes
+   5. Engine notes
    -------------------------------------------------------------------------- */
 
 
 /* -----------------------------------------------------------------------------
-   7. The summary line
+   6. The summary line
 
    One sentence where there used to be three stacked blocks — a banner, a
    count line, and a list of notes. Weekly homework time is the only figure a
@@ -438,7 +417,7 @@ header p{
 
 
 /* -----------------------------------------------------------------------------
-   7b. Loading
+   6b. Loading
 
    The live endpoint takes about five seconds, so the first paint has to say
    something. Shaped like the plan card that replaces it — same border, same
@@ -483,7 +462,7 @@ header p{
 
 
 /* -----------------------------------------------------------------------------
-   8. The plan card
+   7. The plan card
 
    One bordered card holding a header, the week table, and a sticky footer.
    Columns stay split — In class and At home side by side — so a facilitator
@@ -518,6 +497,16 @@ header p{
    so what reads is the lime date chip. */
 .plan-head .deadline{
   margin-top:11px;
+}
+
+/* Only appears for 8-12 on AI in Action. Sits under the deadline rather than
+   in the plan itself: it is a caution about the choice, not about a week. */
+.plan-head .head-note{
+  margin:12px auto 0;
+  max-width:56ch;
+  font-size:12.5px;
+  line-height:1.5;
+  color:#E6E2F2;
 }
 
 
@@ -739,7 +728,7 @@ tr.slack td{
 
 
 /* -----------------------------------------------------------------------------
-   9. Secondary blocks — "Not included" and "Other tool options"
+   8. Secondary blocks — "Not included" and "Other tool options"
    -------------------------------------------------------------------------- */
 
 .block{
@@ -772,7 +761,7 @@ tr.slack td{
 
 
 /* -----------------------------------------------------------------------------
-   10. The refusal state
+   9. The refusal state
 
    Shown when no plan fits. The engine returns structured fixes, so this is a
    set of buttons that apply themselves rather than a paragraph of advice.
@@ -855,28 +844,14 @@ tr.slack td{
 
 
 /* =============================================================================
-   11. Responsive
+   10. Responsive
 
    Two steps, each doing one job:
-     900px — the chip bar appears, and the sentence tightens
+     900px — the sentence tightens
      640px — the table restructures into one card per week
    ============================================================================= */
 
 @media(max-width:900px){
-
-  /* Sticky so the current selections stay visible while scrolling the plan. */
-  .chips{
-    display:flex;
-    gap:7px;
-    overflow-x:auto;
-    padding:11px 20px;
-    position:sticky;
-    top:0;
-    z-index:20;
-    background:rgba(251,250,245,.94);
-    backdrop-filter:blur(8px);
-    border-bottom:1px solid var(--line);
-  }
 
   header{
     padding:26px 0 16px;
@@ -988,7 +963,7 @@ tr.slack td{
 
 
 /* =============================================================================
-   12. Print
+   11. Print
 
    The printed plan is a physical tracker, so this is a real layout rather
    than a stripped screen. Everything interactive is removed, colour drops to
@@ -1016,7 +991,7 @@ tr.slack td{
   /* Everything the reader cannot act on from paper. The summary line stays:
      it is one sentence and it carries the homework figure, which is exactly
      what the printed sheet used to be missing. */
-  header,.panel,.chips,.actions,.plan-foot{
+  header,.panel,.actions,.plan-foot{
     display:none !important;
   }
 
