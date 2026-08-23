@@ -513,7 +513,7 @@ export function buildPlan(data, params) {
     gap.push({
       week: w, minutes: sessionLength, lessons: [],
       workTime: true,
-      note: 'Work time - building, testing, and user feedback'
+      note: 'Work Time'
     });
   }
 

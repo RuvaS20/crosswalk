@@ -192,12 +192,26 @@ function render(plan) {
                 : home >= LIGHT_HOMEWORK ? 'Manageable load'
                 : 'Light load';
 
+  // Weeks holding a lesson longer than the session. packWeeks flags each one
+  // individually, but a single row saying "30m over" does not tell you that
+  // most of your season is in the same state - the pattern only shows if you
+  // read every row. Said once, up front, it becomes a fact about the plan.
+  const over = plan.weeks.filter(w => w.overrun).length;
+  const spread = plan.weeks.flatMap(w => w.lessons.map(l => l.minutes))
+                           .sort((a, b) => a - b);
+  const at = f => spread[Math.min(spread.length - 1, Math.floor(spread.length * f))];
+
   out.innerHTML = `
     <p class="lede ${level}">${home
-      ? `Your ${s.weeksUsed}-week plan requires <strong>${hrs(home)}</strong> a week
-         of homework. <span class="judge">${verdict}</span>`
-      : `Your ${s.weeksUsed}-week plan fits entirely in class.
-         <span class="judge">No homework</span>`}</p>
+      ? `Your ${s.weeksUsed}-week plan requires an average of <strong>${hrs(home)}</strong> a week
+         of homework.`
+      : `Your ${s.weeksUsed}-week plan fits entirely in class.`}</p>
+
+    ${over ? `
+      <p class="lede over-note">
+        <strong>${over} of ${plan.weeks.length} weeks</strong> hold a lesson longer
+        than your ${plan.params.sessionLength} minute sessions.
+      </p>` : ''}
 
     <div class="plan-card">
       <div class="plan-head">
@@ -211,8 +225,8 @@ function render(plan) {
       <table class="plan">
         <thead>
           <tr>
-            <th class="c-wk"><span class="sr">Week</span></th>
-            <th class="c-in">In class (max ${mins(plan.params.sessionLength)})</th>
+            <th class="c-wk">Week</th>
+            <th class="c-in">In class</th>
             <th class="c-home">At home</th>
             <th class="c-done"><span class="sr">Done</span></th>
           </tr>
@@ -304,7 +318,7 @@ function weekRow(w) {
 
   const inClass = w.lessons.length
     ? w.lessons.map(item).join('')
-    : '<div class="li muted">Build, test and gather feedback.</div>';
+    : '<div class="li muted">Work Time</div>';
 
   const homework = (w.homework || []).length
     ? w.homework.map(item).join('')
@@ -366,8 +380,8 @@ function toCSV(plan) {
                  'In class', 'Out of class', 'Link']];
   plan.weeks.forEach(w => {
     if (w.workTime) {
-      rows.push([w.week, w.date, 'In class', 'Work time',
-                 'Building, testing and user feedback', w.minutes, '', '', '']);
+      rows.push([w.week, w.date, 'In class', 'Work Time',
+                 'Work Time', w.minutes, '', '', '']);
       return;
     }
     w.lessons.forEach(l => rows.push([w.week, w.date, 'In class', l.category, l.title,
