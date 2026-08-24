@@ -182,6 +182,11 @@ function render(plan) {
 
   const s = plan.summary;
 
+  // Work Time rows are slots in the room, not content, so a list of nine
+  // identical "Work Time" entries tells a facilitator nothing about what their
+  // team is missing. The weeks are already visibly gone from the table.
+  const cut = plan.dropped.filter(l => l.url);
+
   // One sentence, not three stacked blocks. Weekly homework time is the only
   // number here a facilitator can act on: lesson counts and in-class hours
   // follow from what they already chose, so stating them adds reading without
@@ -193,7 +198,13 @@ function render(plan) {
   // individually, but a single row saying "30m over" does not tell you that
   // most of your season is in the same state - the pattern only shows if you
   // read every row. Said once, up front, it becomes a fact about the plan.
-  const over = plan.weeks.filter(w => w.overrun).length;
+  //
+  // Two shapes, because two different things are true. A couple of weeks is a
+  // scheduling note - name them and move on. Half the season is a fact about
+  // the session length itself, and the useful reply is what to change.
+  const over = plan.weeks.filter(w => w.overrun);
+  const worst = over.length
+    ? over.reduce((a, w) => (w.minutes > a.minutes ? w : a), over[0]) : null;
 
   out.innerHTML = `
     <p class="lede ${level}">${home
@@ -201,10 +212,17 @@ function render(plan) {
          of homework.`
       : `Your ${s.weeksUsed}-week plan fits entirely in class.`}</p>
 
-    ${over ? `
+    ${over.length ? `
       <p class="lede over-note">
-        <strong>${over} of ${plan.weeks.length} weeks</strong> hold a lesson longer
-        than your ${plan.params.sessionLength} minute sessions.
+        ${over.length <= 4
+          ? `<strong>Week${over.length > 1 ? 's' : ''} ${listWeeks(over.map(w => w.week))}</strong>
+             ${over.length > 1 ? 'hold lessons' : 'holds a lesson'} longer than your
+             ${plan.params.sessionLength} minute sessions &mdash;
+             Run a longer meeting those weeks, or split the lesson over two.`
+          : `<strong>${over.length} of ${plan.weeks.length} weeks</strong> hold a lesson
+             longer than your ${plan.params.sessionLength} minute sessions.
+             At this session length most weeks need a longer meeting or a two-part
+             split.`}
       </p>` : ''}
 
     <div class="plan-card">
@@ -237,11 +255,11 @@ function render(plan) {
       </div>
     </div>
 
-    ${!plan.params.core && plan.dropped.length ? `
+    ${cut.length ? `
       <div class="block">
         <h3>Not included</h3>
         <p>Optional lessons left out to fit the time. Add them back if you gain weeks.</p>
-        <ul>${plan.dropped.map(l => `<li>${esc(l.title)}</li>`).join('')}</ul>
+        <ul>${cut.map(l => `<li>${esc(l.title)}</li>`).join('')}</ul>
       </div>` : ''}
 `;
 
@@ -307,8 +325,11 @@ function weekRow(w) {
   const cls = [w.workTime ? 'slack' : locked ? 'locked' : '',
                w.overrun ? 'over' : ''].filter(Boolean).join(' ');
 
+  // Plain language: what it needs, then how far over. "30m over your session"
+  // made the reader work out the total themselves.
   const over = w.overrun
-    ? `<span class="overage">${mins(w.overrun)} over your session</span>` : '';
+    ? `<span class="overage">Needs ${mins(w.minutes)} &mdash; ${mins(w.overrun)}
+         more than your session</span>` : '';
 
   const inClass = w.lessons.length
     ? w.lessons.map(item).join('')
@@ -447,6 +468,12 @@ const esc = t => String(t ?? '').replace(/[&<>"]/g,
 const link = l => l.url
   ? `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}</a>`
   : esc(l.title);
+
+/** [17] -> "17";  [17, 18] -> "17 and 18";  [3, 9, 14] -> "3, 9 and 14" */
+function listWeeks(ns) {
+  if (ns.length < 2) return String(ns[0] ?? '');
+  return ns.slice(0, -1).join(', ') + ' and ' + ns[ns.length - 1];
+}
 
 const mins = m => m >= 60
   ? (m % 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m / 60}h`) : `${m}m`;

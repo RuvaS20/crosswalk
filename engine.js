@@ -35,6 +35,20 @@ const HOMEWORK_CAP = 0.70;
 // Above this many hours of homework a week, say so plainly.
 const HEAVY_HOMEWORK_HOURS = 2;
 
+/**
+ * The most homework any single week may carry.
+ *
+ * Homework attaches to the week of the lesson it follows, which stacks a run of
+ * related lessons onto one week - senior web at 14 x 75 put 9h 15m into a single
+ * week while reporting an average of 1h 17m. The average was true and the week
+ * was unusable. Anything above this spills forward to the next week that has
+ * room, never backward, so a task is still never set before it has been taught.
+ *
+ * A single lesson longer than the cap is left where it is: splitting a lesson
+ * would misrepresent it, and the longest in the curriculum is 135 minutes.
+ */
+const HOMEWORK_WEEK_CAP = HEAVY_HOMEWORK_HOURS * 60;
+
 // Spare capacity below this is left as breathing room rather than filled.
 const MIN_SLACK_BLOCK = 20;
 
@@ -519,33 +533,29 @@ export function buildPlan(data, params) {
   const fit = fitToBudget(resolved, weeks, sessionLength);
 
   if (!fit.ok) {
-    // No fix buttons here. The three we used to offer were derived from
+    // No estimate-based buttons. The three we used to offer were derived from
     // needLength, a minutes average - the same estimate lever 1 documents as
     // understating what packing really needs - and two of the three did not
-    // resolve the refusal when clicked. The week count in the message is the
-    // useful part, and the facilitator can type it.
+    // resolve the refusal when clicked.
     //
-    // What is offered instead is a different programme. Core first, but only
-    // when it genuinely fits these same weeks and minutes: suggesting it
-    // otherwise would just move the refusal.
-    const coreFits = !params.core &&
-                     buildPlan(data, { ...params, core: true }).status === 'ok';
+    // Instead every candidate is rebuilt and only offered if it comes back ok.
+    // A button that appears is a button that works. `probe` stops the rebuild
+    // from searching for its own fixes, which would recurse.
+    const fixes = params.probe ? [] : findFixes(data, params, fit);
 
-    // Core is a mode this tool builds itself, and coreFits has already proved
-    // it fits these same weeks and minutes - so offer it as a switch that
-    // rebuilds the plan in place. Sending someone to the Technovation site
-    // instead would make them re-enter everything to see a plan we can
-    // already draw. AI Mini is a different programme hosted elsewhere, so
-    // that one stays a link.
+    // A fix that changes the plan is something the facilitator can act on
+    // today. "Use more weeks" is not - it asks them to have a longer season
+    // than they have - so it does not count as an answer, and AI Mini stays
+    // on screen beside it.
+    const inPlace = fixes.some(f => !f.set.weeks);
+
     return {
       status: 'refused',
       reason: fit.reason,
       message: fit.detail,
-      note: coreFits ? CORE_CURRICULUM.note : AI_MINI.note,
-      link: coreFits ? null : AI_MINI,
-      fixes: coreFits
-        ? [{ label: 'Switch to the Core Curriculum', set: { core: true } }]
-        : [],
+      note: inPlace ? null : AI_MINI.note,
+      link: inPlace ? null : AI_MINI,
+      fixes,
       suggestions: []
     };
   }
@@ -575,7 +585,8 @@ export function buildPlan(data, params) {
   // no date attached. Anchor each item to the week of the nearest in-class
   // lesson that precedes it in curriculum order: that is where it sits in the
   // sequence, and WHEN to assign it is the only thing a facilitator needs.
-  const homeworkByWeek = assignHomeworkToWeeks(fit.inClass, fit.homework, bodyWeeks);
+  const homeworkByWeek = assignHomeworkToWeeks(fit.inClass, fit.homework, bodyWeeks,
+                                              all.map(w => w.week));
   all.forEach(w => {
     w.homework = homeworkByWeek.get(w.week) || [];
     w.homeworkMinutes = sum(w.homework);
@@ -625,7 +636,7 @@ export function buildPlan(data, params) {
  * carries over for free: an item can never be assigned before the lesson it
  * depends on has been taught.
  */
-function assignHomeworkToWeeks(inClass, homework, bodyWeeks) {
+function assignHomeworkToWeeks(inClass, homework, bodyWeeks, allWeeks) {
   const byWeek = new Map();
   if (!homework.length) return byWeek;
 
@@ -643,7 +654,81 @@ function assignHomeworkToWeeks(inClass, homework, bodyWeeks) {
       current = weekOf.get(l.lesson_id);
     }
   }
+  return spreadHomework(byWeek, allWeeks || bodyWeeks.map(w => w.week));
+}
+
+/**
+ * Moves homework out of overloaded weeks and into the weeks after them.
+ *
+ * Forward only. An item may be set later than the lesson it follows, never
+ * earlier, so the prerequisite order assignHomeworkToWeeks establishes survives
+ * untouched. The last item in a week moves first, which keeps the item nearest
+ * its own lesson in place.
+ *
+ * A week may still exceed the cap in two cases, both deliberate: a single
+ * lesson longer than the cap, and the final week, which has nowhere left to
+ * spill to.
+ */
+function spreadHomework(byWeek, allWeeks) {
+  const weeks = [...allWeeks].sort((a, b) => a - b);
+  const load = w => (byWeek.get(w) || []).reduce((n, l) => n + l.minutes, 0);
+
+  for (let i = 0; i < weeks.length - 1; i++) {
+    const here = weeks[i];
+    const items = byWeek.get(here);
+    if (!items) continue;
+
+    while (items.length > 1 && load(here) > HOMEWORK_WEEK_CAP) {
+      const next = weeks[i + 1];
+      if (!byWeek.has(next)) byWeek.set(next, []);
+      byWeek.get(next).unshift(items.pop());
+    }
+    if (!items.length) byWeek.delete(here);
+  }
   return byWeek;
+}
+
+/**
+ * Alternatives that genuinely resolve a refusal, in the order a facilitator
+ * would prefer them: keep your season and drop content, then change course,
+ * then ask for more time.
+ *
+ * Each candidate is built for real. Nothing is offered on the strength of an
+ * estimate, because the previous version of this did exactly that and two of
+ * its three buttons left the refusal on screen when clicked.
+ */
+function findFixes(data, params, fit) {
+  const works = patch =>
+    buildPlan(data, { ...params, ...patch, probe: true }).status === 'ok';
+
+  const out = [];
+
+  // 1. Drop the AI topics. Worth four to five weeks in the Beginner course,
+  //    and it keeps the season the facilitator actually has.
+  if (!params.core && params.aiMode === 'integrated' && works({ aiMode: 'none' })) {
+    out.push({ label: 'Leave out the AI topics', set: { aiMode: 'none' } });
+  }
+
+  // 2. Switch to Core. A mode this tool builds itself, so it rebuilds in place
+  //    rather than sending anyone to the Technovation site to re-enter it all.
+  if (!params.core && works({ core: true })) {
+    out.push({ label: 'Switch to the Core Curriculum', set: { core: true } });
+  }
+
+  // 3. A few more weeks - but only a few. Offering "use 24 weeks" to someone
+  //    with ten is not an alternative, it is a different school year, and a
+  //    button that rewrites their season into a fiction is worse than the
+  //    sentence already telling them the number.
+  const STRETCH = 4;
+  const from = Math.max(fit.needWeeks || params.weeks + 1, params.weeks + 1);
+  for (let w = from; w <= Math.min(from + 2, params.weeks + STRETCH); w++) {
+    if (works({ weeks: w })) {
+      out.push({ label: `Use ${w} weeks`, set: { weeks: w } });
+      break;
+    }
+  }
+
+  return out;
 }
 
 const sum = ls => ls.reduce((n, l) => n + (l.minutes || 0), 0);
