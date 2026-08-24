@@ -8,25 +8,60 @@ let data = null;
 let current = null;      // last built plan, for export
 
 /**
- * Which lessons have been marked done.
+ * Which lessons have been marked done, per configuration.
  *
- * Keyed by lesson_id, never by week number. The plan is rebuilt on every
- * control change and week numbers move with it, so a tick stored against
- * "week 3" would silently reattach to whatever landed there. Stored against
- * the lesson, it follows the lesson.
+ * Within a configuration, ticks are keyed by lesson_id, never by week number.
+ * The plan is rebuilt on every control change and week numbers move with it,
+ * so a tick stored against "week 3" would silently reattach to whatever landed
+ * there. Stored against the lesson, it follows the lesson.
+ *
+ * Across configurations they are kept apart. Lesson IDs are shared between
+ * courses, so a single flat set let a mobile plan's ticks surface on a Core
+ * plan that happened to reuse the same IDs - progress the facilitator never
+ * made, on a course they had not taught.
  *
  * A week's checkbox is derived: it shows ticked when every lesson in that
  * week is done, and ticking it marks them all.
  */
-const DONE_KEY = 'crosswalk.done.v1';
-let done = new Set();
+const DONE_KEY = 'crosswalk.done.v2';
+
+/*
+ * What counts as a configuration: the controls that decide *which lessons*
+ * are in the plan. weeks and sessionLength are deliberately not part of it -
+ * they only repack the same lessons into a different shape, and wiping a
+ * term's progress because someone nudged the session length from 45 to 60
+ * would be the same bug in a new place.
+ */
+const configKey = p => [p.age, p.platform, p.aiMode,
+                        p.core ? 'core' : 'custom', p.builder || 'auto'].join('|');
+
+let store   = {};      // configKey -> lesson_id[]
+let done    = new Set();
+let doneKey = null;
+
 try {
-  done = new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]'));
+  const raw = JSON.parse(localStorage.getItem(DONE_KEY) || '{}');
+  // A v1 value was an array. Anything that is not a plain object is from a
+  // shape we no longer read, so start clean rather than guess at its owner.
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) store = raw;
 } catch { /* private mode, or corrupt value: start empty */ }
 
+/** Points `done` at the set belonging to these params. Cheap; safe to re-call. */
+function useConfig(params) {
+  const key = configKey(params);
+  if (key === doneKey) return;
+  doneKey = key;
+  done = new Set(store[key] || []);
+}
+
 function saveDone() {
+  if (!doneKey) return;
+  // Drop emptied configurations instead of leaving `[]` behind, so browsing
+  // through options does not slowly fill storage with nothing.
+  if (done.size) store[doneKey] = [...done];
+  else delete store[doneKey];
   try {
-    localStorage.setItem(DONE_KEY, JSON.stringify([...done]));
+    localStorage.setItem(DONE_KEY, JSON.stringify(store));
   } catch { /* nothing we can do, and not worth interrupting the user */ }
 }
 
@@ -325,11 +360,10 @@ function weekRow(w) {
   const cls = [w.workTime ? 'slack' : locked ? 'locked' : '',
                w.overrun ? 'over' : ''].filter(Boolean).join(' ');
 
-  // Plain language: what it needs, then how far over. "30m over your session"
-  // made the reader work out the total themselves.
+  // Just the overage. The week's own lesson minutes are already on the row, so
+  // restating the total here read as clutter.
   const over = w.overrun
-    ? `<span class="overage">Needs ${mins(w.minutes)} &mdash; ${mins(w.overrun)}
-         more than your session</span>` : '';
+    ? `<span class="overage">${mins(w.overrun)} more than your session</span>` : '';
 
   const inClass = w.lessons.length
     ? w.lessons.map(item).join('')
@@ -381,6 +415,7 @@ function update({ immediate = false, focus = false } = {}) {
   clearTimeout(timer);
   timer = setTimeout(() => {
     const params = readParams();
+    useConfig(params);           // before render: the ticks it draws are per-configuration
     current = buildPlan(data, params);
     render(current);
     if (focus) $('#out').focus();
