@@ -216,16 +216,29 @@ assert(s.weeks.some(w => w.lessons.length > 1 && w.minutes > 105),
 /* ------------------------------------------------- Work Time is not homework
    A Work Time row is a slot in the room, not a lesson with content: it has no
    url and nothing to read. Sending one home turns it into an empty line on the
-   plan. So it may stay in class or be dropped, never moved to homework - and
-   because Core is over half Work Time by minutes, a tight Core plan is where
-   the wrong behaviour showed up first. Dropping it before any real lesson is
-   the right order: cut the padding, then move the content. */
+   plan. So it may stay in class or be dropped, never moved to homework, and
+   dropping it before any real lesson is the right order: cut the padding, then
+   move the content.
+
+   Core used to be over half Work Time by minutes, which is where the wrong
+   behaviour first showed up. It is now a single junior row out of 1150
+   minutes, so senior Core has nothing droppable at all and only junior still
+   moves the lever. The coverage here is thinner than it looks: if that last
+   row goes, these assertions stop testing anything and the guard below is
+   what will say so. */
 
 const isSlot = l => !l.url;
 
-for (const [weeks, sessionLength] of [[14, 90], [16, 90], [18, 60], [20, 60]]) {
-  const c = plan({ age: 'senior', core: true, weeks, sessionLength });
-  const where = `core/${weeks}w/${sessionLength}m`;
+/* Senior Core stopped being the tight case: the course lost enough minutes
+   that it now fits at every week count it will build at, so it exercises the
+   "fits" path only. Junior Core is where the lever still moves, so the cases
+   below carry their age with them rather than assuming one. */
+for (const [age, weeks, sessionLength] of [
+  ['senior', 14, 90], ['senior', 16, 90], ['senior', 18, 60], ['senior', 20, 60],
+  ['junior', 12, 90], ['junior', 14, 75], ['junior', 16, 45]
+]) {
+  const c = plan({ age, core: true, weeks, sessionLength });
+  const where = `${age}/core/${weeks}w/${sessionLength}m`;
   assert(c.status === 'ok', `${where}: expected a plan, got ${c.reason || c.status}`);
   if (c.status !== 'ok') continue;
 
@@ -241,14 +254,16 @@ for (const [weeks, sessionLength] of [[14, 90], [16, 90], [18, 60], [20, 60]]) {
 }
 
 // The tight end must actually exercise the lever, or the assertions above pass
-// on a plan that never had to cut anything.
-const tight = plan({ age: 'senior', core: true, weeks: 14, sessionLength: 90 });
+// on a plan that never had to cut anything. If this starts failing, the
+// curriculum has changed size again - find the new tight case rather than
+// deleting the guard, which is the only thing keeping the loop honest.
+const tight = plan({ age: 'junior', core: true, weeks: 12, sessionLength: 90 });
 assert(tight.status === 'ok' && tight.dropped?.length > 0,
-  `core/14w/90m should be tight enough to drop something (got ` +
+  `junior/core/12w/90m should be tight enough to drop something (got ` +
   `${tight.status === 'ok' ? 'no drops' : tight.reason}) - if it is not, the ` +
   'Work Time assertions above are not testing anything');
 assert((tight.dropped || []).every(isSlot),
-  'core/14w/90m dropped a real lesson before exhausting the Work Time rows');
+  'junior/core/12w/90m dropped a real lesson before exhausting the Work Time rows');
 
 
 /* ------------------------------------------------------------------ report */

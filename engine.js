@@ -291,6 +291,29 @@ export function fitToBudget(lessons, weeks, sessionLength) {
     homework.push(...alwaysHome);
   }
 
+  // Lever 1b. Padding leaves the room before content does.
+  //
+  // A Work Time row is a slot, not a lesson. If the plan is over budget it is
+  // absurd for an optional Work Time block to hold its place in the room while
+  // a real lesson is pushed out to homework - which is exactly what happened
+  // while this ran after Lever 2, because Lever 2 got the plan under budget and
+  // Lever 3 never fired. Weeks 8, 12 and 13 of a junior mobile plan held
+  // optional Work Time in class while three real lessons were set as homework
+  // in those same weeks.
+  //
+  // Only optional Work Time goes. A Work Time row marked non-optional is
+  // someone saying the build session matters more than the content around it,
+  // and that judgement is theirs to make in the sheet.
+  if (packedCount(inClass) > bodyWeeksAvailable) {
+    const padding = inClass.filter(l => isWorkTime(l) && l.optional)
+                           .sort((a, b) => b.minutes - a.minutes);
+    for (const l of padding) {
+      if (packedCount(inClass) <= bodyWeeksAvailable) break;
+      inClass = inClass.filter(x => x !== l);
+      dropped.push(l);
+    }
+  }
+
   // Lever 2. Push to homework, most home-suitable first. Nothing is lost.
   // Lessons marked essential are held back: they are the Core-equivalent
   // spine, and a team that cannot work outside class still has to cover them.
@@ -328,9 +351,11 @@ export function fitToBudget(lessons, weeks, sessionLength) {
       inClass = inClass.filter(x => x !== l);
       dropped.push(l);
     }
-    if (dropped.length) {
-      notes.push(`${dropped.length} optional lesson(s) dropped (${fmt(sum(dropped))}).`);
-    }
+  }
+
+  // One note for both drop passes - Lever 1b and Lever 3 both fill `dropped`.
+  if (dropped.length) {
+    notes.push(`${dropped.length} optional lesson(s) dropped (${fmt(sum(dropped))}).`);
   }
 
   // Task 14. All three levers spent and still over: refuse, and say by how much.
