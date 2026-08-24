@@ -47,6 +47,9 @@ const MIN_SLACK_BLOCK = 20;
  * showcase, per technovationchallenge.org/ai-mini-technovation.
  */
 const CORE_CURRICULUM = {
+  // Kept for reference. The over-budget refusal no longer links out to it -
+  // Core is a mode of this tool, so it offers a switch that rebuilds the plan
+  // in place instead. Only `note` is read today.
   url: 'https://technovationchallenge.org/courses/technovation-girls-core-curriculum/',
   label: 'See the Core Curriculum',
   note: 'The Core Curriculum is built for a shorter season and would fit.'
@@ -59,6 +62,18 @@ const AI_MINI = {
         'showcase. A free trial run of the full programme, and a way to ' +
         'explore project-based AI curriculum with your students.'
 };
+
+// Beginner lessons are shorter and more numerous, so a long session packs
+// three unrelated topics into one block. 8-12 year olds do better with a
+// shorter teaching stretch; the remainder of the session is break and setup.
+export const BEGINNER_TEACHING_CAP = 105;
+
+function teachingCap(lessons, sessionLength) {
+  const course = lessons.length ? lessons[0].course : null;
+  return course === 'beginner'
+    ? Math.min(sessionLength, BEGINNER_TEACHING_CAP)
+    : sessionLength;
+}
 
 
 /* ------------------------------------------------------------------ step 1 */
@@ -250,6 +265,18 @@ export function fitToBudget(lessons, weeks, sessionLength) {
   const homework = [];
   const dropped = [];
 
+  // Some lessons are better done alone than in a room - concept explainers
+  // with no hands-on activity. Moving them out first frees class time for
+  // the work that genuinely needs a facilitator. The isWorkTime guard is the
+  // same rule Lever 2 applies below: a working session sent home is an empty
+  // line on the plan, whatever flag put it there.
+  const goesHome = l => l.home_only && !isWorkTime(l);
+  const alwaysHome = inClass.filter(goesHome);
+  if (alwaysHome.length) {
+    inClass = inClass.filter(l => !goesHome(l));
+    homework.push(...alwaysHome);
+  }
+
   // Lever 2. Push to homework, most home-suitable first. Nothing is lost.
   // Lessons marked essential are held back: they are the Core-equivalent
   // spine, and a team that cannot work outside class still has to cover them.
@@ -257,6 +284,7 @@ export function fitToBudget(lessons, weeks, sessionLength) {
     const cap = total * HOMEWORK_CAP;
     const candidates = inClass
       .filter(l => !l.essential)          // Core-equivalent lessons stay in class  
+      .filter(l => !isWorkTime(l))        // sending a working session home leaves nothing
       .map(l => ({ l, score: homeworkScore(l) }))
       .sort((a, b) => b.score - a.score || b.l.minutes - a.l.minutes)
       .map(x => x.l);
@@ -312,6 +340,7 @@ export function fitToBudget(lessons, weeks, sessionLength) {
   const restored = [];
   for (let i = homework.length - 1; i >= 0; i--) {
     const candidate = homework[i];
+    if (candidate.home_only) continue;   // never belonged in class in the first place
     if (packedCount([...inClass, candidate]) <= bodyWeeksAvailable) {
       inClass.push(candidate);
       homework.splice(i, 1);
@@ -335,6 +364,19 @@ export function fitToBudget(lessons, weeks, sessionLength) {
     ok: true, inClass, homework, dropped, locked, tailCount,
     notes, homeworkPerWeek
   };
+}
+
+/**
+ * A Work Time row is a slot in the room, not a lesson with content. Sending
+ * one home converts it into an empty line on the plan - the facilitator loses
+ * the working session and gains nothing to do. They stay in class, or Lever 3
+ * drops them, which is the right order: cut the padding before moving content.
+ *
+ * The URL test identifies them exactly - every real lesson has a link and no
+ * Work Time row does - and the title test keeps it honest if that ever slips.
+ */
+function isWorkTime(l) {
+  return !l.url || /^work time/i.test(l.title);
 }
 
 /**
@@ -366,6 +408,7 @@ function isDependedOn(lesson, others, keptIds) {
  * alternative, splitting it, would misrepresent the curriculum.
  */
 function packWeeks(ordered, sessionLength, startWeek = 1) {
+  const packTo = teachingCap(ordered, sessionLength);
   const weeks = [];
   let current = { week: startWeek, lessons: [], minutes: 0 };
 
@@ -381,7 +424,7 @@ function packWeeks(ordered, sessionLength, startWeek = 1) {
       current = { week: startWeek + weeks.length, lessons: [], minutes: 0 };
       continue;
     }
-    if (current.minutes + l.minutes > sessionLength && current.lessons.length) {
+    if (current.minutes + l.minutes > packTo && current.lessons.length) {
       weeks.push(current);
       current = { week: startWeek + weeks.length, lessons: [], minutes: 0 };
     }
@@ -488,12 +531,21 @@ export function buildPlan(data, params) {
     const coreFits = !params.core &&
                      buildPlan(data, { ...params, core: true }).status === 'ok';
 
+    // Core is a mode this tool builds itself, and coreFits has already proved
+    // it fits these same weeks and minutes - so offer it as a switch that
+    // rebuilds the plan in place. Sending someone to the Technovation site
+    // instead would make them re-enter everything to see a plan we can
+    // already draw. AI Mini is a different programme hosted elsewhere, so
+    // that one stays a link.
     return {
       status: 'refused',
       reason: fit.reason,
       message: fit.detail,
-      link: coreFits ? CORE_CURRICULUM : AI_MINI,
-      fixes: [],
+      note: coreFits ? CORE_CURRICULUM.note : AI_MINI.note,
+      link: coreFits ? null : AI_MINI,
+      fixes: coreFits
+        ? [{ label: 'Switch to the Core Curriculum', set: { core: true } }]
+        : [],
       suggestions: []
     };
   }

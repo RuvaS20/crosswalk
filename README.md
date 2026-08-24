@@ -115,9 +115,25 @@ exactly one week, no lesson is both taught and set, each week's reported
 `homeworkMinutes` matches the lessons behind it, and nothing is set for home before the
 lesson it depends on has been taught.
 
+Every combination also asserts that nothing without a URL is ever sent home — that is
+what identifies a Work Time row — and that no real lesson is dropped while a Work Time
+row still sits in class. A separate block builds four tight Core plans and checks each
+Work Time row lands either in class or in "Not included", never under "At home".
+
 Four further checks guard the AI in Action Junior/Senior split, which is driven by
 division rather than by choice group — including that an 8–12 team taking that course
 follows the junior track instead of silently losing two lessons.
+
+`qa-check.py` covers the data rather than the engine, including that every Work Time
+row is `optional` — since Work Time is never sent home, dropping it is the only way the
+engine can reclaim its slot, and a non-optional one occupies a week no matter how tight
+the plan gets.
+
+Assertions are mutation-tested. Two in this suite previously could not fail: the
+beginner cap check compared against a literal that had drifted from the constant, and
+a Work Time check was written against Core, where every optional row is Work Time and
+the condition was vacuous. Both now import the value or live in the general sweep. When
+adding an assertion, break the code it guards and confirm it actually fails.
 
 ## Design
 
@@ -279,22 +295,43 @@ headings, Poppins for body.
 - **Nothing required is ever dropped.** Only lessons marked optional, and only after
   moving work out of class has not been enough.
 - **Protecting the essential lessons makes tight schedules refuse more often.**
-  Removing 39 lessons from the homework pool takes away the engine's main lever on its
-  most important content. That's deliberate — a refusal naming a workable week count is
-  more useful than a plan that quietly sets Paper Prototypes as homework.
+  Removing 65 non-locked lessons from the homework pool takes away the engine's main
+  lever on its most important content. That's deliberate — a refusal naming a workable
+  week count is more useful than a plan that quietly sets Paper Prototypes as
+  homework.
 - **The 8–12 course** uses Scratch and App Inventor, so the mobile/web choice is
   disabled for that age group.
 - **Core Curriculum is a fifth course**, selectable when a facilitator is short on
-  time. All 27 of its rows are `essential`, so nothing goes home — it's already the
-  stripped-back version. That leaves two levers, reserve the tail and drop optional
-  work time, so Core needs 17 weeks at 45 or 60 minutes, or 13 at 90, and refuses
-  below that.
+  time. 18 of its 27 rows are `essential` and the other 9 are Work Time, so nothing it
+  contains is a homework candidate — it's already the stripped-back version. That
+  leaves two levers, reserve the tail and drop Work Time, so Core needs 17 weeks at 45
+  or 60 minutes, 13 at 90, 10 at 120, and refuses below that. The 11h 30m of Work Time
+  is the whole of its slack.
+- **Beginner weeks cap teaching at 1h 45m.** The 8–12 course has shorter, more
+  numerous lessons than the others — median 45 minutes against 60 — so a two-hour
+  session packed three unrelated topics into one block. Beginner plans stop combining
+  lessons past `BEGINNER_TEACHING_CAP` regardless of session length; the remaining time
+  is break and setup. A single lesson longer than the cap still gets its own week, and
+  overrun is still measured against the real session length, so a 120-minute lesson in
+  a 120-minute session is not flagged. Other courses are unaffected.
+- **Work Time is never sent home.** A Work Time row is a slot in the room, not a lesson
+  with content — it has no URL and nothing to read. Sending one home turns it into an
+  empty line on the plan: the facilitator loses the working session and gains nothing
+  to do. So Work Time stays in class or gets dropped, which puts the levers in the
+  right order — cut the padding, then move the content. Core is over half Work Time by
+  minutes, which is where the wrong behaviour showed up first.
+- **An over-budget refusal switches to Core in place.** Core is a mode of this tool,
+  and the refusal has already proved it fits the same weeks and minutes before offering
+  it, so the button changes the curriculum selector and redraws rather than opening
+  technovationchallenge.org and making someone re-enter their season. AI Mini is a
+  different programme hosted elsewhere, so that one stays a link.
 
 ## Data model notes
 
 The Google Sheet is the source of truth for *structure*; the live site remains
-authoritative for lesson *content*. Four columns are hand-authored and exist nowhere
-on the website: `depends_on`, `optional`, `deadline_locked`, `choice_group`.
+authoritative for lesson *content*. Five columns are hand-authored and exist nowhere
+on the website: `depends_on`, `optional`, `deadline_locked`, `choice_group`,
+`home_only`.
 
 Things learned the hard way, worth not relearning:
 
@@ -316,12 +353,27 @@ Things learned the hard way, worth not relearning:
   renaming category values means changing that line in the same commit.
 - **`essential` marks a lesson as in-class only.** It maps to Technovation's Core
   Curriculum: if a lesson appears there, its equivalent in every other course carries
-  the flag. `deadline_locked` rows are already excluded from homework, so only the 39
+  the flag. `deadline_locked` rows are already excluded from homework, so only the 65
   non-locked equivalents needed it. When the curriculum changes, re-derive the flag
   from the Core course page rather than editing rows individually — it's a mapping, not
   a judgement call.
+- **`home_only` marks a lesson better done alone than in a room** — a concept
+  explainer with no hands-on activity. Those leave class before the budget is even
+  checked, so they go home whether or not the plan is tight, and the packer will not
+  pull them back when it finds spare capacity. It overrides `essential`, so a row
+  carrying both still goes home; only Work Time is exempt, because sending a slot home
+  leaves nothing. Note that `homeworkScore` independently penalises the `AI` category
+  by −2 as "needs the room", so flagging an AI lesson `home_only` sets the two rules
+  against each other — the sheet wins, but it is worth knowing which is being overruled.
+- **New sheet columns do not appear on their own.** They must be added to the published
+  field list in `Crosswalk.gs` *and* the deployment redeployed. `url_junior`,
+  `essential`, `home_only` and the `core` course each needed this.
 - **The deadline lives in two places** — `engine.js` and the publish payload in
   `Crosswalk.gs`. Season rollover has to change both.
+- **`packWeeks` uses two limits, deliberately.** `sessionLength` decides whether a
+  single lesson overruns; `packTo` decides whether two lessons can share a week. They
+  differ only for the Beginner course. Collapsing them back into one variable would
+  either remove the cap or flag long locked lessons as overrunning when they fit fine.
 
 ## Session log — August 2026
 
@@ -362,8 +414,40 @@ indistinguishable from a manual publish.
 **Health check.** `Crosswalk → Health check` reports triggers, output folder, live file
 and its age, last publish, and whether the drift baseline matches the sheet.
 
+**Beginner teaching cap.** `packWeeks` gained a second limit so the 8–12 course stops
+combining lessons past `BEGINNER_TEACHING_CAP` however long the session runs, while
+`sessionLength` still decides what counts as an overrun.
+
+**`home_only`.** A new sheet column for lessons better done alone than in a room. They
+leave class before the budget check rather than as a lever, so they go home whether or
+not the plan is tight, and the pull-back loop no longer restores them — without that
+guard a loose plan quietly put them straight back in class.
+
+**Work Time is no longer a homework candidate.** Sending a Work Time row home converted
+a working session into an empty line on the plan. Lever 2 now skips them and so does
+the `home_only` path, which bypasses Lever 2 entirely; they stay in class or Lever 3
+drops them. `qa-check.py` gained a matching rule, since a Work Time row that is not
+`optional` can now never be removed at all — `AIA-028` is the one row failing it.
+
+**The Core route switches in place.** The over-budget refusal used to link out to
+technovationchallenge.org, which meant re-entering the season on another site to see a
+plan this tool can already draw. It now offers a button that sets the curriculum
+selector to Core and redraws. `setParams` had no `core` branch, and the refusal note
+was read off `link.note`, so both needed changing with it.
+
 ## Still open
 
+- **A `home_only` lesson moves silently when the plan is loose.** The
+  "N lesson(s) moved to out-of-class work" note is written inside Lever 2's branch, so
+  a plan with room to spare sends those lessons home and says nothing about it. A
+  facilitator with a roomy schedule sees lessons vanish from class with no explanation.
+  Either hoist the note or give `home_only` its own wording — it is user-facing copy,
+  so it needs a decision rather than a patch.
+- **`AIA-028` is a Work Time row that is not `optional`.** Since Work Time is never
+  sent home, dropping it is the only way its slot can be reclaimed, so as it stands it
+  occupies a week in every AI in Action plan. `qa-check.py` fails on it. It changes no
+  current plan's week count, so it is a latent trap rather than a live bug — but it is
+  a one-cell fix in the sheet.
 - **Homework distribution is uneven.** Sequence-anchoring is honest but front-loads:
   senior web at 16 × 45 puts 540 minutes in week 1 and leaves 10 of the 16 weeks empty.
   Either spread each week's overflow forward, or cap per-week homework at the session

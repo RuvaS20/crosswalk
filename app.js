@@ -97,6 +97,7 @@ function readParams() {
 function setParams(patch) {
   if (patch.age)      $('#age').value = patch.age;
   if (patch.platform) $('#platform').value = patch.platform;
+  if (patch.core)     $('#mode').value = 'core';   // syncSentence hides the custom clause
   if (patch.aiMode === 'focused') $('#mode').value = 'ai';
   else if (patch.aiMode)          { $('#mode').value = 'custom';
                                     $('#aiMode').value = patch.aiMode; }
@@ -160,11 +161,12 @@ function render(plan) {
 
   if (plan.status === 'refused') {
     $('#printhead').innerHTML = '';
+    const note = plan.note || (plan.link && plan.link.note);
     out.innerHTML = `
       <div class="nofit">
         <h2>That's a tight fit</h2>
         <p>${esc(plan.message)}</p>
-        ${plan.link ? `<p class="alt-route">${esc(plan.link.note)}</p>` : ''}
+        ${note ? `<p class="alt-route">${esc(note)}</p>` : ''}
         ${(plan.fixes || []).length || plan.link ? `<div class="fixes">${plan.link
             ? `<a class="alt" href="${esc(plan.link.url)}" target="_blank"
                   rel="noopener">${esc(plan.link.label)}</a>` : ''}${
@@ -211,7 +213,7 @@ function render(plan) {
         <div class="deadline">Submissions close
           <b class="mono">${esc(longDate(plan.deadline))}</b></div>
         ${plan.params.age === 'beginner' && plan.params.aiMode === 'focused' ? `
-          <p class="head-note">Technovation recommends the 'AI in Action' course for ages 13–18. Use your judgment with younger groups.</p>` : ''}
+          <p class="head-note">Technovation recommends the 'AI in Action' course for ages 13–18. For younger groups, the beginner curriculum has AI included.</p>` : ''}
       </div>
 
       <table class="plan">

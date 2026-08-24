@@ -19,6 +19,12 @@ for l in L:
     check(bool(l['title'].strip()), f"{l['lesson_id']} blank title")
     check(bool(l['category']), f"{l['lesson_id']} blank category")
     check(wt or bool(l['url']), f"{l['lesson_id']} no url")
+    # Work Time is never sent home (it would leave an empty line), so dropping
+    # it is the only way the engine can reclaim its slot. Not optional means
+    # it occupies a week no matter how tight the plan gets.
+    if wt and not l['deadline_locked']:
+        check(l['optional'],
+              f"{l['lesson_id']} is Work Time but not optional - it can never be removed")
     for p in l['depends_on']:
         check(p in by, f"{l['lesson_id']} -> {p} does not exist")
         dep = by.get(p)

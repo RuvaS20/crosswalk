@@ -10,7 +10,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { buildPlan } from './engine.js';
+import { buildPlan, BEGINNER_TEACHING_CAP } from './engine.js';
 
 const data = JSON.parse(readFileSync(new URL('./curriculum.json', import.meta.url)));
 
@@ -99,6 +99,25 @@ for (const age of ['beginner', 'junior', 'senior']) {
             `${where}: week ${over[0]?.week} combines ${over[0]?.lessons.length} ` +
             `lessons into ${over[0]?.minutes} min in a ${sessionLength} min session`);
 
+          // A Work Time row is a slot in the room, not a lesson with content.
+          // Sent home it becomes an empty line on the plan - the facilitator
+          // loses the working session and gains nothing to do. Every real
+          // lesson carries a url; no Work Time row does.
+          const homeSlot = p.homework.filter(l => !l.url);
+          assert(homeSlot.length === 0,
+            `${where}: ${homeSlot[0]?.lesson_id} "${homeSlot[0]?.title}" was sent ` +
+            `home, but it has no content - only a slot in the room`);
+
+          // Padding goes before content. While a Work Time row still sits in
+          // class, no real lesson should have been dropped to make room.
+          // Asserted here rather than against Core, where every optional row
+          // is Work Time and the check could never fail.
+          const slotKept = p.weeks.flatMap(w => w.lessons).some(l => !l.url);
+          const realCut = p.dropped.filter(l => l.url);
+          assert(!(slotKept && realCut.length > 0),
+            `${where}: dropped ${realCut[0]?.lesson_id} (${realCut[0]?.minutes} min) ` +
+            `while a Work Time row still sat in class`);
+
           // An over-long lesson must always declare itself, so the UI can warn.
           const silent = p.weeks.filter(w => w.minutes > sessionLength && !w.overrun);
           assert(silent.length === 0,
@@ -165,6 +184,71 @@ for (const age of ['beginner', 'junior', 'senior']) {
     }
   }
 }
+
+
+/* --------------------------------------------------- beginner teaching cap
+   The 8-12 course is capped at BEGINNER_TEACHING_CAP minutes of teaching in a
+   week regardless of how long the session is, because attention rather than
+   timetable is the binding constraint at that age. The cap has to hold when
+   the session is longer than it, and must not apply to anyone else - a senior
+   group with a 120 minute session should get 120 minutes of lessons. */
+
+const b = buildPlan(data, { age: 'beginner', platform: 'mobile', aiMode: 'integrated',
+                            weeks: 20, sessionLength: 120 });
+// Read the cap from the engine rather than repeating it: the literal here sat
+// at 90 while the constant moved to 105, so the test checked a number the
+// engine no longer used. `b.weeks?.` because a refusal has no weeks at all,
+// and that should fail as an assertion, not crash the whole run.
+assert(b.weeks?.every(w => w.minutes <= BEGINNER_TEACHING_CAP ||
+                           w.lessons.length === 1),
+  `beginner weeks should not combine lessons past ${BEGINNER_TEACHING_CAP} ` +
+  `minutes (got ${b.status === 'refused' ? 'a refusal: ' + b.reason : 'a bad week'})`);
+
+const s = buildPlan(data, { age: 'senior', platform: 'mobile', aiMode: 'integrated',
+                            weeks: 20, sessionLength: 120 });
+// Has to look for a week that *combines* lessons past 105. Checking only
+// `w.minutes > 105` passes even when the cap is leaked to every course, because
+// a single 135 min lesson still gets its own week and clears 105 on its own.
+assert(s.weeks.some(w => w.lessons.length > 1 && w.minutes > 105),
+  'the cap must not leak into other courses');
+
+
+/* ------------------------------------------------- Work Time is not homework
+   A Work Time row is a slot in the room, not a lesson with content: it has no
+   url and nothing to read. Sending one home turns it into an empty line on the
+   plan. So it may stay in class or be dropped, never moved to homework - and
+   because Core is over half Work Time by minutes, a tight Core plan is where
+   the wrong behaviour showed up first. Dropping it before any real lesson is
+   the right order: cut the padding, then move the content. */
+
+const isSlot = l => !l.url;
+
+for (const [weeks, sessionLength] of [[14, 90], [16, 90], [18, 60], [20, 60]]) {
+  const c = plan({ age: 'senior', core: true, weeks, sessionLength });
+  const where = `core/${weeks}w/${sessionLength}m`;
+  assert(c.status === 'ok', `${where}: expected a plan, got ${c.reason || c.status}`);
+  if (c.status !== 'ok') continue;
+
+  assert(c.homework.filter(isSlot).length === 0,
+    `${where}: a Work Time row was sent home`);
+
+  // Every slot is accounted for: in class or removed, nowhere else.
+  const seen = [...c.weeks.flatMap(w => w.lessons), ...c.homework, ...c.dropped];
+  const slots = seen.filter(isSlot).length;
+  const placed = c.weeks.flatMap(w => w.lessons).filter(isSlot).length +
+                 c.dropped.filter(isSlot).length;
+  assert(slots === placed, `${where}: ${slots - placed} Work Time row(s) unaccounted for`);
+}
+
+// The tight end must actually exercise the lever, or the assertions above pass
+// on a plan that never had to cut anything.
+const tight = plan({ age: 'senior', core: true, weeks: 14, sessionLength: 90 });
+assert(tight.status === 'ok' && tight.dropped?.length > 0,
+  `core/14w/90m should be tight enough to drop something (got ` +
+  `${tight.status === 'ok' ? 'no drops' : tight.reason}) - if it is not, the ` +
+  'Work Time assertions above are not testing anything');
+assert((tight.dropped || []).every(isSlot),
+  'core/14w/90m dropped a real lesson before exhausting the Work Time rows');
 
 
 /* ------------------------------------------------------------------ report */
