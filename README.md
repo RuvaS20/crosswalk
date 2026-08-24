@@ -20,6 +20,8 @@ Live at https://curriculum-crosswalk.netlify.app
 | `config.js` | Your Apps Script endpoint. **The one file you must edit** |
 | `curriculum.json` | Snapshot of the curriculum, used if the endpoint is unreachable |
 | `engine.test.mjs` | Test suite. Standalone — no framework, no `package.json` |
+| `qa-check.py` | Data checks — structure, link pairing, choice groups, flags |
+| `plan-matrix.mjs` | Feasibility grid and anomaly report across every configuration |
 | `.github/workflows/refresh-curriculum.yml` | Daily refresh of the fallback snapshot |
 
 ## Run it locally
@@ -104,7 +106,8 @@ Refresh before running the tests, or they check stale data.
 node engine.test.mjs
 ```
 
-A 288-combination sweep asserts that plans never exceed the weeks available, that the
+A sweep of every age, platform, AI mode, week count and session length — 2,537
+assertions — checks that plans never exceed the weeks available, that the
 packer never combines lessons past the session length, that a lesson longer than one
 session is flagged with `overrun` rather than silently overflowing, that no lesson is
 scheduled twice, that the deadline is carried through, and that every refusal explains
@@ -117,8 +120,15 @@ lesson it depends on has been taught.
 
 Every combination also asserts that nothing without a URL is ever sent home — that is
 what identifies a Work Time row — and that no real lesson is dropped while a Work Time
-row still sits in class. A separate block builds four tight Core plans and checks each
-Work Time row lands either in class or in "Not included", never under "At home".
+row still sits in class. A separate block builds seven tight Core plans across two age
+groups and checks each Work Time row lands either in class or in "Not included", never
+under "At home".
+
+That block carries a guard asserting its tightest case actually drops something.
+Core used to be over half Work Time by minutes; it is now a single junior row out of
+1,150, so senior Core has nothing droppable and only junior still moves the lever. If
+the guard fires, the curriculum has changed size again — find the new tight case rather
+than deleting the guard, which is the only thing keeping that block honest.
 
 Four further checks guard the AI in Action Junior/Senior split, which is driven by
 division rather than by choice group — including that an 8–12 team taking that course
@@ -250,10 +260,17 @@ headings, Poppins for body.
   and the engine swaps them by age. Rows that exist under only one division — Lean
   Canvas, User Adoption Plan — are left alone, since rewriting them would 404.
 - **Progress is tracked and saved.** Each week carries a checkbox; ticking it marks
-  every lesson in that week. State lives in `localStorage` under `crosswalk.done.v1`,
+  every lesson in that week. State lives in `localStorage` under `crosswalk.done.v2`,
   **keyed by `lesson_id` and never by week number** — the plan is rebuilt on every
   control change and weeks move with it, so a tick stored against "week 3" would
-  silently reattach to whatever landed there. The footer counts weeks complete;
+  silently reattach to whatever landed there. Ticks are also **scoped per
+  configuration**: lesson IDs are shared between courses, so one flat set let a mobile
+  plan's ticks surface on a Core plan reusing the same IDs. A configuration is age,
+  platform, AI mode, Core and builder — the controls that decide *which* lessons appear.
+  Weeks and session length are deliberately excluded, since they only repack the same
+  lessons and wiping a term's progress for nudging session length would be the same bug
+  in a new place. v1 ticks cannot be attributed to a configuration, so they are not
+  migrated. The footer counts weeks complete;
   work-time weeks hold no lessons to mark, so they show a dash and are left out of
   the total rather than making it unreachable.
 - **Print** produces a compact one-page planner: 9pt body, 4px cell padding, stated
@@ -285,7 +302,10 @@ headings, Poppins for body.
 
 ## Notes on behaviour
 
-- **Below 10 weeks the planner refuses** and says what would work instead.
+- **Below 10 weeks, or below 30-minute sessions, the planner refuses** and says what
+  would work instead. Both floors are single constants — `MIN_WEEKS` and `MIN_SESSION`
+  — read by the guard, the refusal copy and the `min` attributes in `index.html`, so
+  the number cannot drift between them again.
 - **"Not included" is hidden under Core.** Everything Core drops is Work Time — the
   only optional rows it has — so the section offered to add back blank time, listed
   several times over.
@@ -302,11 +322,12 @@ headings, Poppins for body.
 - **The 8–12 course** uses Scratch and App Inventor, so the mobile/web choice is
   disabled for that age group.
 - **Core Curriculum is a fifth course**, selectable when a facilitator is short on
-  time. 18 of its 27 rows are `essential` and the other 9 are Work Time, so nothing it
+  time. 18 of its 19 rows are `essential` and the last is Work Time, so nothing it
   contains is a homework candidate — it's already the stripped-back version. That
-  leaves two levers, reserve the tail and drop Work Time, so Core needs 17 weeks at 45
-  or 60 minutes, 13 at 90, 10 at 120, and refuses below that. The 11h 30m of Work Time
-  is the whole of its slack.
+  leaves two levers, reserve the tail and drop Work Time, so senior Core needs 17 weeks
+  at 45 or 60 minutes, 13 at 90, 10 at 120, and refuses below that. Its slack is now a
+  single 60-minute row: eight Work Time lessons marked `division: both` were removed
+  from the sheet, which is why senior Core no longer drops anything at any week count.
 - **Beginner weeks cap teaching at 1h 45m.** The 8–12 course has shorter, more
   numerous lessons than the others — median 45 minutes against 60 — so a two-hour
   session packed three unrelated topics into one block. Beginner plans stop combining
@@ -318,8 +339,16 @@ headings, Poppins for body.
   with content — it has no URL and nothing to read. Sending one home turns it into an
   empty line on the plan: the facilitator loses the working session and gains nothing
   to do. So Work Time stays in class or gets dropped, which puts the levers in the
-  right order — cut the padding, then move the content. Core is over half Work Time by
+  right order — cut the padding, then move the content. Core was over half Work Time by
   minutes, which is where the wrong behaviour showed up first.
+- **Padding leaves the room before content does.** Dropping Work Time is now its own
+  pass (Lever 1b) ahead of the homework lever, not after it. Running it last meant
+  Lever 2 got the plan under budget and Lever 3 never fired, so an optional Work Time
+  block held its place in class while a real lesson was pushed home in the same week.
+  That happened in 892 week-slots across the 3,240 configurations tested; it is now
+  zero, and no plan changed feasibility as a result. Only *optional* Work Time goes — a
+  non-optional row is someone saying the build session matters more than the content
+  around it, and that judgement belongs in the sheet.
 - **An over-budget refusal switches to Core in place.** Core is a mode of this tool,
   and the refusal has already proved it fits the same weeks and minutes before offering
   it, so the button changes the curriculum selector and redraws rather than opening
@@ -435,6 +464,39 @@ plan this tool can already draw. It now offers a button that sets the curriculum
 selector to Core and redraws. `setParams` had no `core` branch, and the refusal note
 was read off `link.note`, so both needed changing with it.
 
+**Work Time drops before homework moves.** The Work Time drop became its own pass
+ahead of Lever 2 rather than after it. Running it last meant Lever 2 got the plan under
+budget and Lever 3 never fired, leaving optional Work Time in class while a real lesson
+went home the same week — 892 week-slots across 3,240 configurations, now zero, with no
+plan changing feasibility.
+
+**Eight Work Time rows removed from Core.** All `division: both`. Core is now 19 rows
+with a single 60-minute Work Time row, so senior Core has nothing droppable at any week
+count and the Work Time test block had to retarget to junior, which still moves the
+lever. Minimum week counts are unchanged.
+
+**Progress ticks scoped per configuration.** Lesson IDs are shared between courses, so
+the flat `crosswalk.done.v1` set let a mobile plan's ticks appear on a Core plan reusing
+the same IDs — progress nobody made, on a course nobody taught. Now `v2`, keyed by
+configuration. Weeks and session length are excluded from that key on purpose.
+
+**Input floors match the guards.** The minutes field allowed 15 while the engine
+refused below 30, and the refusal quoted a third number ("Most lessons run for 1h").
+`MIN_SESSION` is now a constant like `MIN_WEEKS`, read by the guard, the copy and the
+`min` attributes. The weeks field allowed 1 against a floor of 10.
+
+**Two dead refusal branches deleted.** `no_lessons` and `tail` were unreachable across
+638,550 combinations — weeks 10–52, sessions 30–300, every course and builder.
+`filterLessons` never returns empty, and the real locked tail peaks at 6 weeks against
+the 10-week floor. Note that a naive minutes-based estimate suggests tails up to 16
+weeks and looks like a live guard; choice-group resolution trims the set before
+`fitToBudget` sees it. The `no_lessons` copy explaining that Beginner uses Scratch had
+never been reachable by anyone.
+
+**Overage copy trimmed.** A week over budget said "Needs 1h 15m — 30m more than your
+session"; the week's own minutes are already on the row, so it now says only the
+overage.
+
 ## Still open
 
 - **A `home_only` lesson moves silently when the plan is loose.** The
@@ -443,19 +505,14 @@ was read off `link.note`, so both needed changing with it.
   facilitator with a roomy schedule sees lessons vanish from class with no explanation.
   Either hoist the note or give `home_only` its own wording — it is user-facing copy,
   so it needs a decision rather than a patch.
-- **`AIA-028` is a Work Time row that is not `optional`.** Since Work Time is never
-  sent home, dropping it is the only way its slot can be reclaimed, so as it stands it
-  occupies a week in every AI in Action plan. `qa-check.py` fails on it. It changes no
-  current plan's week count, so it is a latent trap rather than a live bug — but it is
-  a one-cell fix in the sheet.
 - **Homework distribution is uneven.** Sequence-anchoring is honest but front-loads:
   senior web at 16 × 45 puts 540 minutes in week 1 and leaves 10 of the 16 weeks empty.
   Either spread each week's overflow forward, or cap per-week homework at the session
   length.
-- **Minimum viable week counts have gone up** and haven't been re-measured since
-  `essential` landed. Worth running the sweep and recording the shortest schedule that
-  works for each configuration, so the refusal messages can name a number that's
-  actually achievable.
+- **Refusal messages still don't name an achievable week count.** `plan-matrix.mjs`
+  now measures the shortest season that fits for every configuration, but the refusals
+  don't read from it — they say how many weeks the current plan needs, not what a
+  facilitator could realistically run.
 - **Shareable plan links.** Encode the parameters in the query string. The engine is
   already a pure function of them, so this is cheap.
 - **`needLength` is now dead weight.** `fitToBudget` still computes it, but nothing
@@ -466,7 +523,7 @@ was read off `link.note`, so both needed changing with it.
   that the chip row is gone. The printed header states the configuration; the screen
   does not, once the form scrolls away.
 - **Session length is a stepped control dressed as a continuous one.** The minutes
-  field steps by 5 from 15 to 300, but extra minutes only change the plan when they
+  field steps by 5 from 30 to 300, but extra minutes only change the plan when they
   cross a *pairing* threshold — the point where two consecutive lessons fit in one
   week. Senior mobile durations cluster at 30, 45 and 60, so 30 and 45 produce an
   identical plan (20 lessons in class either way), and the real steps are 60 (two 30s

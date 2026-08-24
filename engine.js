@@ -19,6 +19,10 @@
  */
 
 export const MIN_WEEKS = 10;
+// The shortest session the packer will plan for. The number belongs here and
+// nowhere else: the input floor in index.html and the refusal copy below both
+// read from it, so they cannot drift apart again.
+export const MIN_SESSION = 30;
 export const DEADLINE = '2027-05-05';
 
 /**
@@ -261,16 +265,6 @@ export function fitToBudget(lessons, weeks, sessionLength) {
   // strands 45), so a minutes-based estimate understates the weeks needed.
   const tailPacked = packWeeks(topoSort(locked), sessionLength, 1);
   const tailCount = tailPacked.length;
-
-  if (tailCount >= weeks) {
-    return {
-      ok: false,
-      reason: 'tail',
-      detail: `The video and submission work alone needs ${tailCount} week(s) ` +
-              `(${fmt(sum(locked))}), leaving nothing for the curriculum.`,
-      needWeeks: tailCount + MIN_WEEKS
-    };
-  }
 
   const bodyWeeksAvailable = weeks - tailCount;
   const packedCount = ls => packWeeks(topoSort(ls), sessionLength, 1).length;
@@ -526,33 +520,21 @@ export function buildPlan(data, params) {
       suggestions: [`Extend to ${MIN_WEEKS} weeks or more.`]
     };
   }
-  if (!sessionLength || sessionLength < 30) {
+  if (!sessionLength || sessionLength < MIN_SESSION) {
     return {
       status: 'refused',
       reason: 'session_too_short',
-      message: `Most lessons run for 1h. You have ${sessionLength || 0} minutes.`,
+      // Says the floor it actually enforces. The old copy quoted how long most
+      // lessons run instead, which left the reader guessing at the real limit.
+      message: `${MIN_SESSION} minutes is the shortest workable session. You have ` +
+               `${sessionLength || 0}.`,
       link: AI_MINI,
       fixes: [{ label: 'Use 1h', set: { sessionLength: 60 } }],
-      suggestions: ['Use at least 30 minutes, ideally 60-90.']
+      suggestions: [`Use at least ${MIN_SESSION} minutes, ideally 60-90.`]
     };
   }
 
   const filtered = filterLessons(data.lessons, params);
-  if (!filtered.length) {
-    return {
-      status: 'refused',
-      reason: 'no_lessons',
-      message: 'Nothing matches that combination yet.',
-      fixes: params.age === 'beginner'
-        ? [{ label: 'Switch to mobile', set: { platform: 'mobile' } },
-           { label: 'Move up to 13-15', set: { age: 'junior' } }]
-        : [{ label: 'Switch to mobile', set: { platform: 'mobile' } }],
-      suggestions: params.age === 'beginner' && params.platform === 'web'
-        ? ['The Beginner course uses Scratch and App Inventor - choose Mobile, ' +
-           'or move up to Junior for the web track.']
-        : ['Try a different age group or platform.']
-    };
-  }
 
   const { lessons: resolved, alternatives } = resolveChoiceGroups(filtered, params);
   const fit = fitToBudget(resolved, weeks, sessionLength);
