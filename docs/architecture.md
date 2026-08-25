@@ -272,7 +272,19 @@ Assertions are mutation-tested. When adding one, deliberately break the code it 
 - **Builder choice appears only when meaningful.** App Inventor vs Thunkable for 13–18 mobile; App Inventor vs Scratch for 8–12. Web, Core and AI in Action do not show it.
 - **8–12 on AI in Action gets a caution.** The course has no 8–12 rows, so the engine maps Beginner to the junior track.
 - **Junior teams get junior links.** Shared Mobile/Web rows carry `url_junior`; the engine swaps URLs by age. Division-specific rows are left unchanged.
-- **Progress is saved by lesson, not week.** `localStorage` uses `crosswalk.done.v2`, keyed by `lesson_id` and scoped to the configuration that determines which lessons appear. Weeks and session length are excluded because they only repack the same lessons. 
+- **Progress is saved by lesson, not week.** `localStorage` uses `crosswalk.done.v2`, keyed by `lesson_id` and scoped to the configuration that determines which lessons appear. Weeks and session length are excluded because they only repack the same lessons.
 - **Print produces a compact one-page planner.** It includes the summary, drawn checkboxes and current completion state.
 - **Spreadsheet export includes:** `Week, Taught, Lesson, Mins, Topic, Activities, Link, Completed`. Progress carries through. Homework rows use their own activities and fall back to the other side when needed; UTF-8 includes the BOM; activity newlines are preserved inside quoted CSV cells.
 - **Lesson links open the public curriculum.** The lesson pages on `technovationchallenge.org` are readable without an account.
+
+## Design
+
+Brand colours come from the Technovation covers:
+
+- Deep indigo `#1D1349` — headings, active states, ink on lime
+- Lime `#D8E583` — accent fill only
+- Darkened lime `#5A6912` — for lime-coloured text
+
+All three sit on a warm off-white page. Lime is too light for text on white, so it
+works as a fill and highlight with indigo on top; the darkened lime clears 4.5:1 on
+both white and the lime tint. Headings use Rubik, body text uses Poppins.

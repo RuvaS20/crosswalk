@@ -4,7 +4,7 @@ A planning tool for Technovation facilitators: enter your age group, what the te
 building and how much time you actually have, and get a week-by-week lesson plan
 counting down to the 5 May 2027 submission deadline.
 
-Live at **https://curriculum-crosswalk.netlify.app**
+Live at **[curriculum-crosswalk.netlify.app](https://curriculum-crosswalk.netlify.app)**
 
 ## Why it exists
 
@@ -102,7 +102,7 @@ empty. Every push to `main` redeploys.
 
 ## Layout
 
-```
+```text
 index.html              the page — markup only
 styles.css
 config.js               your Apps Script endpoint — the one file you must edit
