@@ -45,9 +45,11 @@ before cutting it, cut padding before content.
 
 ```mermaid
 flowchart TD
-  P["params<br/>age, platform, aiMode, core,<br/>builder, weeks, sessionLength"] --> G{"floors"}
-  G -->|"weeks &lt; 10<br/>session &lt; 30"| R1["refuse: too_short<br/>→ AI Mini"]
-  G -->|"ok"| F["filterLessons<br/>course, division, platform, AI"]
+  P["params<br/>age, platform, aiMode, core,<br/>builder, weeks, sessionLength"] --> G1{"weeks &ge; MIN_WEEKS?"}
+  G1 -->|"no"| R1["refuse: too_short<br/>fix: Use 10 weeks · AI Mini"]
+  G1 -->|"yes"| G2{"session &ge; MIN_SESSION?"}
+  G2 -->|"no"| R2["refuse: session_too_short<br/>fix: Use 1h · AI Mini"]
+  G2 -->|"yes"| F["filterLessons<br/>course, division, platform, AI"]
   F --> C["resolveChoiceGroups<br/>pick one builder per group"]
   C --> T["Lever 1: reserve the tail<br/>deadline_locked lessons"]
   T --> H0["home_only lessons leave first<br/>not a lever — they always go"]
@@ -55,7 +57,7 @@ flowchart TD
   L1B --> L2["Lever 2: move to homework<br/>essential and Work Time held back"]
   L2 --> L3["Lever 3: drop optional lessons<br/>longest first, never a prerequisite"]
   L3 --> Q{"fits?"}
-  Q -->|"no"| R2["refuse: over_budget<br/>→ switch to Core, or AI Mini"]
+  Q -->|"no"| R3["refuse: over_budget<br/>→ switch to Core, or AI Mini"]
   Q -->|"yes"| W["packWeeks<br/>two limits: sessionLength and packTo"]
   W --> AN["anchor the tail<br/>last week = deadline week"]
   AN --> O["plan"]
