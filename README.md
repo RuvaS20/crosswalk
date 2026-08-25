@@ -19,9 +19,9 @@ Live at https://curriculum-crosswalk.netlify.app
 | `engine.js` | The planning logic. Filtering, choice groups, time-fitting, dependency order |
 | `config.js` | Your Apps Script endpoint. **The one file you must edit** |
 | `curriculum.json` | Snapshot of the curriculum, used if the endpoint is unreachable |
-| `engine.test.mjs` | Test suite. Standalone — no framework, no `package.json` |
-| `qa-check.py` | Data checks — structure, link pairing, choice groups, flags |
-| `plan-matrix.mjs` | Feasibility grid and anomaly report across every configuration |
+| `test/engine.test.mjs` | Test suite. Standalone — no framework, no `package.json` |
+| `tools/qa-check.py` | Data checks — structure, link pairing, choice groups, flags |
+| `tools/plan-matrix.mjs` | Feasibility grid and anomaly report across every configuration |
 | `.github/workflows/refresh-curriculum.yml` | Daily refresh of the fallback snapshot |
 
 ## Run it locally
@@ -95,7 +95,7 @@ Run it by hand from the **Actions** tab, or locally:
 curl -sL "YOUR_EXEC_URL" -o /tmp/fresh.json   # never straight over the tracked file
 head -c 200 /tmp/fresh.json                   # confirm JSON, not an HTML sign-in page
 mv /tmp/fresh.json curriculum.json
-node engine.test.mjs
+node test/engine.test.mjs
 ```
 
 Refresh before running the tests, or they check stale data.
@@ -103,7 +103,7 @@ Refresh before running the tests, or they check stale data.
 ## Tests
 
 ```bash
-node engine.test.mjs
+node test/engine.test.mjs
 ```
 
 A sweep of every age, platform, AI mode, week count and session length — 2,537
@@ -134,7 +134,7 @@ Four further checks guard the AI in Action Junior/Senior split, which is driven 
 division rather than by choice group — including that an 8–12 team taking that course
 follows the junior track instead of silently losing two lessons.
 
-`qa-check.py` covers the data rather than the engine, including that every Work Time
+`tools/qa-check.py` covers the data rather than the engine, including that every Work Time
 row is `optional` — since Work Time is never sent home, dropping it is the only way the
 engine can reclaim its slot, and a non-optional one occupies a week no matter how tight
 the plan gets.
@@ -455,7 +455,7 @@ guard a loose plan quietly put them straight back in class.
 **Work Time is no longer a homework candidate.** Sending a Work Time row home converted
 a working session into an empty line on the plan. Lever 2 now skips them and so does
 the `home_only` path, which bypasses Lever 2 entirely; they stay in class or Lever 3
-drops them. `qa-check.py` gained a matching rule, since a Work Time row that is not
+drops them. `tools/qa-check.py` gained a matching rule, since a Work Time row that is not
 `optional` can now never be removed at all — `AIA-028` is the one row failing it.
 
 **The Core route switches in place.** The over-budget refusal used to link out to
@@ -509,7 +509,7 @@ overage.
   senior web at 16 × 45 puts 540 minutes in week 1 and leaves 10 of the 16 weeks empty.
   Either spread each week's overflow forward, or cap per-week homework at the session
   length.
-- **Refusal messages still don't name an achievable week count.** `plan-matrix.mjs`
+- **Refusal messages still don't name an achievable week count.** `tools/plan-matrix.mjs`
   now measures the shortest season that fits for every configuration, but the refusals
   don't read from it — they say how many weeks the current plan needs, not what a
   facilitator could realistically run.

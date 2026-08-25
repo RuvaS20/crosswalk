@@ -9,13 +9,14 @@
  *   node plan-matrix.mjs --week senior mobile integrated 20 90
  *                                   week-by-week dump of one plan
  *
- * Put it next to engine.js and curriculum.json. No dependencies.
+ * Run from anywhere: paths resolve against this file, not the shell's cwd.
+ * No dependencies.
  */
 
 import { readFileSync } from 'node:fs';
-import { buildPlan } from './engine.js';
+import { buildPlan } from '../engine.js';
 
-const data = JSON.parse(readFileSync(new URL('./curriculum.json', import.meta.url)));
+const data = JSON.parse(readFileSync(new URL('../curriculum.json', import.meta.url)));
 
 const MODES = [
   { name: 'custom mobile +AI',   platform: 'mobile', aiMode: 'integrated', core: false },

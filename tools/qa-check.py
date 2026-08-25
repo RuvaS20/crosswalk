@@ -1,6 +1,7 @@
 import json, re, collections, sys
+from pathlib import Path
 
-d = json.load(open('curriculum.json'))
+d = json.load(open(Path(__file__).resolve().parent.parent / 'curriculum.json'))
 L = d['lessons']
 by = {l['lesson_id']: l for l in L}
 fails = []

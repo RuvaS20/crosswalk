@@ -5,14 +5,14 @@
  *
  *   node engine.test.mjs
  *
- * Put this next to engine.js and curriculum.json.
+ * Run from anywhere: paths resolve against this file, not the shell's cwd.
  * Exit code 0 = pass, 1 = fail.
  */
 
 import { readFileSync } from 'node:fs';
-import { buildPlan, BEGINNER_TEACHING_CAP } from './engine.js';
+import { buildPlan, BEGINNER_TEACHING_CAP } from '../engine.js';
 
-const data = JSON.parse(readFileSync(new URL('./curriculum.json', import.meta.url)));
+const data = JSON.parse(readFileSync(new URL('../curriculum.json', import.meta.url)));
 
 let passed = 0;
 const failures = [];

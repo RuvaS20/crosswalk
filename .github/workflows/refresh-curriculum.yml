@@ -92,7 +92,7 @@ jobs:
       # the bug is usually in the spreadsheet, not the engine.
       - name: Run the engine tests against the new data
         if: steps.diff.outputs.changed == 'true'
-        run: node engine.test.mjs
+        run: node test/engine.test.mjs
 
       - name: Commit
         if: steps.diff.outputs.changed == 'true'
