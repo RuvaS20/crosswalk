@@ -31,7 +31,15 @@ step, no dependencies, no `package.json`.
 
 ## How it works
 
-![Data flow: the Google Sheet publishes through Apps Script to an /exec endpoint; the page fetches that endpoint live, while a daily GitHub Action writes the same payload to curriculum.json as a fallback; the page hands params to src/engine and gets a plan back.](assets/architecture.png)
+```mermaid
+flowchart LR
+  S[("Google Sheet")] -->|"Apps Script"| A["/exec endpoint"]
+  A -->|"live fetch"| U["the page"]
+  A -->|"daily Action"| J[("curriculum.json")]
+  J -.->|"fallback"| U
+  U --> E["src/engine"]
+  E -->|"plan"| U
+```
 
 The sheet is the source of truth. The page fetches the live endpoint and falls back to
 the committed snapshot silently, so a Google outage leaves a working planner.
@@ -41,7 +49,16 @@ every configuration can be swept in a test.
 
 Given a plan that doesn't fit, the engine pulls four levers in order, cheapest first:
 
-![The levers in order: filter to the course, reserve the dated tail, drop optional Work Time, move lessons to homework, drop optional lessons, then a fits? decision — yes packs the weeks and anchors them to the deadline, no refuses and offers a workable fix.](assets/pipeline.png)
+```mermaid
+flowchart TD
+  F["filter to the course"] --> T["1. reserve the dated tail"]
+  T --> P["1b. drop optional Work Time"]
+  P --> H["2. move lessons to homework"]
+  H --> D["3. drop optional lessons"]
+  D --> Q{"fits?"}
+  Q -->|"yes"| W["pack weeks, anchor to deadline"]
+  Q -->|"no"| R["refuse, and offer a fix that works"]
+```
 
 Move work before cutting it; cut padding before content. Nothing required is ever
 dropped — only lessons marked `optional`, and only after moving work out of class was
@@ -103,7 +120,7 @@ src/ui/
 test/engine.test.mjs    2,537 assertions. Standalone — no framework
 tools/qa-check.py       data integrity rather than engine behaviour
 tools/plan-matrix.mjs   feasibility grid across every configuration
-assets/                 the logo, and the diagrams above
+assets/                 the logo
 docs/                   architecture.md, decisions.md
 apps-script/            Crosswalk.gs, Sync.gs — how the sheet publishes
 .github/workflows/      daily curriculum refresh, gated on the test suite
