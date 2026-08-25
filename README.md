@@ -37,14 +37,14 @@ flowchart LR
   A -->|"live fetch"| U["the page"]
   A -->|"daily Action"| J[("curriculum.json")]
   J -.->|"fallback"| U
-  U --> E["engine.js"]
+  U --> E["src/engine"]
   E -->|"plan"| U
 ```
 
 The sheet is the source of truth. The page fetches the live endpoint and falls back to
 the committed snapshot silently, so a Google outage leaves a working planner.
 
-`engine.js` is a pure function of `(data, params)` — no DOM, no globals — which is why
+`src/engine/` is a pure function of `(data, params)` — no DOM, no globals — which is why
 every configuration can be swept in a test.
 
 Given a plan that doesn't fit, the engine pulls four levers in order, cheapest first:
@@ -106,7 +106,7 @@ empty. Every push to `main` redeploys.
 |---|---|
 | `index.html` `styles.css` | The page. Markup and styling |
 | `config.js` | Your Apps Script endpoint. **The one file you must edit** |
-| `engine.js` | Planning logic: filtering, choice groups, time-fitting, dependency order |
+| `src/engine/` | Planning logic: `filter.js` chooses lessons, `schedule.js` fits them to the season, `index.js` assembles |
 | `src/ui/` | The interface: `main.js` loads and wires, `render.js` draws, `progress.js` tracks ticks |
 | `curriculum.json` | Committed snapshot, used when the endpoint is unreachable |
 | `test/` `tools/` | Test suite; data checks and the feasibility matrix |

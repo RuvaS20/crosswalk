@@ -10,7 +10,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { buildPlan, BEGINNER_TEACHING_CAP } from '../engine.js';
+import { buildPlan, BEGINNER_TEACHING_CAP } from '../src/engine/index.js';
 
 const data = JSON.parse(readFileSync(new URL('../curriculum.json', import.meta.url)));
 

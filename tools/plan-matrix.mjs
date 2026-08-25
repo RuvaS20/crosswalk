@@ -14,7 +14,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { buildPlan } from '../engine.js';
+import { buildPlan } from '../src/engine/index.js';
 
 const data = JSON.parse(readFileSync(new URL('../curriculum.json', import.meta.url)));
 

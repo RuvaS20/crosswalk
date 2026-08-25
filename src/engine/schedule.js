@@ -1,29 +1,11 @@
 /**
- * Curriculum Crosswalk - planning engine
- * Build Plan tasks 10-14.
+ * Everything time-shaped: ordering, packing, and fitting a course into a season.
  *
- *   10  filterLessons        division + platform + AI mode
- *   11  resolveChoiceGroups  one row per group, minutes counted once
- *   12  fitToBudget          the three levers
- *   13  validateOrder        enforce depends_on
- *   14  refusal paths        under 10 weeks, and over budget after all levers
- *
- * No dependencies. Runs in the browser against the published curriculum.json.
- *
- *   import { buildPlan } from './engine.js';
- *   const data = await (await fetch(ENDPOINT)).json();
- *   const plan = buildPlan(data, {
- *     age: 'senior', platform: 'mobile', aiMode: 'integrated',
- *     weeks: 14, sessionLength: 90
- *   });
+ * Kept in one piece deliberately. The levers in fitToBudget only make sense
+ * read in order, and packWeeks and the homework placement share enough of its
+ * state that separating them would mean exporting internals to keep them
+ * talking.
  */
-
-export const MIN_WEEKS = 10;
-// The shortest session the packer will plan for. The number belongs here and
-// nowhere else: the input floor in index.html and the refusal copy below both
-// read from it, so they cannot drift apart again.
-export const MIN_SESSION = 30;
-export const DEADLINE = '2027-05-05';
 
 /**
  * How much of the course may be sent home.
@@ -53,34 +35,6 @@ const HEAVY_HOMEWORK_HOURS = 2;
  */
 const HOMEWORK_WEEK_CAP = HEAVY_HOMEWORK_HOURS * 60;
 
-// Spare capacity below this is left as breathing room rather than filled.
-const MIN_SLACK_BLOCK = 20;
-
-/**
- * The route out when a group has too little time for a full season.
- *
- * Both "too few weeks" and "sessions too short" are real situations rather
- * than mistakes to correct, so each refusal names the programme built for
- * them instead of only insisting on more time. Four 1-hour sessions plus a
- * showcase, per technovationchallenge.org/ai-mini-technovation.
- */
-const CORE_CURRICULUM = {
-  // Kept for reference. The over-budget refusal no longer links out to it -
-  // Core is a mode of this tool, so it offers a switch that rebuilds the plan
-  // in place instead. Only `note` is read today.
-  url: 'https://technovationchallenge.org/courses/technovation-girls-core-curriculum/',
-  label: 'See the Core Curriculum',
-  note: 'The Core Curriculum is built for a shorter season and would fit.'
-};
-
-const AI_MINI = {
-  url: 'https://technovationchallenge.org/ai-mini-technovation/',
-  label: 'Try AI Mini Technovation',
-  note: 'Try AI Mini Technovation instead: four 1-hour sessions plus a pitch ' +
-        'showcase. A free trial run of the full programme, and a way to ' +
-        'explore project-based AI curriculum with your students.'
-};
-
 // Beginner lessons are shorter and more numerous, so a long session packs
 // three unrelated topics into one block. 8-12 year olds do better with a
 // shorter teaching stretch; the remainder of the session is break and setup.
@@ -91,117 +45,6 @@ function teachingCap(lessons, sessionLength) {
   return course === 'beginner'
     ? Math.min(sessionLength, BEGINNER_TEACHING_CAP)
     : sessionLength;
-}
-
-
-/* ------------------------------------------------------------------ step 1 */
-
-/**
- * Task 10. Narrows the full lesson set to the ones this group will actually do.
- *
- * Course selection is derived, not asked: age picks the division, platform
- * picks mobile vs web, and AI mode can override both by routing to the
- * standalone AI in Action course.
- */
-export function filterLessons(all, params) {
-  const { age, platform, aiMode } = params;
-
-  let course;
-  if (params.core)               course = 'core';
-  else if (aiMode === 'focused') course = 'ai_in_action';
-  else if (age === 'beginner')   course = 'beginner';
-  else                           course = platform === 'web' ? 'jr_sr_web' : 'jr_sr_mobile';
-
-  let out = all.filter(l => l.course === course);
-
-  // Division. Rows marked "both" run for Junior and Senior alike; the Jr./Sr.
-  // splits carry a specific division.
-if (course === 'jr_sr_mobile' || course === 'jr_sr_web' || course === 'core') {
-    out = out.filter(l => l.division === 'both' || l.division === age);
-  } else if (course === 'ai_in_action') {
-    // AI in Action has no beginner-specific rows. An 8-12 team taking this
-    // course follows the junior track, so map beginner -> junior rather than
-    // letting the filter drop every junior row and silently shorten the plan.
-    const effective = age === 'beginner' ? 'junior' : age;
-    out = out.filter(l => l.division === 'both' ||
-                          l.division === effective ||
-                          l.division === 'beginner');
-  }
-
-  // AI mode. "none" strips the AI category; "focused" already routed to the
-  // AI course, where stripping AI would leave nothing.
-  // Matches the literal 'AI' section used by the Beginner, Mobile and Web
-  // courses. AI in Action uses its own section names and is never reached by
-  // aiMode 'none', so it needs no equivalent. If category values are ever
-  // renamed, this line must change with them.
-  if (aiMode === 'none') out = out.filter(l => l.category !== 'AI');
-  out = applyDivisionUrls(out, course, age);
-  return out;
-}
-
-
-/* ------------------------------------------------------------------ step 2 */
-
-/**
- * Task 11. Rows sharing a choice_group are alternatives - "App Inventor:
- * Closer Look OR Thunkable: Closer Look" - so exactly one survives and its
- * minutes are counted once. Keeping both would double-count an hour that the
- * group only ever spends once.
- */
-export function resolveChoiceGroups(lessons, params) {
-  const preferred = params.builder || 'auto';
-  const platform = params.platform || 'mobile';
-
-  // Default builder when the user has not chosen one.
-  const fallback = platform === 'web' ? 'python_streamlit' : 'app_inventor';
-
-  const groups = new Map();
-  const singles = [];
-  for (const l of lessons) {
-    if (!l.choice_group) singles.push(l);
-    else {
-      if (!groups.has(l.choice_group)) groups.set(l.choice_group, []);
-      groups.get(l.choice_group).push(l);
-    }
-  }
-
-  const chosen = [];
-  const alternatives = {};
-  for (const [g, members] of groups) {
-    const want = preferred === 'auto' ? fallback : preferred;
-    const pick = members.find(m => m.builder === want)
-              || members.find(m => m.builder === fallback)
-              || members.find(m => m.builder === 'any')
-              || members[0];
-    chosen.push(pick);
-    alternatives[pick.lesson_id] = members
-      .filter(m => m !== pick)
-      .map(m => ({ lesson_id: m.lesson_id, title: m.title, builder: m.builder }));
-  }
-
-  const kept = [...singles, ...chosen];
-  kept.sort((a, b) => (a.source_week - b.source_week) ||
-                      a.lesson_id.localeCompare(b.lesson_id));
-  return { lessons: kept, alternatives };
-}
-
-
-/**
- * Which coding tools this configuration can be taught in, and how completely
- * each one is linked. The UI uses this to build the tool control and to warn
- * when a choice would produce lessons with no link to follow.
- */
-export function availableBuilders(all, params) {
-  const lessons = filterLessons(all, params);
-  const tally = new Map();
-  for (const l of lessons) {
-    if (!l.choice_group || l.builder === 'any') continue;
-    if (!tally.has(l.builder)) tally.set(l.builder, { builder: l.builder, total: 0, linked: 0 });
-    const t = tally.get(l.builder);
-    t.total++;
-    if (l.url) t.linked++;
-  }
-  return [...tally.values()].sort((a, b) => b.total - a.total);
 }
 
 
@@ -237,6 +80,7 @@ export function topoSort(lessons) {
 
   return out;
 }
+
 
 
 /* ------------------------------------------------------------------ step 4 */
@@ -399,6 +243,7 @@ export function fitToBudget(lessons, weeks, sessionLength) {
   };
 }
 
+
 /**
  * A Work Time row is a slot in the room, not a lesson with content. Sending
  * one home converts it into an empty line on the plan - the facilitator loses
@@ -433,6 +278,7 @@ function isDependedOn(lesson, others, keptIds) {
 }
 
 
+
 /* ------------------------------------------------------------------ step 5 */
 
 /**
@@ -440,7 +286,7 @@ function isDependedOn(lesson, others, keptIds) {
  * A lesson longer than one session gets its own week and is flagged - the
  * alternative, splitting it, would misrepresent the curriculum.
  */
-function packWeeks(ordered, sessionLength, startWeek = 1) {
+export function packWeeks(ordered, sessionLength, startWeek = 1) {
   const packTo = teachingCap(ordered, sessionLength);
   const weeks = [];
   let current = { week: startWeek, lessons: [], minutes: 0 };
@@ -471,6 +317,7 @@ function packWeeks(ordered, sessionLength, startWeek = 1) {
 }
 
 
+
 /* ------------------------------------------------------------------ step 6 */
 
 /**
@@ -497,143 +344,8 @@ export function validateOrder(weeks) {
 }
 
 
-/* --------------------------------------------------------------- assembler */
 
-/**
- * The one function the UI calls.
- * Returns { status: 'ok' | 'refused', ... }.
- */
-export function buildPlan(data, params) {
-  const { weeks, sessionLength } = params;
-
-  // Task 14. Floor first: below this nothing else is worth computing.
-  if (!weeks || weeks < MIN_WEEKS) {
-    return {
-      status: 'refused',
-      reason: 'too_short',
-      message: `${MIN_WEEKS} weeks is the shortest workable season. You have ` +
-               `${weeks || 0}.`,
-      link: AI_MINI,
-      // Structured so the UI can offer a button that applies the fix, rather
-      // than a sentence the person has to translate back into a form field.
-      fixes: [{ label: `Use ${MIN_WEEKS} weeks`, set: { weeks: MIN_WEEKS } }],
-      suggestions: [`Extend to ${MIN_WEEKS} weeks or more.`]
-    };
-  }
-  if (!sessionLength || sessionLength < MIN_SESSION) {
-    return {
-      status: 'refused',
-      reason: 'session_too_short',
-      // Says the floor it actually enforces. The old copy quoted how long most
-      // lessons run instead, which left the reader guessing at the real limit.
-      message: `${MIN_SESSION} minutes is the shortest workable session. You have ` +
-               `${sessionLength || 0}.`,
-      link: AI_MINI,
-      fixes: [{ label: 'Use 1h', set: { sessionLength: 60 } }],
-      suggestions: [`Use at least ${MIN_SESSION} minutes, ideally 60-90.`]
-    };
-  }
-
-  const filtered = filterLessons(data.lessons, params);
-
-  const { lessons: resolved, alternatives } = resolveChoiceGroups(filtered, params);
-  const fit = fitToBudget(resolved, weeks, sessionLength);
-
-  if (!fit.ok) {
-    // No estimate-based buttons. The three we used to offer were derived from
-    // needLength, a minutes average - the same estimate lever 1 documents as
-    // understating what packing really needs - and two of the three did not
-    // resolve the refusal when clicked.
-    //
-    // Instead every candidate is rebuilt and only offered if it comes back ok.
-    // A button that appears is a button that works. `probe` stops the rebuild
-    // from searching for its own fixes, which would recurse.
-    const fixes = params.probe ? [] : findFixes(data, params, fit);
-
-    // A fix that changes the plan is something the facilitator can act on
-    // today. "Use more weeks" is not - it asks them to have a longer season
-    // than they have - so it does not count as an answer, and AI Mini stays
-    // on screen beside it.
-    const inPlace = fixes.some(f => !f.set.weeks);
-
-    return {
-      status: 'refused',
-      reason: fit.reason,
-      message: fit.detail,
-      note: inPlace ? null : AI_MINI.note,
-      link: inPlace ? null : AI_MINI,
-      fixes,
-      suggestions: []
-    };
-  }
-
-  // Pack the tail, then anchor it so its LAST week is the deadline week.
-  // Sizing the tail from minutes and trusting it to land correctly is what
-  // previously let the body overflow into the submission weeks.
-  const tailPacked = packWeeks(topoSort(fit.locked), sessionLength, 1);
-  const tailStart = weeks - tailPacked.length + 1;
-  const tailWeeks = tailPacked.map((w, i) => ({ ...w, week: tailStart + i }));
-
-  const bodyWeeks = packWeeks(topoSort(fit.inClass), sessionLength, 1);
-
-  // Any gap between body and tail becomes work time rather than dead weeks.
-  const gap = [];
-  for (let w = bodyWeeks.length + 1; w < tailStart; w++) {
-    gap.push({
-      week: w, minutes: sessionLength, lessons: [],
-      workTime: true,
-      note: 'Work Time'
-    });
-  }
-
-  const all = [...bodyWeeks, ...gap, ...tailWeeks];
-
-  // Homework is displaced from the pool, not from a week, so it arrives with
-  // no date attached. Anchor each item to the week of the nearest in-class
-  // lesson that precedes it in curriculum order: that is where it sits in the
-  // sequence, and WHEN to assign it is the only thing a facilitator needs.
-  const homeworkByWeek = assignHomeworkToWeeks(fit.inClass, fit.homework, bodyWeeks,
-                                              all.map(w => w.week));
-  all.forEach(w => {
-    w.homework = homeworkByWeek.get(w.week) || [];
-    w.homeworkMinutes = sum(w.homework);
-  });
-
-  const violations = validateOrder(all);
-
-  // Spare capacity is given back as work time rather than finishing early:
-  // teams always need build and feedback time before submission.
-  const notes = [...fit.notes];
-  if (gap.length) {
-    notes.push(`${gap.length} week(s) of spare time - kept as work time for ` +
-               `building, testing and user feedback.`);
-  }
-
-  return {
-    status: 'ok',
-    params,
-    deadline: data.submission_deadline || DEADLINE,
-    weeks: all.map(w => ({ ...w, date: weekDate(w.week, weeks, data.submission_deadline) })),
-    homework: fit.homework,
-    dropped: fit.dropped,
-    alternatives,
-    notes,
-    orderViolations: violations,
-    summary: {
-      weeksUsed: all.length,
-      weeksAvailable: weeks,
-      inClassMinutes: sum(fit.inClass) + sum(fit.locked),
-      homeworkMinutes: sum(fit.homework),
-      homeworkMinutesPerWeek: fit.homeworkPerWeek,
-      droppedMinutes: sum(fit.dropped),
-      budgetMinutes: weeks * sessionLength,
-      lessonCount: fit.inClass.length + fit.locked.length
-    }
-  };
-}
-
-
-/* ----------------------------------------------------------------- helpers */
+/* ----------------------------------------------- homework placement */
 
 /**
  * Maps each homework lesson to the week it belongs beside.
@@ -643,7 +355,7 @@ export function buildPlan(data, params) {
  * carries over for free: an item can never be assigned before the lesson it
  * depends on has been taught.
  */
-function assignHomeworkToWeeks(inClass, homework, bodyWeeks, allWeeks) {
+export function assignHomeworkToWeeks(inClass, homework, bodyWeeks, allWeeks) {
   const byWeek = new Map();
   if (!homework.length) return byWeek;
 
@@ -663,6 +375,7 @@ function assignHomeworkToWeeks(inClass, homework, bodyWeeks, allWeeks) {
   }
   return spreadHomework(byWeek, allWeeks || bodyWeeks.map(w => w.week));
 }
+
 
 /**
  * Moves homework out of overloaded weeks and into the weeks after them.
@@ -695,72 +408,13 @@ function spreadHomework(byWeek, allWeeks) {
   return byWeek;
 }
 
-/**
- * Alternatives that genuinely resolve a refusal, in the order a facilitator
- * would prefer them: keep your season and drop content, then change course,
- * then ask for more time.
- *
- * Each candidate is built for real. Nothing is offered on the strength of an
- * estimate, because the previous version of this did exactly that and two of
- * its three buttons left the refusal on screen when clicked.
- */
-function findFixes(data, params, fit) {
-  const works = patch =>
-    buildPlan(data, { ...params, ...patch, probe: true }).status === 'ok';
 
-  const out = [];
+/* ----------------------------------------------------------------- helpers */
 
-  // 1. Drop the AI topics. Worth four to five weeks in the Beginner course,
-  //    and it keeps the season the facilitator actually has.
-  if (!params.core && params.aiMode === 'integrated' && works({ aiMode: 'none' })) {
-    out.push({ label: 'Leave out the AI topics', set: { aiMode: 'none' } });
-  }
+export const sum = ls => ls.reduce((n, l) => n + (l.minutes || 0), 0);
 
-  // 2. Switch to Core. A mode this tool builds itself, so it rebuilds in place
-  //    rather than sending anyone to the Technovation site to re-enter it all.
-  if (!params.core && works({ core: true })) {
-    out.push({ label: 'Switch to the Core Curriculum', set: { core: true } });
-  }
-
-  // 3. A few more weeks - but only a few. Offering "use 24 weeks" to someone
-  //    with ten is not an alternative, it is a different school year, and a
-  //    button that rewrites their season into a fiction is worse than the
-  //    sentence already telling them the number.
-  const STRETCH = 4;
-  const from = Math.max(fit.needWeeks || params.weeks + 1, params.weeks + 1);
-  for (let w = from; w <= Math.min(from + 2, params.weeks + STRETCH); w++) {
-    if (works({ weeks: w })) {
-      out.push({ label: `Use ${w} weeks`, set: { weeks: w } });
-      break;
-    }
-  }
-
-  return out;
-}
-
-const sum = ls => ls.reduce((n, l) => n + (l.minutes || 0), 0);
-
-function fmt(min) {
+export function fmt(min) {
   const h = Math.floor(min / 60), m = min % 60;
   return h && m ? `${h}h ${m}min` : h ? `${h}h` : `${m}min`;
 }
 
-/** Weeks count backward from the submission deadline. */
-function weekDate(week, totalWeeks, deadline) {
-  const end = new Date((deadline || DEADLINE) + 'T00:00:00Z');
-  const d = new Date(end);
-  d.setUTCDate(d.getUTCDate() - (totalWeeks - week) * 7);
-  return d.toISOString().slice(0, 10);
-}
-
-/* Mobile and Web are one course in the sheet, two on the site. Rows taught to
-   both divisions carry a url_junior alongside url; junior teams follow that. */
-function applyDivisionUrls(lessons, course, age) {
-  if (age !== 'junior') return lessons;
-  if (course !== 'jr_sr_mobile' && course !== 'jr_sr_web') return lessons;
-
-  return lessons.map(l => {
-    if (!l.url_junior) return l;
-    return Object.assign({}, l, { url: l.url_junior });   // copy, never mutate
-  });
-}

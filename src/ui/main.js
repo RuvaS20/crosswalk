@@ -5,7 +5,7 @@
  * argument, so there is no `current` to go stale between a rebuild and a click.
  */
 
-import { buildPlan, filterLessons } from '../../engine.js';
+import { buildPlan, filterLessons } from '../engine/index.js';
 import { ENDPOINT } from '../../config.js';
 import { useConfig } from './progress.js';
 import { render, esc, TOOL_NAMES } from './render.js';

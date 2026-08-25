@@ -20,7 +20,7 @@ flowchart LR
   S[("Google Sheet<br/>Curriculum Master")]
   A["Apps Script<br/>Crosswalk.gs / Sync.gs"]
   J[("curriculum.json<br/>committed fallback")]
-  E["engine.js<br/>pure function"]
+  E["src/engine<br/>pure function"]
   U["the page<br/>src/ui"]
 
   S -->|"publish"| A
@@ -36,7 +36,7 @@ the page says which copy you are looking at — deliberate, so a Google outage l
 working planner rather than a blank screen, but it also means a broken endpoint looks
 exactly like a working one. Check `generated_at` in the payload to tell them apart.
 
-`engine.js` is a pure function of `(data, params)`. It touches no DOM and reads no
+`src/engine/` is a pure function of `(data, params)`. It touches no DOM and reads no
 globals, which is why the whole grid can be swept in a test.
 
 ## The planning pipeline
@@ -187,7 +187,7 @@ Things learned the hard way, worth not relearning:
   them. Gaps from deleted rows are fine.
 - **`category` is the section heading from the lesson's own course page**, not a shared
   taxonomy. Each course groups its lessons differently and that's Technovation's
-  choice. `engine.js` matches the literal string `AI` for the "no AI" filter, so
+  choice. `src/engine/filter.js` matches the literal string `AI` for the "no AI" filter, so
   renaming category values means changing that line in the same commit.
 - **`essential` marks a lesson as in-class only.** It maps to Technovation's Core
   Curriculum: if a lesson appears there, its equivalent in every other course carries
@@ -206,7 +206,7 @@ Things learned the hard way, worth not relearning:
 - **New sheet columns do not appear on their own.** They must be added to the published
   field list in `Crosswalk.gs` *and* the deployment redeployed. `url_junior`,
   `essential`, `home_only` and the `core` course each needed this.
-- **The deadline lives in two places** — `engine.js` and the publish payload in
+- **The deadline lives in two places** — `src/engine/index.js` and the publish payload in
   `Crosswalk.gs`. Season rollover has to change both.
 - **`packWeeks` uses two limits, deliberately.** `sessionLength` decides whether a
   single lesson overruns; `packTo` decides whether two lessons can share a week. They
