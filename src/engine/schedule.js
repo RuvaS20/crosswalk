@@ -205,8 +205,7 @@ export function fitToBudget(lessons, weeks, sessionLength) {
       reason: 'over_budget',
       detail: `Needs ${need + tailCount} weeks at ${sessionLength} min, ` +
               `${shortBy} more than you have.`,
-      needWeeks: need + tailCount,
-      needLength: Math.ceil((total - sum(homework)) / weeks / 15) * 15
+      needWeeks: need + tailCount
     };
   }
 

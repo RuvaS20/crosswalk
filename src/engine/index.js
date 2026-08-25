@@ -100,9 +100,10 @@ export function buildPlan(data, params) {
 
   if (!fit.ok) {
     // No estimate-based buttons. The three we used to offer were derived from
-    // needLength, a minutes average - the same estimate lever 1 documents as
-    // understating what packing really needs - and two of the three did not
-    // resolve the refusal when clicked.
+    // a minutes average - the same estimate lever 1 documents as understating
+    // what packing really needs - and two of the three did not resolve the
+    // refusal when clicked. That average was carried on the refusal as
+    // `needLength` long after nothing read it; it is gone now.
     //
     // Instead every candidate is rebuilt and only offered if it comes back ok.
     // A button that appears is a button that works. `probe` stops the rebuild
