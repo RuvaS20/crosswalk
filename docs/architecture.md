@@ -31,13 +31,12 @@ flowchart LR
   E -->|"plan"| U
 ```
 
-The endpoint is fetched first; `curriculum.json` is the silent fallback. Nothing on
-the page says which copy you are looking at — deliberate, so a Google outage leaves a
-working planner rather than a blank screen, but it also means a broken endpoint looks
-exactly like a working one. Check `generated_at` in the payload to tell them apart.
+The endpoint is fetched first, with `curriculum.json` as a silent fallback. 
+The page doesn’t show which copy it’s using. This keeps the planner working during a Google outage, but also makes a broken endpoint look like a working one. Check `generated_at` in the payload to tell the difference.
 
-`src/engine/` is a pure function of `(data, params)`. It touches no DOM and reads no
-globals, which is why the whole grid can be swept in a test.
+
+`src/engine/` takes the data and settings, then produces the result. It doesn’t depend on the page or hidden values elsewhere, so the entire grid can be tested at once.
+
 
 ## The planning pipeline
 
