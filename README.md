@@ -85,16 +85,32 @@ empty. Every push to `main` redeploys.
 
 ## Layout
 
-| Path | |
-|---|---|
-| `index.html` `styles.css` | The page. Markup and styling |
-| `config.js` | Your Apps Script endpoint. **The one file you must edit** |
-| `src/engine/` | Planning logic: `filter.js` chooses lessons, `schedule.js` fits them to the season, `index.js` assembles |
-| `src/ui/` | The interface: `main.js` loads and wires, `render.js` draws, `progress.js` tracks ticks |
-| `curriculum.json` | Committed snapshot, used when the endpoint is unreachable |
-| `test/` `tools/` | Test suite; data checks and the feasibility matrix |
-| `apps-script/` | `Crosswalk.gs`, `Sync.gs` — how the sheet publishes |
-| `docs/` | Architecture, data model, decisions |
+```
+index.html              the page — markup only
+styles.css
+config.js               your Apps Script endpoint — the one file you must edit
+curriculum.json         committed snapshot, used when the endpoint is unreachable
+
+src/engine/             the planner — a pure function of (data, params)
+  index.js              buildPlan, the constants, the public exports
+  filter.js             which lessons are in this plan
+  schedule.js           ordering, packing, and fitting a course into a season
+src/ui/
+  main.js               loads the data, owns the controls, drives the updates
+  render.js             everything that writes HTML
+  progress.js           per-configuration ticks, and the CSV export
+
+test/engine.test.mjs    2,537 assertions. Standalone — no framework
+tools/qa-check.py       data integrity rather than engine behaviour
+tools/plan-matrix.mjs   feasibility grid across every configuration
+assets/                 the logo, and the diagrams above
+docs/                   architecture.md, decisions.md
+apps-script/            Crosswalk.gs, Sync.gs — how the sheet publishes
+.github/workflows/      daily curriculum refresh, gated on the test suite
+```
+
+Imports are native ES modules with relative paths, so the tree is the dependency
+graph: `ui` imports `engine`, and nothing imports `ui`.
 
 ## Further reading
 
