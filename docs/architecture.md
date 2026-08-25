@@ -346,7 +346,7 @@ adding an assertion, break the code it guards and confirm it actually fails.
   as thrashing rather than response.
 - **The wait is covered.** The live endpoint takes about five seconds, so `#out`
   ships with a spinner and a line of copy as static markup — not injected by JS,
-  which would leave the region blank until `app.js` had parsed. `render()` replaces
+  which would leave the region blank until the modules had parsed. `render()` replaces
   it on the first plan. Under `prefers-reduced-motion` the ring is hidden rather
   than frozen, since a stopped spinner reads as broken.
 - **The plan is a card**: an indigo header carrying the deadline, a table of weeks,

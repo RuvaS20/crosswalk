@@ -107,7 +107,7 @@ empty. Every push to `main` redeploys.
 | `index.html` `styles.css` | The page. Markup and styling |
 | `config.js` | Your Apps Script endpoint. **The one file you must edit** |
 | `engine.js` | Planning logic: filtering, choice groups, time-fitting, dependency order |
-| `app.js` | Loads data, runs the engine, renders the plan |
+| `src/ui/` | The interface: `main.js` loads and wires, `render.js` draws, `progress.js` tracks ticks |
 | `curriculum.json` | Committed snapshot, used when the endpoint is unreachable |
 | `test/` `tools/` | Test suite; data checks and the feasibility matrix |
 | `apps-script/` | `Crosswalk.gs`, `Sync.gs` — how the sheet publishes |

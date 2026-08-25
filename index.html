@@ -83,10 +83,10 @@
     </form>
 
     <div class="results">
-      <!-- The plan card is rendered here by app.js; Print and Spreadsheet now
+      <!-- The plan card is rendered here by src/ui/render.js; Print and Spreadsheet now
            live in its sticky footer rather than in a bar above it. -->
       <!-- Static first paint, not injected by JS: the endpoint takes ~5s, and
-           this has to be on screen before app.js has even parsed. render()
+           this has to be on screen before the modules have even parsed. render()
            replaces it on the first plan. -->
       <main id="out" aria-live="polite" tabindex="-1">
         <div class="loading">
@@ -100,6 +100,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js"></script>
+<script type="module" src="./src/ui/main.js"></script>
 </body>
 </html>
