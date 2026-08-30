@@ -147,8 +147,15 @@ export function buildPlan(data, params) {
   // no date attached. Anchor each item to the week of the nearest in-class
   // lesson that precedes it in curriculum order: that is where it sits in the
   // sequence, and WHEN to assign it is the only thing a facilitator needs.
-  const homeworkByWeek = assignHomeworkToWeeks(fit.inClass, fit.homework, bodyWeeks,
-                                              all.map(w => w.week));
+  //
+  // The walk covers the tail as well as the body. A home_only row that is also
+  // deadline_locked now leaves the tail and becomes homework, and it sequences
+  // after the locked lessons it follows - so anchoring against the body alone
+  // set Editing Videos in week 17 while Recording was still being taught in
+  // week 19.
+  const homeworkByWeek = assignHomeworkToWeeks([...fit.inClass, ...fit.locked],
+                                               fit.homework, all,
+                                               all.map(w => w.week));
   all.forEach(w => {
     w.homework = homeworkByWeek.get(w.week) || [];
     w.homeworkMinutes = sum(w.homework);
@@ -249,32 +256,41 @@ function weekDate(week, totalWeeks, deadline) {
  * Interleaves the season's spare weeks through the taught weeks.
  *
  * Build time is most useful between lessons, not banked at the end: a team
- * that has just been taught prototyping needs a session to prototype in. The
- * weeks are placed as evenly as the arithmetic allows, and never before the
- * first lesson - week 1 of a course is not a work week.
+ * taught prototyping in week 7 needs a session to prototype in week 8.
+ *
+ * Every taught week opens one slot behind it, and the spare weeks are shared
+ * out across those slots - `base` each, with the remainder spread evenly rather
+ * than handed to the first few. That matters when there are more spare weeks
+ * than lessons, which a short course in a long season produces: Core at 20
+ * weeks has 9 taught weeks and 11 spare. Perfect alternation is impossible
+ * there, but runs of two are, and the earlier version gave runs of eight
+ * because it placed one per slot and appended everything it could not fit.
  */
 function spreadWorkWeeks(bodyWeeks, spare, sessionLength) {
-  if (!spare) return bodyWeeks;
+  if (!spare || !bodyWeeks.length) return bodyWeeks;
 
   const workWeek = () => ({
     minutes: sessionLength, lessons: [], workTime: true, note: 'Work Time'
   });
 
-  const every = Math.max(1, Math.floor(bodyWeeks.length / (spare + 1)));
-  const out = [];
-  let placed = 0;
+  const slots = bodyWeeks.length;
+  const base  = Math.floor(spare / slots);
+  const extra = spare % slots;
+  const out   = [];
 
   bodyWeeks.forEach((w, i) => {
     out.push(w);
-    const isLast = i === bodyWeeks.length - 1;
-    if (placed < spare && !isLast && (i + 1) % every === 0) {
-      out.push(workWeek());
-      placed++;
-    }
+    // `extra` weeks spread across `slots` positions: this slot takes one when
+    // the running share crosses a whole number, which puts them at even
+    // intervals instead of all at the front.
+    const takesExtra = Math.floor((i + 1) * extra / slots) >
+                       Math.floor(i * extra / slots);
+    for (let n = 0; n < base + (takesExtra ? 1 : 0); n++) out.push(workWeek());
   });
 
-  while (placed < spare) { out.push(workWeek()); placed++; }
-
+  // Renumbering in place, not by copying: assignHomeworkToWeeks reads these
+  // same objects when it anchors homework to a week, so a `{...w}` here would
+  // leave it anchoring to the pre-shift numbers. Nothing would fail loudly.
   out.forEach((w, i) => { w.week = i + 1; });
   return out;
 }

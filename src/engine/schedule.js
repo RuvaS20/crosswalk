@@ -100,8 +100,13 @@ export function topoSort(lessons) {
 export function fitToBudget(lessons, weeks, sessionLength) {
   const notes = [];
 
-  const locked = lessons.filter(l => l.deadline_locked);
-  const body   = lessons.filter(l => !l.deadline_locked);
+  // home_only wins over deadline_locked. A locked row reserves a week at the end
+  // of the season; a row that is always homework needs no week, so keeping it in
+  // the tail held a meeting open for something nobody attends. The sheet marks
+  // the video-editing and pitch-prep rows both ways, and this is what makes the
+  // home_only half of that mean anything.
+  const locked = lessons.filter(l =>  l.deadline_locked && !l.home_only);
+  const body   = lessons.filter(l => !l.deadline_locked ||  l.home_only);
   const total  = sum(lessons);
 
   // Lever 1. Pack the tail for real rather than estimating from minutes:

@@ -199,11 +199,12 @@ const b = buildPlan(data, { age: 'beginner', platform: 'mobile', aiMode: 'integr
 // at 90 while the constant moved to 105, so the test checked a number the
 // engine no longer used. `b.weeks?.` because a refusal has no weeks at all,
 // and that should fail as an assertion, not crash the whole run.
-// `<= 1` also skips work time weeks, which carry the whole session as minutes
-// and no lessons at all. They are spare capacity given back to the team, not a
-// teaching week, so the cap has nothing to say about them.
+// Work time weeks are exempted by name, not by lesson count. They carry the
+// whole session as minutes and no lessons at all, so the cap has nothing to say
+// about them - but `lessons.length <= 1` would have excused any empty week
+// claiming teaching time, which is a bug this assertion should still catch.
 assert(b.weeks?.every(w => w.minutes <= BEGINNER_TEACHING_CAP ||
-                           w.lessons.length <= 1),
+                           w.lessons.length === 1 || w.workTime),
   `beginner weeks should not combine lessons past ${BEGINNER_TEACHING_CAP} ` +
   `minutes (got ${b.status === 'refused' ? 'a refusal: ' + b.reason : 'a bad week'})`);
 
@@ -238,7 +239,7 @@ const isSlot = l => !l.url;
    below carry their age with them rather than assuming one. */
 for (const [age, weeks, sessionLength] of [
   ['senior', 14, 90], ['senior', 16, 90], ['senior', 18, 60], ['senior', 20, 60],
-  ['junior', 12, 90], ['junior', 14, 75], ['junior', 16, 45]
+  ['junior', 11, 90], ['junior', 13, 75], ['junior', 15, 45]
 ]) {
   const c = plan({ age, core: true, weeks, sessionLength });
   const where = `${age}/core/${weeks}w/${sessionLength}m`;
@@ -260,13 +261,13 @@ for (const [age, weeks, sessionLength] of [
 // on a plan that never had to cut anything. If this starts failing, the
 // curriculum has changed size again - find the new tight case rather than
 // deleting the guard, which is the only thing keeping the loop honest.
-const tight = plan({ age: 'junior', core: true, weeks: 12, sessionLength: 90 });
+const tight = plan({ age: 'junior', core: true, weeks: 11, sessionLength: 90 });
 assert(tight.status === 'ok' && tight.dropped?.length > 0,
-  `junior/core/12w/90m should be tight enough to drop something (got ` +
+  `junior/core/11w/90m should be tight enough to drop something (got ` +
   `${tight.status === 'ok' ? 'no drops' : tight.reason}) - if it is not, the ` +
   'Work Time assertions above are not testing anything');
 assert((tight.dropped || []).every(isSlot),
-  'junior/core/12w/90m dropped a real lesson before exhausting the Work Time rows');
+  'junior/core/11w/90m dropped a real lesson before exhausting the Work Time rows');
 
 
 /* ------------------------------------------------------------------ report */
