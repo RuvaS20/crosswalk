@@ -117,6 +117,61 @@ function renderToolChoice() {
 }
 
 
+/* ------------------------------------------------------------- remembering */
+
+/**
+ * The controls, saved and restored across reloads.
+ *
+ * Ticks were already stored per configuration, but the configuration itself was
+ * not, so every reload landed on the 16-18 Custom default. A Core plan's ticks
+ * looked lost until you happened to switch back to Core and they reappeared.
+ *
+ * Values are validated on the way back in: a select only accepts a value it has
+ * an option for, and a number only one inside its own min/max. A stale or
+ * hand-edited entry is ignored rather than left in a state the controls cannot
+ * represent.
+ */
+const VIEW_KEY = 'crosswalk.view.v1';
+const REMEMBERED = ['age', 'platform', 'mode', 'aiMode', 'weeks', 'len'];
+
+function saveView() {
+  try {
+    const v = {};
+    for (const id of [...REMEMBERED, 'builder']) v[id] = $('#' + id).value;
+    localStorage.setItem(VIEW_KEY, JSON.stringify(v));
+  } catch { /* private mode: the planner still works, it just will not persist */ }
+}
+
+/**
+ * Applies what was saved. Returns the saved builder rather than setting it -
+ * the tool select is empty until renderToolChoice fills it, so it can only be
+ * restored after syncSentence has run.
+ */
+function restoreView() {
+  let v = null;
+  try { v = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null'); }
+  catch { /* corrupt value: fall back to the defaults in the markup */ }
+  if (!v || typeof v !== 'object') return null;
+
+  for (const id of REMEMBERED) {
+    const el = $('#' + id), want = v[id];
+    if (want == null || !el) continue;
+    if (el.tagName === 'SELECT') {
+      if ([...el.options].some(o => o.value === want)) el.value = want;
+    } else {
+      const n = Number(want);
+      if (Number.isFinite(n) && n >= Number(el.min) && n <= Number(el.max)) el.value = n;
+    }
+  }
+  return v.builder || null;
+}
+
+function restoreBuilder(want) {
+  const el = $('#builder');
+  if (want && [...el.options].some(o => o.value === want)) el.value = want;
+}
+
+
 /* ------------------------------------------------------------ the update loop */
 
 let timer = null;
@@ -132,6 +187,7 @@ function update({ immediate = false, focus = false } = {}) {
   clearTimeout(timer);
   timer = setTimeout(() => {
     const params = readParams();
+    saveView();                  // every path that rebuilds also comes through here
     useConfig(params);           // before render: the ticks it draws are per-configuration
     render(buildPlan(data, params), { onFix: setParams });
     if (focus) $('#out').focus();
@@ -184,7 +240,9 @@ $('#controls').addEventListener('submit', e => e.preventDefault());
 // what the tool produces and adjusts, instead of facing a form and guessing.
 load()
   .then(() => {
-    syncSentence();
+    const builder = restoreView();
+    syncSentence();              // fills the tool select, so the builder comes after
+    restoreBuilder(builder);
     update({ immediate: true });
   })
   .catch(err => {
