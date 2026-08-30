@@ -136,17 +136,12 @@ export function buildPlan(data, params) {
 
   const bodyWeeks = packWeeks(topoSort(fit.inClass), sessionLength, 1);
 
-  // Any gap between body and tail becomes work time rather than dead weeks.
-  const gap = [];
-  for (let w = bodyWeeks.length + 1; w < tailStart; w++) {
-    gap.push({
-      week: w, minutes: sessionLength, lessons: [],
-      workTime: true,
-      note: 'Work Time'
-    });
-  }
-
-  const all = [...bodyWeeks, ...gap, ...tailWeeks];
+  // Any spare week between body and tail becomes work time rather than a dead
+  // week - but spread through the course, not stacked in front of the tail.
+  // Seven consecutive Work Time weeks reads as the plan having run out, when
+  // what it means is that this season has room to build as it goes.
+  const spare = Math.max(0, tailStart - 1 - bodyWeeks.length);
+  const all = [...spreadWorkWeeks(bodyWeeks, spare, sessionLength), ...tailWeeks];
 
   // Homework is displaced from the pool, not from a week, so it arrives with
   // no date attached. Anchor each item to the week of the nearest in-class
@@ -164,8 +159,8 @@ export function buildPlan(data, params) {
   // Spare capacity is given back as work time rather than finishing early:
   // teams always need build and feedback time before submission.
   const notes = [...fit.notes];
-  if (gap.length) {
-    notes.push(`${gap.length} week(s) of spare time - kept as work time for ` +
+  if (spare) {
+    notes.push(`${spare} week(s) of spare time - kept as work time for ` +
                `building, testing and user feedback.`);
   }
 
@@ -248,3 +243,38 @@ function weekDate(week, totalWeeks, deadline) {
 
 /* Mobile and Web are one course in the sheet, two on the site. Rows taught to
    both divisions carry a url_junior alongside url; junior teams follow that. */
+
+
+/**
+ * Interleaves the season's spare weeks through the taught weeks.
+ *
+ * Build time is most useful between lessons, not banked at the end: a team
+ * that has just been taught prototyping needs a session to prototype in. The
+ * weeks are placed as evenly as the arithmetic allows, and never before the
+ * first lesson - week 1 of a course is not a work week.
+ */
+function spreadWorkWeeks(bodyWeeks, spare, sessionLength) {
+  if (!spare) return bodyWeeks;
+
+  const workWeek = () => ({
+    minutes: sessionLength, lessons: [], workTime: true, note: 'Work Time'
+  });
+
+  const every = Math.max(1, Math.floor(bodyWeeks.length / (spare + 1)));
+  const out = [];
+  let placed = 0;
+
+  bodyWeeks.forEach((w, i) => {
+    out.push(w);
+    const isLast = i === bodyWeeks.length - 1;
+    if (placed < spare && !isLast && (i + 1) % every === 0) {
+      out.push(workWeek());
+      placed++;
+    }
+  });
+
+  while (placed < spare) { out.push(workWeek()); placed++; }
+
+  out.forEach((w, i) => { w.week = i + 1; });
+  return out;
+}
