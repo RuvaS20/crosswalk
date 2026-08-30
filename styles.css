@@ -841,9 +841,11 @@ tr.slack td{
      900px — the sentence tightens
      768px — the table restructures into one card per week
 
-   Both are scoped to `screen` deliberately. A4 inside 12mm margins is 703 CSS
-   pixels, so an unscoped max-width query fires on paper too — which silently
-   gave the printed sheet the phone layout, one stacked card per week.
+   Both are scoped to `screen` deliberately. A4 inside the 15mm page margin is
+   680 CSS pixels and US Letter is 703, so an unscoped max-width query fires on
+   paper too — which silently gave the printed sheet the phone layout, one
+   stacked card per week. Widening the page margin narrows that figure, so it
+   moves further under 768px rather than out of range: keep the `screen` scope.
    ============================================================================= */
 
 @media screen and (max-width:900px){
@@ -965,17 +967,23 @@ tr.slack td{
    black on white, and the tick column — hidden on screen — appears here.
    ============================================================================= */
 
-/* Populated by app.js and shown only when printing: title and configuration,
-   since the on-screen header is hidden below. */
+/* Populated by src/ui/render.js and shown only when printing: title and
+   configuration, since the on-screen header is hidden below. */
 .printhead{
   display:none;
 }
 
-@media print{
+/* Page margins sit at the top level, NOT inside the @media print block below.
+   @page is already print-only by definition, and Safari has historically
+   ignored an @page nested inside @media print - which printed the plan edge to
+   edge on a Mac while Chrome honoured it. Nesting it buys nothing and costs
+   that. 15mm rather than 12mm: the tick column is meant to be written in, and
+   12mm left no room for a hole punch or a binder clip. */
+@page{
+  margin:15mm;
+}
 
-  @page{
-    margin:12mm;
-  }
+@media print{
 
   body{
     background:#fff;

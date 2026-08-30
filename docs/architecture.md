@@ -264,7 +264,7 @@ Assertions are mutation-tested. When adding one, deliberately break the code it 
 - **Over-budget refusals do not offer unreliable fixes.** They state the useful week count and offer Core only when Core actually fits. Otherwise they link to AI Mini.
 - **Too little time routes elsewhere.** Below 10 weeks or below 30 minutes, the planner points to AI Mini: four one-hour sessions plus a pitch showcase.
 - **Core only rescues some plans.** Its main advantage appears at longer sessions; lesson granularity still determines the minimum week count.
-- **Over-long weeks say how far over.** The plan shows text such as "30m over your session" instead of making the user calculate it.
+- **Over-long weeks name the total and the overage.** The row reads "Needs 2h — 30m more than your session". The week's minutes already appear in the first column, but at 11px muted they read as a label, so the row repeats the figure rather than making anyone subtract.
 - **The summary also counts over-long weeks.** For example, "16 of 20 weeks hold a lesson longer than your 30 minute sessions." This is a warning, not a refusal.
 - **A real plan renders on first load.** The page is not blank for first-time visitors.
 - **Mobile uses one card per week.** The week number becomes the header, content columns stack, and labels come from `data-label`.
@@ -272,8 +272,17 @@ Assertions are mutation-tested. When adding one, deliberately break the code it 
 - **Builder choice appears only when meaningful.** App Inventor vs Thunkable for 13–18 mobile; App Inventor vs Scratch for 8–12. Web, Core and AI in Action do not show it.
 - **8–12 on AI in Action gets a caution.** The course has no 8–12 rows, so the engine maps Beginner to the junior track.
 - **Junior teams get junior links.** Shared Mobile/Web rows carry `url_junior`; the engine swaps URLs by age. Division-specific rows are left unchanged.
+- **Your last selections are remembered.** The seven control values are written to
+  `localStorage` under `crosswalk.view.v1` on every rebuild and restored on load,
+  because ticks were stored per configuration while the configuration itself was not —
+  so a reload landed on the 16–18 Custom default and a Core plan's ticks looked lost
+  until you switched back. Values are validated on the way in: a select only accepts a
+  value it has an option for, a number only one inside its own min/max. The tool select
+  is restored last, since it has no options until `renderToolChoice` fills it.
 - **Progress is saved by lesson, not week.** `localStorage` uses `crosswalk.done.v2`, keyed by `lesson_id` and scoped to the configuration that determines which lessons appear. Weeks and session length are excluded because they only repack the same lessons.
 - **Print produces a compact one-page planner.** It includes the summary, drawn checkboxes and current completion state.
+- **Page margins live outside `@media print`.** `@page` is print-only by definition, and Safari has historically ignored one nested inside `@media print` — printing edge to edge on a Mac while Chrome honoured it. The margin is 15mm, which leaves room to hole-punch a sheet meant to be ticked by hand.
+- **Responsive breakpoints are scoped to `screen`, and must stay that way.** A4 inside that 15mm margin is 680 CSS pixels and US Letter is 703, both under the 768px breakpoint — so an unscoped `max-width` query fires on paper and silently gives the printed sheet the phone layout, one stacked card per week. Widening the margin narrows the page, moving it further under the breakpoint rather than out of range.
 - **Spreadsheet export includes:** `Week, Taught, Lesson, Mins, Topic, Activities, Link, Completed`. Progress carries through. Homework rows use their own activities and fall back to the other side when needed; UTF-8 includes the BOM; activity newlines are preserved inside quoted CSV cells.
 - **Lesson links open the public curriculum.** The lesson pages on `technovationchallenge.org` are readable without an account.
 
