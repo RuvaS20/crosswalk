@@ -65,7 +65,7 @@ flowchart TD
   subgraph FIT["if it doesn't fit, give ground in this order"]
     direction TB
     T["keep the dated final weeks free"]
-    T  --> HO["send home the lessons meant for home"]
+    T  --> HO["send home the lessons meant for home<br/>including dated ones — home_only wins"]
     HO --> L1["drop spare Work Time"]
     L1 --> L2["move lessons to homework"]
     L2 --> L3["drop optional lessons"]
@@ -102,8 +102,9 @@ Why this order:
 - **Required lessons are never dropped.** Only optional lessons can be dropped, and only after moving work out of class is not enough.
 - **Tight schedules may refuse more often by design.** Protecting essential lessons removes a major homework lever. A refusal with a workable week count is better than quietly sending required content home.
 - **8–12 uses Scratch and App Inventor**, so mobile/web choice is disabled for that age group.
-- **Core is a fifth course.** 18 of its 19 rows are essential and the last is Work Time, so nothing in Core can become homework. Senior Core therefore needs 17 weeks at 45/60 minutes, 13 at 90, and 10 at 120.
+- **Core is a fifth course.** 18 of its 19 rows are essential and the last is Work Time, so its only homework candidate is the one row flagged `home_only` (Editing Videos). Senior Core needs 16 weeks at 45/60 minutes, 12 at 90, and 10 at 120; beginner Core is two rows shorter and needs 14/10.
 - **Beginner caps teaching at 1h 45m.** Its lessons are shorter and more numerous, so two-hour sessions could pack unrelated topics together. `BEGINNER_TEACHING_CAP` limits teaching time; remaining time is break/setup. A lesson longer than the cap still gets its own week, and overrun is measured against the real session length.
+- **Spare weeks are spread through the season, not banked before the tail.** A short course in a long season leaves weeks over; they become Work Time, shared out evenly between the taught weeks rather than stacked in one block, because build time is most useful right after the lesson it follows. Where there are more spare weeks than taught ones, runs of two or three are unavoidable arithmetic.
 - **Work Time stays in class or is dropped.** Only optional Work Time can be removed. A non-optional row remains because the sheet is explicitly saying the build session matters.
 - **Over-budget refusals can switch to Core in place.** Core is part of this tool, so the button changes the course and redraws. AI Mini is a separate programme and remains a link.
 
@@ -166,7 +167,7 @@ Things worth not relearning:
 - **Never renumber `lesson_id`.** Prerequisites and the drift tracker depend on it. Gaps are fine.
 - **`category` is the course page's own section heading**, not a shared taxonomy. `filter.js` matches the literal `AI` for the no-AI filter, so category changes must be coordinated with that code.
 - **`essential` maps to Core.** If a lesson appears in Core, its equivalent elsewhere is essential. Re-derive this mapping from the Core page when the curriculum changes.
-- **`home_only` means better done alone than in a room.** It leaves before budgeting, overrides `essential`, and the packer will not pull it back. Work Time is the exception because it has no content to send home.
+- **`home_only` means better done alone than in a room.** It leaves before budgeting, overrides both `essential` and `deadline_locked`, and the packer will not pull it back. Overriding `deadline_locked` matters: a locked row reserves a week at the end of the season, and a row that is always homework needs no week. Work Time is the exception, having no content to send home.
 - **`home_only` can contradict `homeworkScore`.** That scorer docks `Coding` and `AI` lessons 2 points as "needs the room". Flagging one `home_only` sets the two rules against each other — the sheet wins, but know which you are overruling.
 - **New sheet columns need code and redeployment.** Add them to the published field list in `Crosswalk.gs`, then redeploy.
 - **The deadline lives in two places:** `src/engine/index.js` and the publish payload in `Crosswalk.gs`. Update both on season rollover.
@@ -270,6 +271,7 @@ Assertions are mutation-tested. When adding one, deliberately break the code it 
 - **Mobile uses one card per week.** The week number becomes the header, content columns stack, and labels come from `data-label`.
 - **Defaults are 20 weeks × 90 minutes.** Number fields look like typed blanks rather than select pills, and their spin controls remain visible.
 - **Builder choice appears only when meaningful.** App Inventor vs Thunkable for 13–18 mobile; App Inventor vs Scratch for 8–12. Web, Core and AI in Action do not show it.
+- **8–12 on Core gets a caution.** Core's division-specific rows (Lean Canvas, User Adoption Plan) match no 8–12 division, so a beginner Core plan is quietly two lessons shorter than a 13–15 one. A head-note says so and points at the Beginner curriculum.
 - **8–12 on AI in Action gets a caution.** The course has no 8–12 rows, so the engine maps Beginner to the junior track.
 - **Junior teams get junior links.** Shared Mobile/Web rows carry `url_junior`; the engine swaps URLs by age. Division-specific rows are left unchanged.
 - **Your last selections are remembered.** The seven control values are written to
