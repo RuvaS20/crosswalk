@@ -9,7 +9,7 @@
  * would make render and main circular - fragile for no gain.
  */
 
-import { weekLessons, weekDone, toggleWeek, renderProgress, exportCSV }
+import { weekDone, toggleWeek, renderProgress, exportCSV, indexWorkWeeks }
   from './progress.js';
 
 const $ = s => document.querySelector(s);
@@ -39,6 +39,12 @@ const standalone = p => p.core || p.aiMode === 'focused';
  */
 export function render(plan, { onFix }) {
   const out = $('#out');
+
+  // Before anything is drawn. weekRow asks weekDone whether to tick each box,
+  // and a work week has no answer until it has been given a key - so keying
+  // them after the markup was built rendered every box empty while the footer
+  // counted them as complete.
+  indexWorkWeeks(plan);
 
   if (plan.status === 'refused') {
     $('#printhead').innerHTML = '';
@@ -217,11 +223,10 @@ function weekRow(w) {
     ? w.homework.map(item).join('')
     : '<div class="li muted">&mdash;</div>';
 
-  const ls = weekLessons(w);
-  const tick = ls.length
-    ? `<input type="checkbox" data-week="${w.week}" ${weekDone(w) ? 'checked' : ''}
-              aria-label="Mark week ${w.week} done">`
-    : '<span class="none" aria-hidden="true">&mdash;</span>';
+  // Every week gets a box, work weeks included: the team meets that week, and a
+  // row that cannot be crossed off reads as a row that does not count.
+  const tick = `<input type="checkbox" data-week="${w.week}" ${weekDone(w) ? 'checked' : ''}
+              aria-label="Mark week ${w.week} done">`;
 
   return `
     <tr class="${cls}">

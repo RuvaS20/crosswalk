@@ -72,28 +72,54 @@ function saveDone() {
 /** Every lesson in a week, taught or set. Work-time weeks have none. */
 export const weekLessons = w => [...w.lessons, ...(w.homework || [])];
 
+/**
+ * Gives every week something to tick against.
+ *
+ * A work week holds no lessons, so keyed by lesson_id it had nothing to store
+ * and no way to be marked - which is why a twenty week plan reported itself as
+ * seventeen. Numbering them instead is stable within a configuration; the count
+ * only shifts when the weeks or session length change, and a tick landing on a
+ * different work week is a smaller cost than three weeks the facilitator
+ * attends but cannot cross off.
+ *
+ * Call this before drawing or counting, so both agree on the keys.
+ */
+export function indexWorkWeeks(plan) {
+  if (plan?.status !== 'ok') return;
+  let n = 0;
+  plan.weeks.forEach(w => {
+    if (!weekLessons(w).length) w.workKey = `work:${++n}`;
+  });
+}
+
+/** What a week is marked by: its lessons, or its work-week number. */
+const weekKeys = w => weekLessons(w).length
+  ? weekLessons(w).map(l => l.lesson_id)
+  : (w.workKey ? [w.workKey] : []);
+
 export const weekDone = w => {
-  const ls = weekLessons(w);
-  return ls.length > 0 && ls.every(l => done.has(l.lesson_id));
+  const keys = weekKeys(w);
+  return keys.length > 0 && keys.every(k => done.has(k));
 };
 
-/** Ticking a week marks every lesson in it, taught and set alike. */
+/** Ticking a week marks everything in it, taught and set alike. */
 export function toggleWeek(plan, week, on) {
   const w = plan?.weeks.find(x => x.week === week);
   if (!w) return;
-  weekLessons(w).forEach(l => on ? done.add(l.lesson_id) : done.delete(l.lesson_id));
+  weekKeys(w).forEach(k => on ? done.add(k) : done.delete(k));
   saveDone();
   renderProgress(plan);
 }
 
-/* Counts only weeks that hold something. Work-time weeks have no lessons to
-   mark, so including them would put a ceiling on the count nobody can reach. */
+/* Counts every week in the season, including work weeks. The denominator here
+   is the number the facilitator sees at the top of the page and writes in their
+   calendar, so it has to be the same number. */
 export function renderProgress(plan) {
   const el = $('#progress');
   if (!el || plan?.status !== 'ok') return;
-  const markable = plan.weeks.filter(w => weekLessons(w).length);
-  const complete = markable.filter(weekDone).length;
-  el.textContent = `${complete}/${markable.length} weeks complete`;
+  indexWorkWeeks(plan);
+  const complete = plan.weeks.filter(weekDone).length;
+  el.textContent = `${complete}/${plan.weeks.length} weeks complete`;
 }
 
 
