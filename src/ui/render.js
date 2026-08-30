@@ -85,6 +85,23 @@ export function render(plan, { onFix }) {
   // the session length itself, and the useful reply is what to change.
   const over = plan.weeks.filter(w => w.overrun);
 
+  // Two age/course mismatches worth naming above the table. Both build a valid
+  // plan, so neither is a refusal - they are cases where the course a group
+  // picked is not the one Technovation would recommend for their age.
+  const young = plan.params.age === 'beginner';
+  const headNote =
+    young && plan.params.aiMode === 'focused'
+      ? "Technovation recommends the 'AI in Action' course for ages 13\u201318. For younger " +
+        'groups, the beginner curriculum has AI included.'
+    : young && plan.params.core
+      // Core carries division-specific rows - Lean Canvas, User Adoption Plan -
+      // and 8-12 matches none of them, so a beginner Core plan is quietly two
+      // lessons shorter than the same plan for a 13-15 group.
+      ? 'The Core Curriculum is built around the 13\u201318 courses, so a few of its lessons ' +
+        'do not apply to younger groups and drop out. For 8\u201312, the Beginner curriculum ' +
+        'is a better fit if you have the weeks.'
+    : null;
+
   out.innerHTML = `
     <p class="lede ${level}">${home
       ? `Your ${s.weeksUsed}-week plan requires an average of <strong>${hrs(home)}</strong> a week
@@ -109,8 +126,7 @@ export function render(plan, { onFix }) {
         <h2>Technovation Plan</h2>
         <div class="deadline">Submissions close
           <b class="mono">${esc(longDate(plan.deadline))}</b></div>
-        ${plan.params.age === 'beginner' && plan.params.aiMode === 'focused' ? `
-          <p class="head-note">Technovation recommends the 'AI in Action' course for ages 13–18. For younger groups, the beginner curriculum has AI included.</p>` : ''}
+        ${headNote ? `<p class="head-note">${esc(headNote)}</p>` : ''}
       </div>
 
       <table class="plan">
@@ -185,10 +201,13 @@ function weekRow(w) {
   const cls = [w.workTime ? 'slack' : locked ? 'locked' : '',
                w.overrun ? 'over' : ''].filter(Boolean).join(' ');
 
-  // Just the overage. The week's own lesson minutes are already on the row, so
-  // restating the total here read as clutter.
+  // Names the total, then how far over. The week's minutes are already in the
+  // first column, but at 11px muted they read as a label rather than a figure,
+  // so a reviewer looking only at this row had to do the subtraction. Repeating
+  // the number here is the cheaper fix of the two.
   const over = w.overrun
-    ? `<span class="overage">${mins(w.overrun)} more than your session</span>` : '';
+    ? `<span class="overage">Needs ${mins(w.minutes)} &mdash; ${mins(w.overrun)} more than your session</span>`
+    : '';
 
   const inClass = w.lessons.length
     ? w.lessons.map(item).join('')
