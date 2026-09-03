@@ -97,15 +97,15 @@ export function render(plan, { onFix }) {
   const young = plan.params.age === 'beginner';
   const headNote =
     young && plan.params.aiMode === 'focused'
-      ? "Technovation recommends the 'AI in Action' course for ages 13\u201318. For younger " +
+      ? "Technovation recommends the 'AI in Action' course for 13\u201318 year olds. For younger " +
         'groups, the beginner curriculum has AI included.'
     : young && plan.params.core
       // Core carries division-specific rows - Lean Canvas, User Adoption Plan -
       // and 8-12 matches none of them, so a beginner Core plan is quietly two
       // lessons shorter than the same plan for a 13-15 group.
-      ? 'The Core Curriculum is built around the 13\u201318 courses, so a few of its lessons ' +
-        'do not apply to younger groups and drop out. For 8\u201312, the Beginner curriculum ' +
-        'is a better fit if you have the weeks.'
+      ? 'The Core Curriculum is better suited for those aged 13-18 ' +
+        'For younger age groups, the Beginner curriculum ' +
+        'is a better fit if you have the time.'
     : null;
 
   out.innerHTML = `
@@ -119,8 +119,8 @@ export function render(plan, { onFix }) {
         ${over.length <= 4
           ? `<strong>Week${over.length > 1 ? 's' : ''} ${listWeeks(over.map(w => w.week))}</strong>
              ${over.length > 1 ? 'hold lessons' : 'holds a lesson'} longer than your
-             ${plan.params.sessionLength} minute sessions &mdash;
-             Run a longer meeting those weeks, or split the lesson over two.`
+             ${plan.params.sessionLength} minute sessions.
+             Run a longer meeting those weeks, or split a lesson over two weeks.`
           : `<strong>${over.length} of ${plan.weeks.length} weeks</strong> hold a lesson
              longer than your ${plan.params.sessionLength} minute sessions.
              At this session length most weeks need a longer meeting or a two-part
@@ -129,9 +129,8 @@ export function render(plan, { onFix }) {
 
     <div class="plan-card">
       <div class="plan-head">
-        <h2>Technovation Plan</h2>
-        <div class="deadline">Submissions close
-          <b class="mono">${esc(longDate(plan.deadline))}</b></div>
+        <h2>Lesson Plan</h2>
+        <div class="deadline">Submissions close ${esc(longDate(plan.deadline))}</div>
         ${headNote ? `<p class="head-note">${esc(headNote)}</p>` : ''}
       </div>
 
@@ -141,7 +140,7 @@ export function render(plan, { onFix }) {
             <th class="c-wk">Week</th>
             <th class="c-in">In class</th>
             <th class="c-home">At home</th>
-            <th class="c-done"><span class="sr">Done</span></th>
+            <th class="c-done">Done</th>
           </tr>
         </thead>
         <tbody>${phasedRows(plan.weeks)}</tbody>
@@ -231,7 +230,7 @@ function weekRow(w) {
   return `
     <tr class="${cls}">
       <td class="c-wk">
-        <b>${w.week}</b>
+        <b>${String(w.week).padStart(2, '0')}</b>
         <span class="wtime">${mins(w.minutes)}</span>
       </td>
       <td class="c-in" data-label="In class">${inClass}${over}</td>

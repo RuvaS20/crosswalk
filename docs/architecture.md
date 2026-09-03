@@ -298,4 +298,6 @@ Brand colours come from the Technovation covers:
 
 All three sit on a warm off-white page. Lime is too light for text on white, so it
 works as a fill and highlight with indigo on top; the darkened lime clears 4.5:1 on
-both white and the lime tint. Headings use Rubik, body text uses Poppins.
+both white and the lime tint. Headings use Castoro, body text uses Manrope.
+Castoro ships a single weight, so headings are set at 400 and the small
+uppercase labels stay on Manrope, which has the weights they need.

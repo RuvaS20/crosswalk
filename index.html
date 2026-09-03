@@ -6,27 +6,43 @@
 <title>Curriculum Crosswalk — Technovation session planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,500;0,600;0,700;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Castoro:ital,wght@0,400;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/light_favicon.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" href="assets/dark_favicon.png" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" href="assets/light_favicon.png">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- Outside .wrap so the bar itself runs edge to edge; .brandmark carries the
+     same max-width as the page so its contents still line up with the columns. -->
+<header>
+  <div class="brandmark">
+    <div class="header-title">
+      <img class="wordmark" src="assets/technovation_logo_text.svg" alt="Technovation">
+    </div>
+  </div>
+</header>
 
 <div class="wrap">
 
   <div class="printhead" id="printhead" aria-hidden="true"></div>
 
-  <header>
-    <div class="brandmark">
-      <img class="logo" src="assets/technovation_logo_svg.svg" alt="">
-      <h1 class="header-title">Technovation <em>session planner</em></h1>
-    </div>
-  </header>
-
   <div class="layout">
+
+    <!-- Names the action rather than the tool, and carries the page's h1: the
+         bar above is identity, this is what the page is for. Outside the form
+         so it introduces the sentence instead of becoming part of it. -->
+    <div class="greeting">
+      <h1>Let&rsquo;s <em>plan</em> your program.</h1>
+      <p>Tell us who you&rsquo;re teaching and how much time you have.</p>
+    </div>
 
     <!-- The controls read as a sentence: a facilitator describes their group
          and the plan follows. Every value is a real form control, so keyboard
          and screen-reader users get the same thing, just spoken as a form. -->
+    <!-- One paragraph, not two: the season and the curriculum are a single
+         sentence, and a divider between them made it read as a form again. -->
     <form class="panel sentence" id="controls">
 
       <p class="clause">
@@ -42,11 +58,7 @@
         weeks of
         <input type="number" id="len" value="90" min="30" max="300" step="5"
                aria-label="Minutes per session">
-        minute sessions.
-      </p>
-
-      <p class="clause secondary">
-        We will follow
+        minute sessions. We will follow
         <select id="mode" class="mode" aria-label="Curriculum">
           <option value="custom" selected>a Custom plan</option>
           <option value="core">the Core Curriculum</option>
@@ -74,7 +86,7 @@
      Continues the same sentence in place of the custom clause: exactly one of
      these two is ever visible, so the line stays complete either way.
   --><span class="aside" id="coreNote" hidden>for groups short on time: all the
-          lessons necessary to submit a project</span><!--
+          lessons necessary to submit a project.</span><!--
   --><span class="aside" id="aiNote" hidden>for teams building an AI-powered
           digital solution</span><span
           class="stop">.</span>

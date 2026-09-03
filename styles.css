@@ -34,17 +34,35 @@
   --lime-tint:#F2F6DC;      /* the wash behind hovered and locked rows */
   --lime-deep:#5A6912;      /* darkened until it clears 4.5:1 on white AND on the tint */
 
-  --paper:#FBFAF5;          /* page ground: warm off-white, not pure #fff */
+  --paper:#Fbfaf5;          /* page ground: warm off-white, not pure #fff */
   --card:#FFFFFF;           /* raised surfaces sit brighter than the page */
 
   --line:#E7E4EF;           /* default border */
   --line-soft:#F0EEF6;      /* lighter divider, used between table rows */
 
   --r:12px;                 /* the one corner radius for cards and panels */
+  --r-sm:6px;               /* the tighter radius, for pills inside a row */
+
+  --cream:#Fbfaf5;          /* the row hover wash: warm, and quieter than lime */
+
+  /* The form's blueprint accent. Blue marks the two decisions that reshape the
+     plan - how long the season is, and which curriculum - against indigo for
+     the rest. 6.98:1 on white, both as ink and as a fill. */
+  --blue:#0038FF;
+  --lime-hover:#C9D96F;      /* the lime pill, one step down, on hover */
+
+  --ink:#0a0a0a;            /* body copy: near-black, not the indigo-grey */
+
+  --warn-ink:#d90429;       /* the overage pill's text */
+  --warn-bg:#FDECEF;        /* and its wash, kept light enough for 4.5:1 */
 
   /* The overage note. Text only — no fills — so it needs to hold up on
      white, where it measures 5.25:1. */
   --danger:#d90429;
+
+
+  --shadow-sm: 0 2px 8px rgba(24, 21, 58, 0.04);
+  --shadow-md: 0 8px 24px rgba(24, 21, 58, 0.06);
 }
 
 
@@ -70,15 +88,20 @@ html{
 
 body{
   margin:0;
-  background:var(--paper);
-  color:var(--muted);
-  font:400 15px/1.6 Poppins,system-ui,sans-serif;
+  background:#Fff;
+  color:var(--ink);
+  font:400 15px/1.6 Manrope,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 
-/* Rubik for headings, Poppins for everything else. */
+/* Castoro for headings, Manrope for everything else.
+   Castoro ships one weight, 400. The browser default for h1-h3 is bold, which
+   it would have to synthesise - so the weight is declared here instead. Small
+   uppercase labels stay on Manrope: a 10px letterspaced serif is neither
+   readable nor available in the weight those labels need. */
 h1,h2,h3{
-  font-family:Rubik,Poppins,sans-serif;
+  font-family:Castoro,Georgia,serif;
+  font-weight:400;
   color:var(--indigo);
   margin:0;
   line-height:1.15;
@@ -120,42 +143,78 @@ h1,h2,h3{
   padding:0 20px 96px;
 }
 
+/* White rather than the page ground: with the square mark gone the wordmark
+   needs its own surface. It sits outside .wrap so the bar runs edge to edge,
+   and .brandmark repeats the page's own max-width so the wordmark still lines
+   up with the columns below it. */
 header{
-  padding:40px 0 22px;
+  background:#fff;
+  padding:22px 0;
+  margin-bottom:28px;
 }
 
 .brandmark{
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 20px;
   display:flex;
   align-items:center;
   gap:12px;
-  margin-bottom:18px;
 }
 
-/* The logo SVG is a hard-cornered square; the radius here is what rounds it. */
-.brandmark .logo{
-  width:40px;
-  height:40px;
-  border-radius:0px 12px 0px 12px;
-  flex:none;
-  display:block;
-}
-
-/* Fluid between 30px and 46px so the title never wraps awkwardly on the way. */
+/* Fluid between 30px and 46px so the title never wraps awkwardly on the way.
+   The word "Technovation" is the wordmark SVG rather than type, so this is a
+   flex row: the mark is sized in em and scales with the clamp alongside it.
+   Weight 400 because Castoro ships only that - 700 here would be synthesised. */
 .header-title{
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:.26em;
   font-size:clamp(30px,4.4vw,46px);
-  font-weight:700;
+  font-weight:400;
   letter-spacing:-.025em;
 }
 
-.header-title em{
-  font-style:italic;
-  color:var(--lime-deep);
+/* viewBox is 1920x219, so height drives the width. Sized against the cap
+   height of the italic beside it rather than the full em box. */
+/* The SVG carries no fill, so it paints black - invisible on the bar. Inverting
+   it is what turns it white; it is single-colour artwork, so nothing else in
+   the file is affected. Set a fill in the SVG instead if it ever gains colour. */
+.header-title .wordmark{
+  height:.44em;
+  width:auto;
+  display:block;
+  align-self:center;
 }
 
-header p{
-  margin:14px 0 0;
-  max-width:74ch;
-  font-size:16px;
+/* The greeting. Centred and above the form: it names the action rather than
+   the tool, so it belongs with the thing it introduces rather than in the bar,
+   where it would compete with the wordmark for the same job. */
+.greeting{
+  text-align:center;
+  margin:0 0 28px;
+}
+
+.greeting h1{
+  margin:0 0 10px;
+  font:400 2.5rem/1.25 Castoro,Georgia,serif;
+  color:var(--indigo);
+}
+
+/* A highlight block rather than italics: the lime is a marker laid over the
+   one word the facilitator is here to act on. */
+.greeting h1 em{
+  font-style:normal;
+  background:#a7d3f0;
+  padding:0 10px;
+  border-radius:4px;
+}
+
+.greeting p{
+  margin:0;
+  font-size:1.05rem;
+  color:var(--muted);
 }
 
 /* The submission deadline: a pill, because it is a fixed fact rather than
@@ -167,19 +226,19 @@ header p{
   margin-top:18px;
   padding:7px 14px 7px 12px;
   border-radius:99px;
-  background:var(--indigo);
-  color:#fff;
+  background:#d8e582;
+  color:var(--indigo);
   font-size:16px;
   font-weight:500;
 }
 
-.deadline b{
-  background:var(--lime);
-  color:var(--indigo);
-  padding:3px 9px;
-  border-radius:99px;
-  font:600 Rubik,sans-serif;
-  font-size: 14px;
+/* One uppercase string, not a label plus a chip: it reads as a single stated
+   fact rather than two things sharing a pill. */
+.deadline{
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  font-weight:600;
+  font-size:14px;
 }
 
 .layout{
@@ -209,31 +268,33 @@ header p{
   margin-bottom:28px;
 }
 
-.sentence{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
+/* The sentence card is a page of prose, not a form: cream on cream so it
+   barely separates from the paper, a hairline edge, and a wide diffuse shadow
+   doing the lifting instead of a border. */
+.panel.sentence{
+  background:var(--cream);
+  border:1px solid rgba(29,19,73,.08);
+  border-radius:24px;
+  padding:40px 50px;
+  box-shadow:0 12px 36px rgba(29,19,73,.05);
 }
+
+
 
 /* line-height carries the pills: they are taller than the text around them,
    so wrapped lines need the room or the rows collide. */
+/* Normal inline flow rather than a flex row: the pills are punctuation inside
+   a sentence, so the text has to wrap around them the way prose does. The tall
+   line-height is what stops the rows colliding once pills sit in the run. */
 .clause{
   margin:0;
-  font-size:17px;
-  line-height:1.95;
+  font:400 1.3rem/2.15 Castoro,Georgia,serif;
   color:var(--indigo);
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:6px 7px;
+  line-height: 2.25;
 }
 
 /* The second clause is the one Core collapses, so it is set apart. */
-.clause.secondary{
-  background:var(--paper);
-  border-radius:16px;
-  padding:14px 18px;
-}
+
 
 /* The closing full stop. A bare "." after the span is its own flex item, so
    the row gap opens a space in front of it — the negative margin cancels
@@ -244,11 +305,9 @@ header p{
 
 /* Keeps "with App Inventor" together when the sentence wraps, instead of
    stranding the preposition at the end of a line. */
+/* Inline, so the clause it holds keeps flowing with the sentence around it. */
 .sub-group{
-  display:inline-flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:6px 7px;
+  display:inline;
 }
 
 
@@ -256,17 +315,20 @@ header p{
 
 .clause select,
 .clause input{
-  font-family:Poppins,system-ui,sans-serif;
+  font-family:Manrope,system-ui,sans-serif;
   font-size:14px;
   font-weight:500;
   cursor:pointer;
   appearance:none;
-  background-color:var(--indigo);
-  color:#fff;
-  border:2px solid var(--indigo);
+  background-color:var(--card);
+  color:var(--indigo);
+  border:1px solid var(--line);
   border-radius:99px;
-  padding:5px 30px 5px 14px;
-  transition:transform .18s,box-shadow .18s;
+  padding:4px 32px 4px 16px;
+  margin:0 3px;
+  vertical-align:baseline;
+  box-shadow:0 2px 8px rgba(0,0,0,.03);
+  transition:border-color .2s ease,background-color .2s ease;
 }
 
 /* Numbers are typed rather than picked, so no chevron and no room for one. */
@@ -278,11 +340,11 @@ header p{
   padding:5px 12px;
   text-align:center;
   font-variant-numeric:tabular-nums;
-  background-color:#f8f9fa;
-  color:var(--indigo);
-  border-style:dashed;
-  caret-color:var(--indigo);
-  accent-color:var(--indigo);
+  background-color:transparent;
+
+  border:1.5px dashed;
+  box-shadow:none;
+  font-weight:600;
   /* The shared pill rule sets appearance:none, which drops the spinner
      entirely in Firefox. The fill and border above still win, so restoring
      the native widget only brings the arrows back. */
@@ -296,36 +358,87 @@ header p{
   opacity:1;
 }
 
+/* The dropdown the browser opens is the one part of a select we do not own:
+   on macOS it is a native menu that ignores font, padding and colour. Two
+   things help without replacing the control and its keyboard behaviour.
+   base-select opts into the styleable picker where it exists (Chromium today)
+   and is ignored everywhere else; color-scheme keeps that native menu light,
+   so a viewer in dark mode does not get a dark popup under light pills. */
+.clause select{
+  color-scheme:light;
+}
+
+.clause select,
+.clause select::picker(select){
+  appearance:base-select;
+}
+
+/* base-select supplies its own arrow. We already draw one as a background
+   image, so this suppresses the duplicate rather than dropping ours - the
+   chevron has to stay for every browser that never reaches this rule. */
+.clause select::picker-icon{
+  display:none;
+}
+
+/* The picker itself, once it is ours to style: the pill's own surface and
+   radius, and the sans face the closed control uses. */
+.clause select::picker(select){
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:6px;
+  font-family:Manrope,system-ui,sans-serif;
+  font-size:14px;
+  box-shadow:0 12px 36px rgba(29,19,73,.12);
+}
+
+.clause select option{
+  padding:7px 12px;
+  border-radius:9px;
+  color:var(--indigo);
+}
+
+.clause select option:checked,
+.clause select option:hover{
+  background:var(--lime-tint);
+}
+
 /* appearance:none drops the native arrow, so the chevron is supplied as an
    inline SVG data URI — white, to sit on the indigo pill. */
 .clause select{
-  background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%231D1349' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
   background-repeat:no-repeat;
-  background-position:right 12px top 55%;
-  background-size:9px auto;
+  background-position:right 14px center;
 }
 
+/* Hover darkens the edge and nothing else. At this size a filling pill pulled
+   the eye off the sentence it is part of. */
 .clause select:hover,
 .clause input:hover{
-  transform:translateY(-1px);
-  box-shadow:0 4px 8px rgba(29,19,73,.15);
+  border-color:var(--indigo);
+}
+
+.clause select.mode:hover{
+  background-color:var(--lime-hover);
+  border-color:var(--lime-hover);
 }
 
 /* outline-offset leaves a gap of the card behind the pill, so the site's
    usual indigo ring stays visible even against an indigo fill. */
 .clause select:focus-visible,
 .clause input:focus-visible{
-  outline:2.5px solid var(--indigo);
+  outline:2.5px solid var(--blue);
   outline-offset:2px;
 }
 
-/* The curriculum switch. Lime rather than indigo because it changes what the
-   rest of the sentence means, instead of answering one more question. */
+/* The one decision that changes what the rest of the sentence means, so it is
+   the one pill carrying a fill. */
 .clause select.mode{
   background-color:var(--lime);
   border-color:var(--lime);
   color:var(--indigo);
-  background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231D1349%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  font-weight:600;
+  box-shadow:none;
 }
 
 /* The Core explainer. It is part of the sentence, not a note about it, so it
@@ -339,7 +452,7 @@ header p{
 /* A value the facilitator did not choose: 8-12 only builds mobile, so it is
    stated rather than offered. Outline, muted, no pointer. */
 .static-text{
-  border:2px solid var(--line);
+  border:1px solid var(--line);
   border-radius:99px;
   padding:5px 14px;
   font-size:14px;
@@ -360,7 +473,7 @@ header p{
    count line, and a list of notes. Weekly homework time is the only figure a
    facilitator can act on; the rest followed from what they had already chosen.
 
-   Rubik rather than Poppins: this is the one piece of prose on the page that
+   Castoro rather than Manrope: this is the one piece of prose on the page that
    is a finding rather than an instruction, and the heading face marks it.
    -------------------------------------------------------------------------- */
 
@@ -376,7 +489,7 @@ header p{
 
 .lede{
   margin:0 0 20px;
-  font:400 18px/1.4 Rubik,sans-serif;
+  font:400 18px/1.4 Castoro,Georgia,serif;
   color:var(--indigo);
   max-width:60ch;
 }
@@ -397,8 +510,11 @@ header p{
 /* The overrun banner. Same shape as the summary sentence, in the red the
    table already uses for the per-week note, so the two obviously refer to
    the same thing — this one just says how widespread it is. */
+/* No 60ch measure here. The sentence is a single instruction and the wrap
+   landed mid-clause, which read as two half-thoughts. */
 .lede.over-note{
   margin-top:-8px;
+  max-width:none;
 }
 
 .lede.over-note strong{
@@ -462,15 +578,16 @@ header p{
    -------------------------------------------------------------------------- */
 
 .plan-card{
-  border:2px solid var(--indigo);
-  border-radius:var(--r);
+  border-radius:16px;
+  border:1px solid rgba(29,19,73,.08);
+  box-shadow: var(--shadow-md);
   background:var(--card);
   margin-top:4px;
   /* No overflow:hidden — it would break position:sticky on the footer. */
 }
 
 .plan-head{
-  background:var(--indigo);
+  background:#1d1349;
   color:#fff;
   padding:20px 24px;
   text-align:center;
@@ -479,8 +596,9 @@ header p{
 
 .plan-head h2{
   margin:0;
-  color:var(--lime);
-  font-size:24px;
+  color:#fff;
+  font-size:30px;
+  font-weight:500;
 }
 
 /* Reuses the .deadline pill from the page header so the same fact is stated
@@ -512,7 +630,7 @@ table.plan{
 table.plan thead th{
   background:var(--card);
   color:var(--muted);
-  font:600 11px/1.4 Rubik,sans-serif;
+  font:600 11px/1.4 Manrope,system-ui,sans-serif;
   letter-spacing:.08em;
   text-transform:uppercase;
   padding:11px 20px;
@@ -523,8 +641,14 @@ table.plan tr{
   border-bottom:1px solid var(--line-soft);
 }
 
+/* Lesson rows only. A unit band is a row too, but it is a label rather than
+   something you act on, so it does not light up under the cursor. */
+table.plan tbody tr:not(:has(th.phase)):hover{
+  background:var(--cream);
+}
+
 table.plan td{
-  padding:14px 20px;
+  padding:20px 20px;
   vertical-align:top;
 }
 
@@ -533,7 +657,7 @@ table.plan td{
 th.phase{
   background:var(--lime-tint);
   color:var(--indigo);
-  font:600 11px/1.4 Rubik,sans-serif;
+  font:600 11px/1.4 Manrope,system-ui,sans-serif;
   letter-spacing:.1em;
   text-transform:uppercase;
   padding:10px 20px;
@@ -551,7 +675,7 @@ tr.slack td{
 /* --- Column 1: week number and total time --------------------------------- */
 
 .c-wk{
-  width:86px;
+  width:104px;
   text-align:center;
   background:var(--paper);
   border-right:1px solid var(--line-soft);
@@ -559,7 +683,7 @@ tr.slack td{
 
 .c-wk b{
   display:block;
-  font:700 26px/1 Rubik,sans-serif;
+  font:400 2.7rem/1 Castoro,Georgia,serif;
   color:var(--indigo);
   font-variant-numeric:tabular-nums;
   margin-bottom:4px;
@@ -580,11 +704,14 @@ tr.slack td{
    longer than one session reads as an error, when it is really a note. The
    red line under the lessons carries it, and on white it clears 4.5:1. */
 .overage{
-  display:block;
+  display:inline-block;
   margin-top:8px;
-  font-size:12px;
+  padding:4px 10px;
+  border-radius:var(--r-sm);
+  background:var(--warn-bg);
+  color:var(--warn-ink);
+  font-size:.75rem;
   font-weight:600;
-  color:var(--danger);
 }
 
 
@@ -595,13 +722,42 @@ tr.slack td{
   text-align:center;
   vertical-align:middle;
   border-left:1px dashed var(--line);
+  border-radius: 6px;
 }
 
+/* Drawn rather than native: a native checkbox renders its own box and ignores
+   border-radius, so the corners only round once we own the painting. */
 .c-done input{
+  appearance:none;
+  -webkit-appearance:none;
   width:22px;
   height:22px;
-  accent-color:var(--indigo);
+  border:1.5px solid var(--line);
+  border-radius:6px;
+  background:var(--card);
   cursor:pointer;
+  display:grid;
+  place-content:center;
+  transition:background .15s ease, border-color .15s ease;
+}
+
+.c-done input:hover{
+  border-color:var(--indigo);
+}
+
+.c-done input:checked{
+  background:var(--indigo);
+  border-color:var(--indigo);
+}
+
+/* The tick itself: two borders of an empty box, rotated. */
+.c-done input:checked::after{
+  content:"";
+  width:10px;
+  height:5px;
+  border-left:2px solid #fff;
+  border-bottom:2px solid #fff;
+  transform:rotate(-45deg) translate(1px,-2px);
 }
 
 /* Work-time weeks hold no lessons, so there is nothing to mark done. */
@@ -619,7 +775,7 @@ tr.slack td{
 .li{
   display:flex;
   gap:10px;
-  font-size:13.5px;
+  font-size:15px;
   padding:3px 0;
   align-items:baseline;
 }
@@ -640,20 +796,25 @@ tr.slack td{
   font-size:13px;
 }
 
-/* Underlined in lime rather than blue: still obviously a link, still on brand. */
+/* A quiet grey rule rather than a lime one: at this size the lime read as a
+   highlight across the whole column. It darkens to indigo on hover, so the
+   affordance arrives on approach instead of shouting from rest. */
 .li a{
   color:var(--indigo);
   text-decoration:none;
-  border-bottom:1.5px solid var(--lime);
+  display:inline;
+  padding-bottom:2px;
+  border-bottom:1px solid #D0D0D0;
+  transition:border-color .2s ease;
 }
 
 .li a:hover{
-  border-bottom-color:var(--indigo);
+  border-color:var(--indigo);
 }
 
 .tag{
   display:inline-block;
-  font:600 10px/1.6 Rubik,sans-serif;
+  font:600 10px/1.6 Manrope,system-ui,sans-serif;
   letter-spacing:.05em;
   text-transform:uppercase;
   padding:0 7px;
@@ -670,8 +831,8 @@ tr.slack td{
   position:sticky;
   bottom:0;
   z-index:10;
-  background:var(--lime);
-  border-top:2px solid var(--indigo);
+  background:var(--lime-tint);
+  border-top:1.3px solid var(--indigo);
   border-radius:0 0 10px 10px;
   padding:13px 20px;
   display:flex;
@@ -683,7 +844,7 @@ tr.slack td{
 }
 
 .plan-foot .progress{
-  font:600 14px/1.3 Rubik,sans-serif;
+  font:400 14px/1.3 Castoro,Georgia,serif;
   color:var(--indigo);
   font-variant-numeric:tabular-nums;
 }
@@ -700,7 +861,7 @@ tr.slack td{
   border:2px solid var(--indigo);
   background:transparent;
   color:var(--indigo);
-  font:500 13px Poppins,sans-serif;
+  font:500 13px Manrope,system-ui,sans-serif;
   cursor:pointer;
 }
 
@@ -790,7 +951,7 @@ tr.slack td{
   border-radius:9px;
   background:var(--indigo);
   color:#fff;
-  font:500 13.5px Poppins,sans-serif;
+  font:500 13.5px Manrope,system-ui,sans-serif;
   cursor:pointer;
 }
 
@@ -806,7 +967,7 @@ tr.slack td{
   align-items:center;
   padding:10px 16px;
   border-radius:9px;
-  font:500 13.5px Poppins,sans-serif;
+  font:500 13.5px Manrope,system-ui,sans-serif;
   text-decoration:none;
 }
 
@@ -851,7 +1012,12 @@ tr.slack td{
 @media screen and (max-width:900px){
 
   header{
-    padding:26px 0 16px;
+    padding:16px 0;
+    margin-bottom:20px;
+  }
+
+  .greeting h1{
+    font-size:1.9rem;
   }
 
   .panel{
@@ -934,7 +1100,7 @@ tr.slack td{
   .c-in::before,.c-home::before{
     content:attr(data-label);
     display:block;
-    font:600 10px/1.5 Rubik,sans-serif;
+    font:600 10px/1.5 Manrope,system-ui,sans-serif;
     letter-spacing:.08em;
     text-transform:uppercase;
     color:var(--muted);
@@ -949,6 +1115,7 @@ tr.slack td{
     border-top:1px dashed var(--line);
     background:var(--paper);
     padding:10px 18px;
+    border-radius: 6px;
   }
 
   .plan-foot{
@@ -994,7 +1161,7 @@ tr.slack td{
   /* Everything the reader cannot act on from paper. The summary line stays:
      it is one sentence and it carries the homework figure, which is exactly
      what the printed sheet used to be missing. */
-  header,.panel,.actions,.plan-foot{
+  header,.greeting,.panel,.actions,.plan-foot{
     display:none !important;
   }
 
@@ -1152,6 +1319,7 @@ tr.slack td{
     width:34px;
     text-align:center;
     border-left:1px solid #999;
+    border-radius: 6px;
   }
 
   .c-done input{
@@ -1159,7 +1327,7 @@ tr.slack td{
     width:18px;
     height:18px;
     border:1.25px solid #000;
-    border-radius:0;
+    border-radius: 6px;
     background:#fff;
   }
 
