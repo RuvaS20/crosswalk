@@ -470,6 +470,16 @@ header{
   font-size:17px;
 }
 
+/* The plan fades up into place after the loading card (reveal() in main.js).
+   Reduced motion turns this off with every other animation. */
+.reveal{
+  animation:reveal .35s ease-out;
+}
+
+@keyframes reveal{
+  from{ opacity:0; filter:blur(3px); }
+}
+
 .loading p{
   margin:0;
   max-width:44ch;

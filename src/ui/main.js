@@ -86,7 +86,7 @@ async function revalidate() {
   if (sameData(live, data)) return;
   data = live;
   syncSentence();      // tool choices can change with the data
-  update({ immediate: true });
+  update({ immediate: true, quiet: true });
 }
 
 
@@ -215,24 +215,51 @@ function restoreBuilder(want) {
 
 let timer = null;
 
+/** How long the "Building your plan" card holds, so a change reads as work done. */
+const THINK_MS = 2000;
+
+/** Same card as the static first paint in index.html. */
+function showThinking() {
+  $('#out').innerHTML =
+    '<div class="loading"><span class="spinner" aria-hidden="true"></span>' +
+    '<h2>Building your plan</h2><p>Fitting the lessons to your weeks.</p></div>';
+}
+
+/** Fades the new plan in. Re-adding the class restarts the animation. */
+function reveal() {
+  const out = $('#out');
+  out.classList.remove('reveal');
+  void out.offsetWidth;          // force a reflow so the animation runs again
+  out.classList.add('reveal');
+}
+
 /**
  * Rebuilds the plan. The number fields are debounced 500ms so the plan does
- * not move under each digit; selects pass `immediate`.
+ * not move under each digit; selects pass `immediate`. The loading card shows
+ * for THINK_MS first, unless `quiet` (a background data swap the user did not
+ * ask for).
  */
-function update({ immediate = false, focus = false } = {}) {
+function update({ immediate = false, focus = false, quiet = false } = {}) {
   if (!data) return;
   clearTimeout(timer);
   timer = setTimeout(() => {
-    const params = readParams();
-    saveView();
-    useConfig(params);           // before render: ticks are per configuration
-    // render replaces #out, so put focus back on the same tick or button.
+    // The card and render both replace #out, so remember the focused tick or
+    // button now and put focus back on it after.
     const a = document.activeElement;
     const was = $('#out').contains(a) &&
       (a.id ? '#' + a.id : a.dataset.week ? `[data-week="${a.dataset.week}"]` : null);
-    render(buildPlan(data, params), { onFix: setParams });
-    if (focus) $('#out').focus();
-    else if (was) $(was)?.focus();
+    const draw = () => {
+      const params = readParams();
+      saveView();
+      useConfig(params);         // before render: ticks are per configuration
+      render(buildPlan(data, params), { onFix: setParams });
+      if (!quiet) reveal();
+      if (focus) $('#out').focus();
+      else if (was) $(was)?.focus();
+    };
+    if (quiet) return draw();
+    showThinking();
+    timer = setTimeout(draw, THINK_MS);   // a newer change clears this too
   }, immediate ? 0 : 500);
 }
 
