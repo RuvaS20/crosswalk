@@ -35,14 +35,16 @@ step, no dependencies, no `package.json`.
 flowchart LR
   S[("Google Sheet")] -->|"Apps Script"| A["/exec endpoint"]
   A -->|"live fetch"| U["the page"]
-  A -->|"daily Action"| J[("curriculum.json")]
+  A -->|"twice-daily Action"| J[("curriculum.json")]
   J -.->|"fallback"| U
   U --> E["src/engine"]
   E -->|"plan"| U
 ```
 
-The sheet is the source of truth. The page fetches the live endpoint and falls back to
-the committed snapshot silently, so a Google outage leaves a working planner.
+The sheet is the source of truth. The page draws straight away from the committed
+snapshot (or the browser's cached copy of the last live payload, whichever is newer),
+then fetches the live endpoint in the background and re-renders only if it differs. A
+Google outage leaves a working planner.
 
 `src/engine/` is a pure function of `(data, params)` — no DOM, no globals — which is why
 every configuration can be swept in a test.
@@ -82,7 +84,7 @@ mv /tmp/fresh.json curriculum.json
 node test/engine.test.mjs
 ```
 
-Never curl straight over the tracked file. A GitHub Action does this daily and refuses
+Never curl straight over the tracked file. A GitHub Action does this twice a day and refuses
 to commit anything that fails the tests.
 
 **See what's feasible** across every age, mode, week count and session length:
@@ -106,7 +108,7 @@ empty. Every push to `main` redeploys.
 index.html              the page — markup only
 styles.css
 config.js               your Apps Script endpoint — the one file you must edit
-curriculum.json         committed snapshot, used when the endpoint is unreachable
+curriculum.json         committed snapshot, drawn first while the endpoint loads
 
 src/engine/             the planner — a pure function of (data, params)
   index.js              buildPlan, the constants, the public exports
@@ -123,7 +125,7 @@ tools/plan-matrix.mjs   feasibility grid across every configuration
 assets/                 the logo
 docs/                   architecture.md, decisions.md
 apps-script/            Crosswalk.gs, Sync.gs — how the sheet publishes
-.github/workflows/      daily curriculum refresh, gated on the test suite
+.github/workflows/      twice-daily curriculum refresh, gated on the test suite
 ```
 
 Imports are native ES modules with relative paths, so the tree is the dependency

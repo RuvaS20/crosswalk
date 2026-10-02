@@ -32,9 +32,9 @@ flowchart LR
 
   A -->|"/exec endpoint"| U
 
-  A -->|"daily GitHub Action"| J
+  A -->|"twice-daily GitHub Action"| J
 
-  J -.->|"used when the endpoint fails"| U
+  J -.->|"first draw"| U
 
   U --> E
 
@@ -42,7 +42,7 @@ flowchart LR
 
 ```
 
-The endpoint is fetched first; `curriculum.json` is the silent fallback. The page does not show which copy it is using. That keeps the planner working during a Google outage, but a broken endpoint can look like a working one. Check `generated_at` in the payload or the browser console to tell the difference.
+The page draws first from `curriculum.json`, or from the last live payload cached in `localStorage` (`crosswalk.data.v1`) when that has a newer `generated_at`. It then fetches the endpoint in the background, caches the result, and re-renders only if the payload differs ignoring `generated_at`; controls, ticks and focus stay put. The page does not show which copy it is using. That keeps the planner working during a Google outage, but a broken endpoint can look like a working one.
 
 `src/engine/` takes data and settings and produces the plan. It does not touch the DOM or read globals, so the whole grid can be tested at once.
 
@@ -190,13 +190,13 @@ Two common silent failures:
 - A `script.googleusercontent.com/...echo?user_content_key=...` URL is not the browser endpoint. It is Google's redirect target, lacks the needed CORS header, and can make `curl` succeed while browser `fetch` fails.
 - The deployment must be set to **Anyone**. More restrictive settings can return 404s or a sign-in page instead of JSON.
 
-If the endpoint fails, the site silently uses `curriculum.json`. Check the console or `generated_at` to see which copy is active.
+If the endpoint fails, the site silently keeps the cached copy or `curriculum.json`. Check the endpoint request in the Network tab, or `generated_at`, to see which copy is active.
 
 A redeploy can change the web-app URL. After every redeploy, check **Show published URL** and update `config.js` if needed.
 
 ### Refreshing the fallback copy
 
-A GitHub Action refreshes `curriculum.json` daily at 08:23 UTC and commits only when the payload changes. `generated_at` is stripped before comparison because it is a response timestamp, not a sheet-edit timestamp.
+A GitHub Action refreshes `curriculum.json` twice a day, at 08:23 and 20:23 UTC, and commits only when the payload changes. `generated_at` is stripped before comparison because it is a response timestamp, not a sheet-edit timestamp.
 
 Before publishing, the workflow checks:
 
@@ -255,7 +255,7 @@ Assertions are mutation-tested. When adding one, deliberately break the code it 
 - **The sentence stays grammatical.** Core and AI in Action collapse the second clause and replace it with course-specific text.
 - **The curriculum selector includes Custom, Core and AI in Action.** AI in Action used to be hidden inside the AI control, even though it is a separate course and ignores mobile/web selection.
 - **Results update live.** The engine runs locally in about a millisecond, so selects rebuild immediately. The two number inputs are debounced by 500ms to avoid rebuilding on every keystroke.
-- **The endpoint wait is covered.** `#out` contains a static spinner and message before JS loads. `render()` replaces it on the first plan. Reduced-motion users get no frozen spinner.
+- **The load is covered.** `#out` contains a static spinner and message before JS loads; `index.html` preloads `curriculum.json` and every module so they download in parallel. `render()` replaces it on the first plan. Reduced-motion users get no frozen spinner.
 - **The plan is a card.** It has a deadline header, week table and sticky footer. In-class and at-home work use separate columns so home load is easy to scan.
 - **Weeks are grouped by `unit`.** A heading appears when the unit changes. Blank-unit weeks continue the previous band instead of creating fragments.
 - **Homework belongs to a week.** A displaced lesson is attached to the week of the nearest preceding in-class lesson, preserving curriculum order.

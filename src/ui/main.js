@@ -16,26 +16,84 @@ let data = null;
 /* ---------------------------------------------------------------- loading */
 
 /**
- * Prefers the live endpoint, falls back to the copy committed beside the site.
- * A Google outage or a blocked request should still leave a working planner
- * with data that may be stale - which we say plainly - rather than a blank page.
+ * Draws from whatever is on hand, then checks the live endpoint in the
+ * background. The endpoint takes 4-6s; the committed file and the cached copy
+ * of the last live payload are both instant, and almost always current.
+ *
+ * Which source the data came from is silent by design: that is our problem,
+ * not the facilitator's.
+ */
+const CACHE_KEY = 'crosswalk.data.v1';
+
+const usable = d => Array.isArray(d?.lessons) && d.lessons.length > 0;
+
+// generated_at is the response time, not an edit time, so it differs on every
+// fetch. Compared without it, as the refresh workflow does.
+const sameData = (a, b) => {
+  const strip = ({ generated_at, ...rest }) => JSON.stringify(rest);
+  return strip(a) === strip(b);
+};
+
+function readCache() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    return usable(d) ? d : null;
+  } catch { return null; }   // private mode, or corrupt value
+}
+
+function writeCache(d) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)); }
+  catch { /* private mode or full: the next visit just draws from the file */ }
+}
+
+// Relative to the page, not to this module: fetch resolves against the
+// document URL, so this stays './curriculum.json' even from src/ui. Preloaded
+// from index.html, so it is usually already downloaded by the time this runs.
+async function fetchLocal() {
+  const res = await fetch('./curriculum.json');
+  if (!res.ok) throw new Error(`curriculum.json: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+async function fetchLive() {
+  const res = await fetch(ENDPOINT);
+  if (!res.ok) throw new Error(`endpoint: ${res.status}`);
+  const json = await res.json();
+  if (!usable(json)) throw new Error('endpoint returned no lessons');
+  return json;
+}
+
+/**
+ * The first draw: the newer of the cached live payload and the committed
+ * file. The cache is usually newer, but not if the refresh workflow has
+ * committed since this browser last visited.
  */
 async function load() {
-  if (ENDPOINT) {
-    try {
-      const res = await fetch(ENDPOINT);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.lessons?.length) { data = json; return; }
-      }
-    } catch { /* fall through */ }
+  const cached = readCache();
+  let local = null;
+  try { local = await fetchLocal(); }
+  catch (err) {
+    if (cached) return cached;
+    if (!ENDPOINT) throw err;
+    // Nothing on hand: the live endpoint is all that is left, so wait for it.
+    try { const live = await fetchLive(); writeCache(live); return live; }
+    catch { throw err; }
   }
-  // Falls back to the copy committed beside the site. Silent by design: which
-  // file the data came from is our problem, not the facilitator's.
-  //
-  // Relative to the page, not to this module: fetch resolves against the
-  // document URL, so this stays './curriculum.json' even from src/ui.
-  data = await (await fetch('./curriculum.json')).json();
+  if (cached && (cached.generated_at || '') >= (local.generated_at || '')) return cached;
+  return local;
+}
+
+/** Fetches the live payload and swaps it in only if it differs from what is drawn. */
+async function revalidate() {
+  if (!ENDPOINT) return;
+  let live;
+  try { live = await fetchLive(); }
+  catch { return; }   // Google down or blocked: keep what is drawn
+  writeCache(live);
+  if (sameData(live, data)) return;
+  data = live;
+  syncSentence();      // the tool choices can change with the data; controls keep their values
+  update({ immediate: true });
 }
 
 
@@ -187,8 +245,14 @@ function update({ immediate = false, focus = false } = {}) {
     const params = readParams();
     saveView();                  // every path that rebuilds also comes through here
     useConfig(params);           // before render: the ticks it draws are per-configuration
+    // render replaces #out wholesale. If the live data swaps in while someone is
+    // on a tick or a footer button, put them back on the same one.
+    const a = document.activeElement;
+    const was = $('#out').contains(a) &&
+      (a.id ? '#' + a.id : a.dataset.week ? `[data-week="${a.dataset.week}"]` : null);
     render(buildPlan(data, params), { onFix: setParams });
     if (focus) $('#out').focus();
+    else if (was) $(was)?.focus();
   }, immediate ? 0 : 500);
 }
 
@@ -237,11 +301,13 @@ $('#controls').addEventListener('submit', e => e.preventDefault());
 // Land on a real plan rather than an empty screen: a first-time visitor sees
 // what the tool produces and adjusts, instead of facing a form and guessing.
 load()
-  .then(() => {
+  .then(first => {
+    data = first;
     const builder = restoreView();
     syncSentence();              // fills the tool select, so the builder comes after
     restoreBuilder(builder);
     update({ immediate: true });
+    revalidate();
   })
   .catch(err => {
     $('#out').innerHTML =

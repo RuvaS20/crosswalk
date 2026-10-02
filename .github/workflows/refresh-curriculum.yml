@@ -1,18 +1,19 @@
 # Keeps curriculum.json in step with the spreadsheet.
 #
-# The site fetches the live endpoint at page load, so this file is the
-# fallback - what visitors get when Google is slow, blocked, or down. Left
-# alone it silently rots, and a stale fallback is worse than an obvious one
-# because nothing on the page says which copy you are looking at.
+# The site draws from this file first and swaps in the live endpoint's data
+# when it arrives a few seconds later, so this is what a first-time visitor
+# sees before then - and all they see when Google is slow, blocked, or down.
+# The staler it is, the more often the plan changes under someone mid-read,
+# and nothing on the page says which copy you are looking at.
 #
-# Runs daily, refuses to commit anything that fails the engine test suite,
+# Runs twice daily, refuses to commit anything that fails the engine test suite,
 # and stays quiet when the sheet has not actually changed.
 
 name: Refresh curriculum
 
 on:
   schedule:
-    - cron: '23 8 * * *'      # 08:23 UTC daily, off the hour to dodge the rush
+    - cron: '23 6,20 * * *'   # 06:23 and 18:23 UTC, off the hour to dodge the rush
   workflow_dispatch:           # and a "Run workflow" button for edits you want live now
 
 permissions:

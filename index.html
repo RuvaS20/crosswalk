@@ -11,6 +11,16 @@
 <link rel="icon" type="image/png" href="assets/dark_favicon.png" media="(prefers-color-scheme: dark)">
 <link rel="icon" type="image/png" href="assets/light_favicon.png">
 <link rel="stylesheet" href="styles.css">
+<!-- Starts the data and the whole module graph downloading in parallel, instead
+     of each import being discovered only after its parent has parsed. -->
+<link rel="preload" href="curriculum.json" as="fetch" crossorigin>
+<link rel="modulepreload" href="src/ui/main.js">
+<link rel="modulepreload" href="config.js">
+<link rel="modulepreload" href="src/ui/progress.js">
+<link rel="modulepreload" href="src/ui/render.js">
+<link rel="modulepreload" href="src/engine/index.js">
+<link rel="modulepreload" href="src/engine/filter.js">
+<link rel="modulepreload" href="src/engine/schedule.js">
 </head>
 <body>
 
@@ -96,14 +106,13 @@
     <div class="results">
       <!-- src/ui/render.js renders the plan card here, with Print and
            Spreadsheet in its sticky footer. The loading state below is static
-           first paint, not injected by JS: the endpoint takes ~5s, and this has
-           to be on screen before the modules have even parsed. render()
-           replaces it on the first plan. -->
+           first paint, not injected by JS, so it is on screen before the
+           modules have parsed. render() replaces it on the first plan. -->
       <main id="out" aria-live="polite" tabindex="-1">
         <div class="loading">
           <span class="spinner" aria-hidden="true"></span>
           <h2>Building your plan</h2>
-          <p>Fetching the latest version of the Curriculum.</p>
+          <p>Loading the Curriculum.</p>
         </div>
       </main>
     </div>
