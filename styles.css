@@ -1,28 +1,20 @@
 /* =============================================================================
-   Curriculum Crosswalk — stylesheet
+   Curriculum Crosswalk - stylesheet
 
-   Plain CSS, no build step and no preprocessor: what is here is what ships.
-   Ordered the way the page is read — tokens, base, shell, controls, results,
-   then the two alternate presentations (narrow screens, then print).
+   Plain CSS, no build step. Ordered the way the page is read: tokens, base,
+   shell, controls, results, then narrow screens and print.
 
-   Two conventions worth knowing before editing:
-
-   1. Colour only ever comes from a token in :root. If you need a new shade,
-      add it there rather than inlining a hex, so contrast stays checkable in
-      one place.
-   2. The print block at the bottom is a real deliverable, not an afterthought.
-      A facilitator prints the plan and writes on it. Anything you add to the
-      screen layout should be considered there too.
+   1. Colour comes from a token in :root, so contrast is checkable in one place.
+   2. Print is a real deliverable: facilitators print the plan and write on it.
+      Check anything new there too.
    ============================================================================= */
 
 
 /* -----------------------------------------------------------------------------
    1. Design tokens
 
-   Brand palette sampled from the Technovation covers. The lime is genuinely
-   light — it cannot carry text on white — so it is used as fill and highlight
-   with indigo on top, and --lime-deep exists for the times we need lime-ish
-   text that still passes contrast.
+   Brand palette from the Technovation covers. Lime is too light for text on
+   white, so it is a fill with indigo on top; --lime-deep is the text version.
    -------------------------------------------------------------------------- */
 
 :root{
@@ -30,7 +22,7 @@
   --indigo-600:#3A2E72;     /* the hover step up from --indigo */
   --muted:#5F5980;          /* body text and secondary labels */
 
-  --lime:#D8E583;           /* accent fill only — too light for text on white */
+  --lime:#D8E583;           /* accent fill only - too light for text on white */
   --lime-tint:#F2F6DC;      /* the wash behind hovered and locked rows */
   --lime-deep:#5A6912;      /* darkened until it clears 4.5:1 on white AND on the tint */
 
@@ -46,22 +38,16 @@
 
   --cream:var(--paper);     /* the row hover wash: warm, and quieter than lime */
 
-  /* The form's blueprint accent. Blue marks the two decisions that reshape the
-     plan - how long the season is, and which curriculum - against indigo for
-     the rest. 6.98:1 on white, both as ink and as a fill. */
+  /* Focus ring on the form's pills. 6.98:1 on white. */
   --blue:#0038FF;
   --lime-hover:#C9D96F;      /* the lime pill, one step down, on hover */
 
   --ink:#0a0a0a;            /* body copy: near-black, not the indigo-grey */
 
-  --warn-bg:#FDECEF;        /* and its wash, kept light enough for 4.5:1 */
+  --warn-bg:#FDECEF;        /* the overage pill, light enough for --danger on top */
+  --danger:#d90429;         /* the overage note: 5.25:1 on white */
 
-  /* The overage note. Text only — no fills — so it needs to hold up on
-     white, where it measures 5.25:1. */
-  --danger:#d90429;
-
-  /* A ticked week. Everything in the row except the tick itself takes
-     --done-ink; --done-rule is the underline left on its lesson links. */
+  /* A ticked row's text, and the underline on its lesson links. */
   --done-ink:#A9A6B8;
   --done-rule:#E4E2EA;
 
@@ -78,10 +64,8 @@
   box-sizing:border-box;
 }
 
-/* The hidden attribute is how app.js collapses parts of the sentence, but the
-   browser's [hidden]{display:none} is a UA rule and loses to any author
-   display declaration — .sub-group{display:inline-flex} silently beat it.
-   This makes the attribute mean what it says, everywhere. */
+/* main.js hides parts of the sentence with [hidden], and the browser's own
+   rule loses to any author `display`. This makes it win everywhere. */
 [hidden]{
   display:none !important;
 }
@@ -98,11 +82,8 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 
-/* Castoro for headings, Manrope for everything else.
-   Castoro ships one weight, 400. The browser default for h1-h3 is bold, which
-   it would have to synthesise - so the weight is declared here instead. Small
-   uppercase labels stay on Manrope: a 10px letterspaced serif is neither
-   readable nor available in the weight those labels need. */
+/* Castoro for headings, Manrope for everything else (small uppercase labels
+   included). Castoro ships only 400, so bold would be synthesised. */
 h1,h2,h3{
   font-family:Castoro,Georgia,serif;
   font-weight:400;
@@ -111,7 +92,7 @@ h1,h2,h3{
   line-height:1.15;
 }
 
-/* One focus ring for the whole page, so keyboard users get a consistent target. */
+/* One focus ring for the whole page. */
 :focus-visible{
   outline:2.5px solid var(--indigo);
   outline-offset:2px;
@@ -124,8 +105,7 @@ h1,h2,h3{
     transition:none !important;
   }
 
-  /* A ring that cannot turn reads as broken rather than busy, so it goes and
-     the wording carries the wait on its own. */
+  /* A frozen spinner looks broken, so the text carries the wait alone. */
   .spinner{
     display:none;
   }
@@ -133,7 +113,7 @@ h1,h2,h3{
 
 
 /* -----------------------------------------------------------------------------
-   3. Shell — page frame and header
+   3. Shell - page frame and header
    -------------------------------------------------------------------------- */
 
 .wrap{
@@ -142,10 +122,8 @@ h1,h2,h3{
   padding:0 20px 96px;
 }
 
-/* White rather than the page ground: with the square mark gone the wordmark
-   needs its own surface. It sits outside .wrap so the bar runs edge to edge,
-   and .brandmark repeats the page's own max-width so the wordmark still lines
-   up with the columns below it. */
+/* Outside .wrap so the bar runs edge to edge; .brandmark repeats the page's
+   max-width so the wordmark lines up with the columns below. */
 header{
   background:var(--card);
   padding:22px 0;
@@ -161,10 +139,7 @@ header{
   gap:12px;
 }
 
-/* Fluid between 30px and 46px so the title never wraps awkwardly on the way.
-   The word "Technovation" is the wordmark SVG rather than type, so this is a
-   flex row: the mark is sized in em and scales with the clamp alongside it.
-   Weight 400 because Castoro ships only that - 700 here would be synthesised. */
+/* Fluid 30-46px. The wordmark is sized in em, so it scales with the clamp. */
 .header-title{
   display:flex;
   align-items:baseline;
@@ -175,11 +150,7 @@ header{
   letter-spacing:-.025em;
 }
 
-/* viewBox is 1920x219, so height drives the width. Sized against the cap
-   height of the italic beside it rather than the full em box. */
-/* The SVG carries no fill, so it paints black - invisible on the bar. Inverting
-   it is what turns it white; it is single-colour artwork, so nothing else in
-   the file is affected. Set a fill in the SVG instead if it ever gains colour. */
+/* viewBox is 1920x219, so height drives the width. */
 .header-title .wordmark{
   height:.44em;
   width:auto;
@@ -187,9 +158,7 @@ header{
   align-self:center;
 }
 
-/* The greeting. Centred and above the form: it names the action rather than
-   the tool, so it belongs with the thing it introduces rather than in the bar,
-   where it would compete with the wordmark for the same job. */
+/* The page's h1. Names the action, so it sits with the form, not in the bar. */
 .greeting{
   text-align:center;
   margin:0 0 28px;
@@ -201,8 +170,7 @@ header{
   color:var(--indigo);
 }
 
-/* A highlight block rather than italics: the lime is a marker laid over the
-   one word the facilitator is here to act on. */
+/* A highlighter block over the key word, rather than italics. */
 .greeting h1 em{
   font-style:normal;
   background:#a7d3f0;
@@ -217,7 +185,7 @@ header{
 }
 
 /* The submission deadline: a pill, because it is a fixed fact rather than
-   something the facilitator controls. */
+   something the facilitator controls. One uppercase string, not label + chip. */
 .deadline{
   display:inline-flex;
   align-items:center;
@@ -231,8 +199,6 @@ header{
   font-weight:500;
 }
 
-/* One uppercase string, not a label plus a chip: it reads as a single stated
-   fact rather than two things sharing a pill. */
 .deadline{
   text-transform:uppercase;
   letter-spacing:.04em;
@@ -246,17 +212,13 @@ header{
 
 
 /* -----------------------------------------------------------------------------
-   4. Controls — the sentence card
+   4. Controls - the sentence card
 
-   The form reads as a sentence a facilitator completes about their group,
-   rather than a stack of labelled fields. Every value is a real <select> or
-   <input>, so nothing is lost for keyboard or screen-reader users — it is
-   still a form, just one that also reads as prose.
+   The form reads as a sentence about the group. Every value is a real
+   <select> or <input>, so keyboard and screen-reader users get a normal form.
 
-   Dark pills: a control shows only its chosen value, so a filled indigo pill
-   is "your answer" and the surrounding text is the question. Values that are
-   fixed rather than chosen render as outline pills (.static-text), which look
-   related but clearly are not interactive.
+   Selects are solid pills, numbers are dashed blanks, the curriculum select
+   is lime, and fixed values (.static-text) are muted outlines.
    -------------------------------------------------------------------------- */
 
 .panel{
@@ -267,9 +229,7 @@ header{
   margin-bottom:28px;
 }
 
-/* The sentence card is a page of prose, not a form: cream on cream so it
-   barely separates from the paper, a hairline edge, and a wide diffuse shadow
-   doing the lifting instead of a border. */
+/* Reads as prose, not a form: a hairline edge and a soft shadow. */
 .panel.sentence{
   background:var(--cream);
   border:1px solid rgba(29,19,73,.08);
@@ -280,11 +240,8 @@ header{
 
 
 
-/* line-height carries the pills: they are taller than the text around them,
-   so wrapped lines need the room or the rows collide. */
-/* Normal inline flow rather than a flex row: the pills are punctuation inside
-   a sentence, so the text has to wrap around them the way prose does. The tall
-   line-height is what stops the rows colliding once pills sit in the run. */
+/* Inline flow so the text wraps around the pills like prose. The tall
+   line-height stops wrapped rows of pills colliding. */
 .clause{
   margin:0;
   font:400 1.3rem/2.15 Castoro,Georgia,serif;
@@ -292,19 +249,12 @@ header{
   line-height: 2.25;
 }
 
-/* The second clause is the one Core collapses, so it is set apart. */
-
-
-/* The closing full stop. A bare "." after the span is its own flex item, so
-   the row gap opens a space in front of it — the negative margin cancels
-   exactly that gap and closes the sentence properly. */
+/* The closing full stop, pulled back against the word or pill before it. */
 .clause .stop{
   margin-left:-7px;
 }
 
-/* Keeps "with App Inventor" together when the sentence wraps, instead of
-   stranding the preposition at the end of a line. */
-/* Inline, so the clause it holds keeps flowing with the sentence around it. */
+/* Inline, so the clause it holds flows with the sentence. */
 .sub-group{
   display:inline;
 }
@@ -330,10 +280,8 @@ header{
   transition:border-color .2s ease,background-color .2s ease;
 }
 
-/* Numbers are typed rather than picked, so no chevron and no room for one. */
-/* Typed rather than picked, so they read as blanks in the sentence: pale fill,
-   dashed edge, indigo text — the opposite of the solid pills either side.
-   accent-color is the standards-based lever for the spin arrows. */
+/* Typed rather than picked, so they read as blanks: no fill, dashed edge,
+   no chevron. */
 .clause input{
   width:70px;
   padding:5px 12px;
@@ -344,25 +292,20 @@ header{
   border:1.5px dashed;
   box-shadow:none;
   font-weight:600;
-  /* The shared pill rule sets appearance:none, which drops the spinner
-     entirely in Firefox. The fill and border above still win, so restoring
-     the native widget only brings the arrows back. */
+  /* The shared rule's appearance:none drops the spinner in Firefox; this
+     brings it back without losing the styles above. */
   appearance:auto;
 }
 
-/* Chrome and Safari ship the spinner at opacity:0 and fade it in on hover.
-   Pin it visible so the field advertises that it steps. */
+/* Chrome and Safari hide the spinner until hover. Pin it visible. */
 .clause input::-webkit-inner-spin-button,
 .clause input::-webkit-outer-spin-button{
   opacity:1;
 }
 
-/* The dropdown the browser opens is the one part of a select we do not own:
-   on macOS it is a native menu that ignores font, padding and colour. Two
-   things help without replacing the control and its keyboard behaviour.
-   base-select opts into the styleable picker where it exists (Chromium today)
-   and is ignored everywhere else; color-scheme keeps that native menu light,
-   so a viewer in dark mode does not get a dark popup under light pills. */
+/* The open dropdown is native and mostly unstyleable. base-select opts into
+   the styleable picker where supported (Chromium); color-scheme keeps the
+   native menu light elsewhere. */
 .clause select{
   color-scheme:light;
 }
@@ -372,15 +315,13 @@ header{
   appearance:base-select;
 }
 
-/* base-select supplies its own arrow. We already draw one as a background
-   image, so this suppresses the duplicate rather than dropping ours - the
-   chevron has to stay for every browser that never reaches this rule. */
+/* base-select adds its own arrow. Ours (below) works in every browser, so
+   this one goes. */
 .clause select::picker-icon{
   display:none;
 }
 
-/* The picker itself, once it is ours to style: the pill's own surface and
-   radius, and the sans face the closed control uses. */
+/* The styleable picker: matches the pill. */
 .clause select::picker(select){
   background:var(--card);
   border:1px solid var(--line);
@@ -402,16 +343,14 @@ header{
   background:var(--lime-tint);
 }
 
-/* appearance:none drops the native arrow, so the chevron is supplied as an
-   inline SVG data URI — white, to sit on the indigo pill. */
+/* appearance:none drops the native arrow, so this is an indigo SVG chevron. */
 .clause select{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%231D1349' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
   background-repeat:no-repeat;
   background-position:right 14px center;
 }
 
-/* Hover darkens the edge and nothing else. At this size a filling pill pulled
-   the eye off the sentence it is part of. */
+/* Hover darkens the edge only, so the sentence stays the focus. */
 .clause select:hover,
 .clause input:hover{
   border-color:var(--indigo);
@@ -422,16 +361,15 @@ header{
   border-color:var(--lime-hover);
 }
 
-/* outline-offset leaves a gap of the card behind the pill, so the site's
-   usual indigo ring stays visible even against an indigo fill. */
+/* Blue with a gap, so the ring shows against any pill fill. */
 .clause select:focus-visible,
 .clause input:focus-visible{
   outline:2.5px solid var(--blue);
   outline-offset:2px;
 }
 
-/* The one decision that changes what the rest of the sentence means, so it is
-   the one pill carrying a fill. */
+/* The curriculum changes what the rest of the sentence means, so it is the
+   one filled pill. */
 .clause select.mode{
   background-color:var(--lime);
   border-color:var(--lime);
@@ -440,16 +378,13 @@ header{
   box-shadow:none;
 }
 
-/* The Core explainer. It is part of the sentence, not a note about it, so it
-   inherits the clause's size and colour and reads continuously with "We will
-   follow". The only job here is letting it shrink and wrap in the flex row
-   rather than pushing the clause wider. */
+/* The Core and AI in Action explainers. Part of the sentence, so they inherit
+   the clause's type. */
 .aside{
   flex:0 1 auto;
 }
 
-/* A value the facilitator did not choose: 8-12 only builds mobile, so it is
-   stated rather than offered. Outline, muted, no pointer. */
+/* A value the facilitator did not choose (8-12 only builds mobile). */
 .static-text{
   border:1px solid var(--line);
   border-radius:99px;
@@ -461,21 +396,11 @@ header{
 
 
 /* -----------------------------------------------------------------------------
-   5. Engine notes
+   5. The summary line
+
+   One sentence giving weekly homework time, the figure a facilitator can act
+   on. Castoro, because it is a finding rather than an instruction.
    -------------------------------------------------------------------------- */
-
-
-/* -----------------------------------------------------------------------------
-   6. The summary line
-
-   One sentence where there used to be three stacked blocks — a banner, a
-   count line, and a list of notes. Weekly homework time is the only figure a
-   facilitator can act on; the rest followed from what they had already chosen.
-
-   Castoro rather than Manrope: this is the one piece of prose on the page that
-   is a finding rather than an instruction, and the heading face marks it.
-   -------------------------------------------------------------------------- */
-
 
 .lede{
   margin:0 0 20px;
@@ -488,8 +413,7 @@ header{
   font-weight:600;
 }
 
-/* Heavy: the figure inverts to a solid chip. The only escalation on the page,
-   so it has to be unmistakable without a second colour. */
+/* Heavy homework: the figure inverts to a solid chip. */
 .lede.heavy strong{
   color:var(--on-dark);
   background:var(--indigo);
@@ -497,11 +421,8 @@ header{
   border-radius:4px;
 }
 
-/* The overrun banner. Same shape as the summary sentence, in the red the
-   table already uses for the per-week note, so the two obviously refer to
-   the same thing — this one just says how widespread it is. */
-/* No 60ch measure here. The sentence is a single instruction and the wrap
-   landed mid-clause, which read as two half-thoughts. */
+/* Weeks over the session length. The red matches the per-week note. No 60ch
+   measure: it wrapped mid-clause. */
 .lede.over-note{
   margin-top:-8px;
   max-width:none;
@@ -514,11 +435,10 @@ header{
 
 
 /* -----------------------------------------------------------------------------
-   6b. Loading
+   6. Loading
 
-   The live endpoint takes about five seconds, so the first paint has to say
-   something. Shaped like the plan card that replaces it — same border, same
-   radius — so the layout does not jump when the plan arrives.
+   Static first paint in index.html. Shaped like the plan card that replaces
+   it, so the layout does not jump.
    -------------------------------------------------------------------------- */
 
 .loading{
@@ -561,10 +481,9 @@ header{
 /* -----------------------------------------------------------------------------
    7. The plan card
 
-   One bordered card holding a header, the week table, and a sticky footer.
-   Columns stay split — In class and At home side by side — so a facilitator
-   can scan down the At home column and see the load building. Under 768px
-   every cell goes full width and the row becomes a stacked card.
+   A header, the week table and a sticky footer. In class and At home sit side
+   by side so the homework load can be scanned. Under 768px each row becomes a
+   stacked card.
    -------------------------------------------------------------------------- */
 
 .plan-card{
@@ -573,7 +492,7 @@ header{
   box-shadow: var(--shadow-md);
   background:var(--card);
   margin-top:4px;
-  /* No overflow:hidden — it would break position:sticky on the footer. */
+  /* No overflow:hidden - it would break position:sticky on the footer. */
 }
 
 .plan-head{
@@ -591,15 +510,12 @@ header{
   font-weight:500;
 }
 
-/* Reuses the .deadline pill from the page header so the same fact is stated
-   the same way in both places. Its indigo fill matches the header behind it,
-   so what reads is the lime date chip. */
+/* The .deadline pill from section 3. */
 .plan-head .deadline{
   margin-top:11px;
 }
 
-/* Only appears for 8-12 on AI in Action. Sits under the deadline rather than
-   in the plan itself: it is a caution about the choice, not about a week. */
+/* The 8-12 caution on Core and AI in Action: about the choice, not a week. */
 .plan-head .head-note{
   margin:12px auto 0;
   max-width:56ch;
@@ -631,8 +547,7 @@ table.plan tr{
   border-bottom:1px solid var(--line-soft);
 }
 
-/* Lesson rows only. A unit band is a row too, but it is a label rather than
-   something you act on, so it does not light up under the cursor. */
+/* Lesson rows only; unit bands are labels, so they do not highlight. */
 table.plan tbody tr:not(:has(th.phase)):hover{
   background:var(--cream);
 }
@@ -642,8 +557,7 @@ table.plan td{
   vertical-align:top;
 }
 
-/* Unit bands. The heading is a <th scope="rowgroup"> spanning the row, so the
-   grouping is announced rather than only drawn. */
+/* Unit bands: a <th scope="rowgroup">, so the grouping is announced. */
 th.phase{
   background:var(--lime-tint);
   color:var(--indigo);
@@ -690,9 +604,7 @@ tr.slack td{
 
 /* --- Over-capacity weeks -------------------------------------------------- */
 
-/* No row or week-cell fill: a whole pink row for a lesson that is simply
-   longer than one session reads as an error, when it is really a note. The
-   red line under the lessons carries it, and on white it clears 4.5:1. */
+/* A note under the lessons, not a row fill: a long lesson is not an error. */
 .overage{
   display:inline-block;
   margin-top:8px;
@@ -714,8 +626,7 @@ tr.slack td{
   border-left:1px dashed var(--line);
 }
 
-/* Drawn rather than native: a native checkbox renders its own box and ignores
-   border-radius, so the corners only round once we own the painting. */
+/* Drawn rather than native, so the corners can round. */
 .c-done input{
   appearance:none;
   -webkit-appearance:none;
@@ -749,9 +660,8 @@ tr.slack td{
   transform:rotate(-45deg) translate(1px,-2px);
 }
 
-/* A ticked week fades back. Keyed off the checkbox itself, so the row changes
-   the moment it is ticked, with no re-render. The tick column is left out so
-   the box stays solid and easy to untick. */
+/* A ticked week fades back, straight off the checkbox with no re-render. The
+   tick itself stays solid so it is easy to untick. */
 tr:has(.c-done input:checked) td:not(.c-done),
 tr:has(.c-done input:checked) td:not(.c-done) *{
   color:var(--done-ink);
@@ -799,9 +709,7 @@ tr:has(.c-done input:checked) .overage{
   font-size:13px;
 }
 
-/* A quiet grey rule rather than a lime one: at this size the lime read as a
-   highlight across the whole column. It darkens to indigo on hover, so the
-   affordance arrives on approach instead of shouting from rest. */
+/* A quiet grey underline that turns indigo on hover. */
 .li a{
   color:var(--indigo);
   text-decoration:none;
@@ -883,7 +791,7 @@ tr:has(.c-done input:checked) .overage{
 
 
 /* -----------------------------------------------------------------------------
-   8. Secondary blocks — "Not included" and "Other tool options"
+   8. Secondary blocks - "Not included"
    -------------------------------------------------------------------------- */
 
 .block{
@@ -918,8 +826,8 @@ tr:has(.c-done input:checked) .overage{
 /* -----------------------------------------------------------------------------
    9. The refusal state
 
-   Shown when no plan fits. The engine returns structured fixes, so this is a
-   set of buttons that apply themselves rather than a paragraph of advice.
+   Shown when no plan fits. The engine's fixes become buttons that apply
+   themselves.
    -------------------------------------------------------------------------- */
 
 .nofit{
@@ -947,7 +855,7 @@ tr:has(.c-done input:checked) .overage{
   margin-top:18px;
 }
 
-/* The first fix is the recommended one and gets the solid indigo treatment. */
+/* The first fix is the recommended one, so it is solid indigo. */
 .fixes button{
   padding:10px 16px;
   border:0;
@@ -962,9 +870,8 @@ tr:has(.c-done input:checked) .overage{
   background:var(--indigo-600);
 }
 
-/* Alternatives after the first, in lime. */
-/* The escape hatch is an <a>, not a button, because it leaves the page. It
-   takes the same shape so the two read as equal-weight choices. */
+/* The link to another course is an <a> because it leaves the page; same
+   shape as the buttons. Alternatives after the first are lime. */
 .fixes a{
   display:inline-flex;
   align-items:center;
@@ -984,9 +891,7 @@ tr:has(.c-done input:checked) .overage{
   background:#CBDA6C;
 }
 
-/* The sentence that explains where the link goes. Full width of the card —
-   the refusal above it already runs the full width, and a narrower measure
-   here made the two look unrelated. */
+/* Explains where the link goes. Full width, like the message above it. */
 .alt-route{
   margin:14px 0 0;
   font-size:13.5px;
@@ -1001,15 +906,11 @@ tr:has(.c-done input:checked) .overage{
 /* =============================================================================
    10. Responsive
 
-   Two steps, each doing one job:
-     900px — the sentence tightens
-     768px — the table restructures into one card per week
+     900px - the sentence tightens
+     768px - one card per week
 
-   Both are scoped to `screen` deliberately. A4 inside the 15mm page margin is
-   680 CSS pixels and US Letter is 703, so an unscoped max-width query fires on
-   paper too — which silently gave the printed sheet the phone layout, one
-   stacked card per week. Widening the page margin narrows that figure, so it
-   moves further under 768px rather than out of range: keep the `screen` scope.
+   Scoped to `screen`: a printed page is about 680-700 CSS px wide, so an
+   unscoped query would give paper the phone layout.
    ============================================================================= */
 
 @media screen and (max-width:900px){
@@ -1027,9 +928,7 @@ tr:has(.c-done input:checked) .overage{
     padding:18px 20px;
   }
 
-  /* The sentence steps down a size and loses some of the line-height that
-     the pills needed at desktop width, so it stays a paragraph rather than
-     a very tall column of wrapped fragments. */
+  /* Smaller, tighter sentence so it stays a paragraph. */
   .clause{
     font-size:16px;
     line-height:1.9;
@@ -1049,8 +948,7 @@ tr:has(.c-done input:checked) .overage{
 
 @media screen and (max-width:768px){
 
-  /* One card per week. Four columns cannot be read at phone width, so every
-     cell goes full width and the row becomes the card. */
+  /* One card per week: every cell goes full width. */
   table.plan,table.plan tbody{
     display:block;
     width:100%;
@@ -1132,23 +1030,17 @@ tr:has(.c-done input:checked) .overage{
 /* =============================================================================
    11. Print
 
-   The printed plan is a physical tracker, so this is a real layout rather
-   than a stripped screen. Everything interactive is removed, colour drops to
-   black on white, and the tick column — hidden on screen — appears here.
+   The printed plan is a tracker to write on. Interactive parts go, colour
+   drops to black on white, and the tick boxes grow for a pen.
    ============================================================================= */
 
-/* Populated by src/ui/render.js and shown only when printing: title and
-   configuration, since the on-screen header is hidden below. */
+/* Title and configuration, filled by render.js and shown only in print. */
 .printhead{
   display:none;
 }
 
-/* Page margins sit at the top level, NOT inside the @media print block below.
-   @page is already print-only by definition, and Safari has historically
-   ignored an @page nested inside @media print - which printed the plan edge to
-   edge on a Mac while Chrome honoured it. Nesting it buys nothing and costs
-   that. 15mm rather than 12mm: the tick column is meant to be written in, and
-   12mm left no room for a hole punch or a binder clip. */
+/* Top level, not inside @media print: Safari ignores a nested @page. 15mm
+   leaves room for a hole punch or binder clip. */
 @page{
   margin:15mm;
 }
@@ -1161,15 +1053,13 @@ tr:has(.c-done input:checked) .overage{
     color:#000;
   }
 
-  /* Everything the reader cannot act on from paper. The summary line stays:
-     it is one sentence and it carries the homework figure, which is exactly
-     what the printed sheet used to be missing. */
+  /* Everything you cannot use on paper. The summary line stays for the
+     homework figure. */
   header,.greeting,.panel,.actions,.plan-foot{
     display:none !important;
   }
 
-  /* The card border and its indigo header are screen furniture; on paper the
-     printhead does that job. */
+  /* The printhead replaces the card's border and header. */
   .plan-card{
     border:0;
   }
@@ -1209,8 +1099,7 @@ tr:has(.c-done input:checked) .overage{
     margin-bottom:6px;
   }
 
-  /* The indigo chip is screen emphasis; on paper it just costs ink, and red
-     prints as an indeterminate grey. Both drop to plain black. */
+  /* The chip and the red cost ink or print grey, so both go plain black. */
   .lede.heavy strong{
     background:transparent;
     color:#000;
@@ -1239,8 +1128,7 @@ tr:has(.c-done input:checked) .overage{
     padding:4px 6px;
   }
 
-  /* Column widths have to be stated for print: the screen values are relative
-     to a viewport the printer does not have. */
+  /* Print column widths. */
   .c-wk{
     width:52px;
   }
@@ -1253,7 +1141,7 @@ tr:has(.c-done input:checked) .overage{
     width:32%;
   }
 
-  /* Lesson rows carry most of the page, so this is where compactness pays. */
+  /* Lesson rows are most of the page, so they are compact. */
   .li{
     font-size:8pt;
     padding:1px 0;
@@ -1314,9 +1202,7 @@ tr:has(.c-done input:checked) .overage{
     padding:3px 6px;
   }
 
-  /* A printed plan is a tracker, so the box has to be big enough for a pen.
-     The live checkbox prints as a tiny control, so it is replaced by a drawn
-     square — and a week already ticked on screen prints ticked. */
+  /* A box big enough for a pen. Weeks ticked on screen print ticked. */
   .c-done{
     display:table-cell;
     width:34px;
@@ -1334,8 +1220,18 @@ tr:has(.c-done input:checked) .overage{
     background:#fff;
   }
 
+  .c-done input:checked{
+    background:#fff;
+    border-color:#000;
+  }
+
+  /* A ✓ glyph, so undo the screen tick's box, borders and rotation. */
   .c-done input:checked::after{
     content:"\2713";
+    width:auto;
+    height:auto;
+    border:0;
+    transform:none;
     display:block;
     font-size:14px;
     line-height:16px;
@@ -1343,7 +1239,7 @@ tr:has(.c-done input:checked) .overage{
     color:#000;
   }
 
-  /* Underline properly on paper — a lime border prints as nothing useful. */
+  /* A real underline: the grey border prints faintly. */
   .li a{
     border:0;
     color:#000;

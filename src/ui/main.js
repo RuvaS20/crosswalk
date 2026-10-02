@@ -16,19 +16,15 @@ let data = null;
 /* ---------------------------------------------------------------- loading */
 
 /**
- * Draws from whatever is on hand, then checks the live endpoint in the
- * background. The endpoint takes 4-6s; the committed file and the cached copy
- * of the last live payload are both instant, and almost always current.
- *
- * Which source the data came from is silent by design: that is our problem,
- * not the facilitator's.
+ * Draws from the committed file or the cached last live payload, then checks
+ * the live endpoint (4-6s) in the background. Which source is in use is not
+ * shown: that is our problem, not the facilitator's.
  */
 const CACHE_KEY = 'crosswalk.data.v1';
 
 const usable = d => Array.isArray(d?.lessons) && d.lessons.length > 0;
 
-// generated_at is the response time, not an edit time, so it differs on every
-// fetch. Compared without it, as the refresh workflow does.
+// Ignores generated_at, which changes on every fetch (as the refresh workflow does).
 const sameData = (a, b) => {
   const strip = ({ generated_at, ...rest }) => JSON.stringify(rest);
   return strip(a) === strip(b);
@@ -46,9 +42,7 @@ function writeCache(d) {
   catch { /* private mode or full: the next visit just draws from the file */ }
 }
 
-// Relative to the page, not to this module: fetch resolves against the
-// document URL, so this stays './curriculum.json' even from src/ui. Preloaded
-// from index.html, so it is usually already downloaded by the time this runs.
+// Resolves against the page, not this module. Preloaded from index.html.
 async function fetchLocal() {
   const res = await fetch('./curriculum.json');
   if (!res.ok) throw new Error(`curriculum.json: ${res.status} ${res.statusText}`);
@@ -64,9 +58,8 @@ async function fetchLive() {
 }
 
 /**
- * The first draw: the newer of the cached live payload and the committed
- * file. The cache is usually newer, but not if the refresh workflow has
- * committed since this browser last visited.
+ * The first draw: the newer of the cache and the committed file. The cache is
+ * usually newer, unless the refresh workflow has committed since the last visit.
  */
 async function load() {
   const cached = readCache();
@@ -75,7 +68,7 @@ async function load() {
   catch (err) {
     if (cached) return cached;
     if (!ENDPOINT) throw err;
-    // Nothing on hand: the live endpoint is all that is left, so wait for it.
+    // Nothing on hand, so wait for the endpoint.
     try { const live = await fetchLive(); writeCache(live); return live; }
     catch { throw err; }
   }
@@ -92,7 +85,7 @@ async function revalidate() {
   writeCache(live);
   if (sameData(live, data)) return;
   data = live;
-  syncSentence();      // the tool choices can change with the data; controls keep their values
+  syncSentence();      // tool choices can change with the data
   update({ immediate: true });
 }
 
@@ -100,10 +93,8 @@ async function revalidate() {
 /* ------------------------------------------------------------------ state */
 
 function readParams() {
-  // The curriculum select picks the course. Core and AI in Action are both
-  // whole-course choices in the engine - filterLessons routes on them before
-  // it looks at anything else - so they belong together here rather than one
-  // of them hiding inside the AI control.
+  // Core and AI in Action are whole-course choices in the engine, so both come
+  // from the curriculum select rather than the AI control.
   const mode = $('#mode').value;
   return {
     age: $('#age').value,
@@ -134,10 +125,9 @@ function setParams(patch) {
 /* ----------------------------------------------------- coding tool choice */
 
 /**
- * Which tools this configuration can genuinely choose between, read from the
- * data rather than hardcoded. AI-focused is excluded on purpose: its
- * alternatives split by mobile vs web, which the platform control already
- * asks, and asking the same thing twice invites contradictory answers.
+ * The tools this configuration can choose between, read from the data.
+ * AI-focused is excluded: its alternatives split by mobile vs web, which the
+ * platform control already asks.
  */
 function toolChoices(params) {
   if (params.aiMode === 'focused') return [];
@@ -161,8 +151,7 @@ function renderToolChoice() {
 
   const keep = tools.includes(sel.value) ? sel.value : tools[0];
 
-  // Only repopulate when the option set actually changed, so a re-render never
-  // steals focus from the control someone is using.
+  // Only repopulate when the options change, so focus is not stolen.
   const currentSet = [...sel.options].map(o => o.value).join(',');
   if (currentSet !== tools.join(',')) {
     sel.innerHTML = tools
@@ -176,16 +165,11 @@ function renderToolChoice() {
 /* ------------------------------------------------------------- remembering */
 
 /**
- * The controls, saved and restored across reloads.
+ * The controls, saved and restored across reloads, so a reload lands on the
+ * configuration (and ticks) you were using.
  *
- * Ticks were already stored per configuration, but the configuration itself was
- * not, so every reload landed on the 16-18 Custom default. A Core plan's ticks
- * looked lost until you happened to switch back to Core and they reappeared.
- *
- * Values are validated on the way back in: a select only accepts a value it has
- * an option for, and a number only one inside its own min/max. A stale or
- * hand-edited entry is ignored rather than left in a state the controls cannot
- * represent.
+ * Restored values are validated: a select only takes a value it has an option
+ * for, a number only one inside its min/max. Anything else is ignored.
  */
 const VIEW_KEY = 'crosswalk.view.v1';
 const REMEMBERED = ['age', 'platform', 'mode', 'aiMode', 'weeks', 'len'];
@@ -195,18 +179,17 @@ function saveView() {
     const v = {};
     for (const id of [...REMEMBERED, 'builder']) v[id] = $('#' + id).value;
     localStorage.setItem(VIEW_KEY, JSON.stringify(v));
-  } catch { /* private mode: the planner still works, it just will not persist */ }
+  } catch { /* private mode: works, just does not persist */ }
 }
 
 /**
- * Applies what was saved. Returns the saved builder rather than setting it -
- * the tool select is empty until renderToolChoice fills it, so it can only be
- * restored after syncSentence has run.
+ * Applies what was saved. Returns the builder rather than setting it: the tool
+ * select is empty until syncSentence fills it.
  */
 function restoreView() {
   let v = null;
   try { v = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null'); }
-  catch { /* corrupt value: fall back to the defaults in the markup */ }
+  catch { /* corrupt value: keep the markup defaults */ }
   if (!v || typeof v !== 'object') return null;
 
   for (const id of REMEMBERED) {
@@ -233,20 +216,17 @@ function restoreBuilder(want) {
 let timer = null;
 
 /**
- * Rebuilds the plan. Debounced so typing in the number fields doesn't rerender
- * on every keystroke. 500ms rather than something snappier: at 160ms the plan
- * still moved under each digit, which read as thrashing rather than response.
- * Select changes bypass this entirely and rebuild immediately.
+ * Rebuilds the plan. The number fields are debounced 500ms so the plan does
+ * not move under each digit; selects pass `immediate`.
  */
 function update({ immediate = false, focus = false } = {}) {
   if (!data) return;
   clearTimeout(timer);
   timer = setTimeout(() => {
     const params = readParams();
-    saveView();                  // every path that rebuilds also comes through here
-    useConfig(params);           // before render: the ticks it draws are per-configuration
-    // render replaces #out wholesale. If the live data swaps in while someone is
-    // on a tick or a footer button, put them back on the same one.
+    saveView();
+    useConfig(params);           // before render: ticks are per configuration
+    // render replaces #out, so put focus back on the same tick or button.
     const a = document.activeElement;
     const was = $('#out').contains(a) &&
       (a.id ? '#' + a.id : a.dataset.week ? `[data-week="${a.dataset.week}"]` : null);
@@ -260,19 +240,13 @@ function update({ immediate = false, focus = false } = {}) {
 /* -------------------------------------------------------------------- wiring */
 
 /**
- * Keeps the sentence grammatical as choices change.
- *
- * Three dependencies, each one a clause that stops making sense:
- *   core      - a Core plan has no platform, tool or AI clause at all
- *   beginner  - the 8-12 course is Scratch and App Inventor, so "building"
- *               is a statement rather than a choice; it becomes static text
- *   web/tool  - handled in renderToolChoice, which reads the data rather
- *               than assuming which tools exist
+ * Keeps the sentence grammatical as choices change:
+ *   core / ai - replace the custom clause; neither takes a platform, tool or
+ *               AI setting
+ *   beginner  - 8-12 only builds mobile, so the platform becomes static text
+ *   tool      - renderToolChoice, from the data
  */
 function syncSentence() {
-  // Core and AI in Action each replace the rest of the sentence: neither takes
-  // a platform, a tool or an AI setting, and AI in Action ignores platform
-  // outright - mobile and web return the same 32 lessons.
   const mode = $('#mode').value;
   $('#customClause').hidden = mode !== 'custom';
   $('#coreNote').hidden = mode !== 'core';
@@ -298,13 +272,12 @@ $('#controls').addEventListener('change', e => {
 // No submit button - Enter should not reload the page.
 $('#controls').addEventListener('submit', e => e.preventDefault());
 
-// Land on a real plan rather than an empty screen: a first-time visitor sees
-// what the tool produces and adjusts, instead of facing a form and guessing.
+// Land on a real plan, not an empty form.
 load()
   .then(first => {
     data = first;
     const builder = restoreView();
-    syncSentence();              // fills the tool select, so the builder comes after
+    syncSentence();              // fills the tool select, so builder comes after
     restoreBuilder(builder);
     update({ immediate: true });
     revalidate();

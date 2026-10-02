@@ -1,12 +1,8 @@
 /**
- * Everything that writes HTML, plus the formatting helpers it uses.
+ * Everything that writes HTML, plus the formatting helpers only it uses.
  *
- * The helpers have no other caller, so a separate format module would only be
- * a file you open to read six one-liners.
- *
- * `render` takes its callbacks rather than importing them. The fix buttons on
- * a refusal need to write back to the controls, and importing that from here
- * would make render and main circular - fragile for no gain.
+ * `render` takes its callbacks rather than importing them from main, which
+ * would make the two modules circular.
  */
 
 import { $, weekDone, toggleWeek, renderProgress, exportCSV, indexWorkWeeks }
@@ -19,9 +15,8 @@ export const TOOL_NAMES = {
 const AGE_LABEL = { beginner: 'Ages 8–12', junior: 'Ages 13–15', senior: 'Ages 16–18' };
 const AI_LABEL  = { none: 'no AI', integrated: 'AI included', focused: 'AI-focused' };
 
-/* Where the weekly homework figure stops being routine and starts being a
-   problem. Matches HEAVY_HOMEWORK_HOURS in the engine, which is what makes
-   the engine raise the same point in its notes. */
+/* Weekly homework minutes that count as heavy. Matches HEAVY_HOMEWORK_HOURS
+   in the engine. */
 const HEAVY_HOMEWORK = 120;
 
 /** Core and AI in Action are whole-course choices: nothing after them applies. */
@@ -38,10 +33,7 @@ const standalone = p => p.core || p.aiMode === 'focused';
 export function render(plan, { onFix }) {
   const out = $('#out');
 
-  // Before anything is drawn. weekRow asks weekDone whether to tick each box,
-  // and a work week has no answer until it has been given a key - so keying
-  // them after the markup was built rendered every box empty while the footer
-  // counted them as complete.
+  // Before drawing: weekRow needs work weeks keyed to know if they are ticked.
   indexWorkWeeks(plan);
 
   if (plan.status === 'refused') {
@@ -67,40 +59,26 @@ export function render(plan, { onFix }) {
 
   const s = plan.summary;
 
-  // Work Time rows are slots in the room, not content, so a list of nine
-  // identical "Work Time" entries tells a facilitator nothing about what their
-  // team is missing. The weeks are already visibly gone from the table.
+  // Work Time rows are slots, not content, so they are left out of the list.
   const cut = plan.dropped.filter(l => l.url);
 
-  // One sentence, not three stacked blocks. Weekly homework time is the only
-  // number here a facilitator can act on: lesson counts and in-class hours
-  // follow from what they already chose, so stating them adds reading without
-  // adding a decision.
+  // Weekly homework is the only figure here a facilitator can act on.
   const home = s.homeworkMinutesPerWeek;
   const level = home >= HEAVY_HOMEWORK ? 'heavy' : '';
 
-  // Weeks holding a lesson longer than the session. packWeeks flags each one
-  // individually, but a single row saying "30m over" does not tell you that
-  // most of your season is in the same state - the pattern only shows if you
-  // read every row. Said once, up front, it becomes a fact about the plan.
-  //
-  // Two shapes, because two different things are true. A couple of weeks is a
-  // scheduling note - name them and move on. Half the season is a fact about
-  // the session length itself, and the useful reply is what to change.
+  // Weeks holding a lesson longer than the session, summarised above the table.
+  // A few are named; more than four means the session length itself is short.
   const over = plan.weeks.filter(w => w.overrun);
 
-  // Two age/course mismatches worth naming above the table. Both build a valid
-  // plan, so neither is a refusal - they are cases where the course a group
-  // picked is not the one Technovation would recommend for their age.
+  // Age/course mismatches: valid plans, but not what Technovation recommends.
   const young = plan.params.age === 'beginner';
   const headNote =
     young && plan.params.aiMode === 'focused'
       ? "Technovation recommends the 'AI in Action' course for 13\u201318 year olds. For younger " +
         'groups, the beginner curriculum has AI included.'
     : young && plan.params.core
-      // Core carries division-specific rows - Lean Canvas, User Adoption Plan -
-      // and 8-12 matches none of them, so a beginner Core plan is quietly two
-      // lessons shorter than the same plan for a 13-15 group.
+      // Core's division-specific lessons (Lean Canvas, User Adoption Plan)
+      // have no 8-12 version, so a beginner Core plan is two lessons short.
       ? 'The Core Curriculum is better suited for those aged 13-18 ' +
         'For younger age groups, the Beginner curriculum ' +
         'is a better fit if you have the time.'
@@ -161,8 +139,7 @@ export function render(plan, { onFix }) {
       </div>` : ''}
 `;
 
-  // The footer and the ticks are rebuilt on every render, so they are bound
-  // here rather than once at startup.
+  // Rebuilt on every render, so bound here rather than once at startup.
   out.querySelectorAll('.c-done input').forEach(box =>
     box.addEventListener('change', () => toggleWeek(plan, +box.dataset.week, box.checked)));
 
@@ -175,12 +152,9 @@ export function render(plan, { onFix }) {
 }
 
 /**
- * Groups the weeks into unit bands.
- *
- * A week takes the unit of its first lesson, and a new heading is emitted
- * only when that changes. Weeks with no unit — work time, and the handful of
- * rows the sheet leaves blank — continue the band above rather than breaking
- * it, which keeps the plan from fragmenting into one-week sections.
+ * Groups the weeks into unit bands. A week takes its first lesson's unit, and
+ * a heading appears when that changes. Weeks with no unit continue the band
+ * above, so the plan does not fragment into one-week sections.
  */
 function phasedRows(weeks) {
   let band = null;
@@ -195,19 +169,12 @@ function phasedRows(weeks) {
   }).join('');
 }
 
-/**
- * One row per week. In-class and at-home content sit side by side, because
- * "what do I teach" and "what do I set" are the same decision.
- */
+/** One row per week, in-class and at-home side by side. */
 function weekRow(w) {
   const locked = w.lessons.some(l => l.deadline_locked);
   const cls = [w.workTime ? 'slack' : locked ? 'locked' : '',
                w.overrun ? 'over' : ''].filter(Boolean).join(' ');
 
-  // Names the total, then how far over. The week's minutes are already in the
-  // first column, but at 11px muted they read as a label rather than a figure,
-  // so a reviewer looking only at this row had to do the subtraction. Repeating
-  // the number here is the cheaper fix of the two.
   const over = w.overrun
     ? `<span class="overage">${mins(w.overrun)} more than your session</span>`
     : '';
@@ -220,8 +187,7 @@ function weekRow(w) {
     ? w.homework.map(item).join('')
     : '<div class="li muted">&mdash;</div>';
 
-  // Every week gets a box, work weeks included: the team meets that week, and a
-  // row that cannot be crossed off reads as a row that does not count.
+  // Every week gets a box, work weeks included: the team still meets.
   const tick = `<input type="checkbox" data-week="${w.week}" ${weekDone(w) ? 'checked' : ''}
               aria-label="Mark week ${w.week} done">`;
 
