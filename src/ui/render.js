@@ -266,7 +266,7 @@ const mins = m => m >= 60
 
 const hrs = m => m >= 60 ? `${(m / 60).toFixed(m % 60 ? 1 : 0)}h` : `${m}m`;
 
-/** 2027-05-05 -> "5 May 2027", matching the deadline pill in the page header. */
+/** 2027-05-05 -> "5 May 2027", for the submission deadline on the plan card. */
 function longDate(iso) {
   const d = new Date(iso + 'T00:00:00Z');
   if (Number.isNaN(+d)) return iso;

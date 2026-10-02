@@ -21,7 +21,7 @@ let data = null;
  * with data that may be stale - which we say plainly - rather than a blank page.
  */
 async function load() {
-  if (ENDPOINT && !ENDPOINT.includes('PASTE_YOUR')) {
+  if (ENDPOINT) {
     try {
       const res = await fetch(ENDPOINT);
       if (res.ok) {

@@ -128,10 +128,9 @@ export function renderProgress(plan) {
 /**
  * The plan as a spreadsheet, one row per lesson.
  *
- * Opens with the same heading the printed sheet carries - title, configuration,
- * and the homework figure - because a file arriving in someone's inbox has to
- * say what it is. The filename cannot carry that, and it is the first thing
- * lost when the file is renamed or pasted into another sheet.
+ * Opens with a "Technovation plan" title row, because a file arriving in
+ * someone's inbox has to say what it is. The filename cannot carry that, and it
+ * is the first thing lost when the file is renamed or pasted into another sheet.
  *
  * Column names avoid the collision the old layout had: "In class" was both a
  * heading and a value in the neighbouring column, meaning two different things

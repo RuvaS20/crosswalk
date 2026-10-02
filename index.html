@@ -40,9 +40,8 @@
 
     <!-- The controls read as a sentence: a facilitator describes their group
          and the plan follows. Every value is a real form control, so keyboard
-         and screen-reader users get the same thing, just spoken as a form. -->
-    <!-- One paragraph, not two: the season and the curriculum are a single
-         sentence, and a divider between them made it read as a form again. -->
+         and screen-reader users get the same thing, just spoken as a form.
+         It is one paragraph, not two: a divider made it read as a form again. -->
     <form class="panel sentence" id="controls">
 
       <p class="clause">
@@ -95,10 +94,10 @@
     </form>
 
     <div class="results">
-      <!-- The plan card is rendered here by src/ui/render.js; Print and Spreadsheet now
-           live in its sticky footer rather than in a bar above it. -->
-      <!-- Static first paint, not injected by JS: the endpoint takes ~5s, and
-           this has to be on screen before the modules have even parsed. render()
+      <!-- src/ui/render.js renders the plan card here, with Print and
+           Spreadsheet in its sticky footer. The loading state below is static
+           first paint, not injected by JS: the endpoint takes ~5s, and this has
+           to be on screen before the modules have even parsed. render()
            replaces it on the first plan. -->
       <main id="out" aria-live="polite" tabindex="-1">
         <div class="loading">
