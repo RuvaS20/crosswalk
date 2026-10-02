@@ -53,13 +53,16 @@
 
   --ink:#0a0a0a;            /* body copy: near-black, not the indigo-grey */
 
-  --warn-ink:#d90429;       /* the overage pill's text */
   --warn-bg:#FDECEF;        /* and its wash, kept light enough for 4.5:1 */
 
   /* The overage note. Text only — no fills — so it needs to hold up on
      white, where it measures 5.25:1. */
   --danger:#d90429;
 
+  /* A ticked week. Everything in the row except the tick itself takes
+     --done-ink; --done-rule is the underline left on its lesson links. */
+  --done-ink:#A9A6B8;
+  --done-rule:#E4E2EA;
 
   --shadow-sm: 0 2px 8px rgba(24, 21, 58, 0.04);
   --shadow-md: 0 8px 24px rgba(24, 21, 58, 0.06);
@@ -105,11 +108,6 @@ h1,h2,h3{
   color:var(--indigo);
   margin:0;
   line-height:1.15;
-}
-
-/* Numbers that should line up in columns rather than shuffle as they change. */
-.mono{
-  font-variant-numeric:tabular-nums;
 }
 
 /* One focus ring for the whole page, so keyboard users get a consistent target. */
@@ -477,15 +475,6 @@ header{
    is a finding rather than an instruction, and the heading face marks it.
    -------------------------------------------------------------------------- */
 
-/* Screen-reader-only. Used for column headings whose cells carry no text. */
-.sr{
-  position:absolute;
-  width:1px;
-  height:1px;
-  overflow:hidden;
-  clip:rect(0 0 0 0);
-  white-space:nowrap;
-}
 
 .lede{
   margin:0 0 20px;
@@ -709,7 +698,7 @@ tr.slack td{
   padding:4px 10px;
   border-radius:var(--r-sm);
   background:var(--warn-bg);
-  color:var(--warn-ink);
+  color:var(--danger);
   font-size:.75rem;
   font-weight:600;
 }
@@ -760,10 +749,24 @@ tr.slack td{
   transform:rotate(-45deg) translate(1px,-2px);
 }
 
-/* Work-time weeks hold no lessons, so there is nothing to mark done. */
-.c-done .none{
-  color:var(--line);
+/* A ticked week fades back. Keyed off the checkbox itself, so the row changes
+   the moment it is ticked, with no re-render. The tick column is left out so
+   the box stays solid and easy to untick. */
+tr:has(.c-done input:checked) td:not(.c-done),
+tr:has(.c-done input:checked) td:not(.c-done) *{
+  color:var(--done-ink);
+  transition:color .15s ease;
 }
+
+tr:has(.c-done input:checked) .li a{
+  border-bottom-color:var(--done-rule);
+}
+
+tr:has(.c-done input:checked) .tag,
+tr:has(.c-done input:checked) .overage{
+  background:transparent;
+}
+
 
 
 /* --- Lesson items inside a cell ------------------------------------------- */

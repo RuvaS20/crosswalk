@@ -211,7 +211,7 @@ function weekRow(w) {
   // so a reviewer looking only at this row had to do the subtraction. Repeating
   // the number here is the cheaper fix of the two.
   const over = w.overrun
-    ? `<span class="overage">Needs ${mins(w.minutes)} &mdash; ${mins(w.overrun)} more than your session</span>`
+    ? `<span class="overage">${mins(w.overrun)} more than your session</span>`
     : '';
 
   const inClass = w.lessons.length
