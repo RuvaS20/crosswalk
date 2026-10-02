@@ -36,6 +36,7 @@
 
   --paper:#Fbfaf5;          /* page ground: warm off-white, not pure #fff */
   --card:#FFFFFF;           /* raised surfaces sit brighter than the page */
+  --on-dark:#FFFFFF;        /* text and marks on indigo and navy fills */
 
   --line:#E7E4EF;           /* default border */
   --line-soft:#F0EEF6;      /* lighter divider, used between table rows */
@@ -43,7 +44,7 @@
   --r:12px;                 /* the one corner radius for cards and panels */
   --r-sm:6px;               /* the tighter radius, for pills inside a row */
 
-  --cream:#Fbfaf5;          /* the row hover wash: warm, and quieter than lime */
+  --cream:var(--paper);     /* the row hover wash: warm, and quieter than lime */
 
   /* The form's blueprint accent. Blue marks the two decisions that reshape the
      plan - how long the season is, and which curriculum - against indigo for
@@ -91,7 +92,7 @@ html{
 
 body{
   margin:0;
-  background:#Fff;
+  background:var(--card);
   color:var(--ink);
   font:400 15px/1.6 Manrope,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;
@@ -146,7 +147,7 @@ h1,h2,h3{
    and .brandmark repeats the page's own max-width so the wordmark still lines
    up with the columns below it. */
 header{
-  background:#fff;
+  background:var(--card);
   padding:22px 0;
   margin-bottom:28px;
 }
@@ -490,7 +491,7 @@ header{
 /* Heavy: the figure inverts to a solid chip. The only escalation on the page,
    so it has to be unmistakable without a second colour. */
 .lede.heavy strong{
-  color:#fff;
+  color:var(--on-dark);
   background:var(--indigo);
   padding:2px 7px;
   border-radius:4px;
@@ -577,7 +578,7 @@ header{
 
 .plan-head{
   background:#1d1349;
-  color:#fff;
+  color:var(--on-dark);
   padding:20px 24px;
   text-align:center;
   border-radius:10px 10px 0 0;
@@ -585,7 +586,7 @@ header{
 
 .plan-head h2{
   margin:0;
-  color:#fff;
+  color:var(--on-dark);
   font-size:30px;
   font-weight:500;
 }
@@ -711,7 +712,6 @@ tr.slack td{
   text-align:center;
   vertical-align:middle;
   border-left:1px dashed var(--line);
-  border-radius: 6px;
 }
 
 /* Drawn rather than native: a native checkbox renders its own box and ignores
@@ -744,8 +744,8 @@ tr.slack td{
   content:"";
   width:10px;
   height:5px;
-  border-left:2px solid #fff;
-  border-bottom:2px solid #fff;
+  border-left:2px solid var(--on-dark);
+  border-bottom:2px solid var(--on-dark);
   transform:rotate(-45deg) translate(1px,-2px);
 }
 
@@ -953,7 +953,7 @@ tr:has(.c-done input:checked) .overage{
   border:0;
   border-radius:9px;
   background:var(--indigo);
-  color:#fff;
+  color:var(--on-dark);
   font:500 13.5px Manrope,system-ui,sans-serif;
   cursor:pointer;
 }

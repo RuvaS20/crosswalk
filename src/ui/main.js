@@ -7,10 +7,8 @@
 
 import { buildPlan, filterLessons } from '../engine/index.js';
 import { ENDPOINT } from '../../config.js';
-import { useConfig } from './progress.js';
+import { $, useConfig } from './progress.js';
 import { render, esc, TOOL_NAMES } from './render.js';
-
-const $ = s => document.querySelector(s);
 
 let data = null;
 
@@ -249,5 +247,6 @@ load()
     $('#out').innerHTML =
       '<div class="nofit"><h2>Couldn\'t load the curriculum</h2>' +
       '<p>' + esc(err.message) + '</p>' +
-      '<div class="fixes"><button type="button" onclick="location.reload()">Try again</button></div></div>';
+      '<div class="fixes"><button type="button" id="retry">Try again</button></div></div>';
+    $('#retry').addEventListener('click', () => location.reload());
   });

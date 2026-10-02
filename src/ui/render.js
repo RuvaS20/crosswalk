@@ -9,16 +9,14 @@
  * would make render and main circular - fragile for no gain.
  */
 
-import { weekDone, toggleWeek, renderProgress, exportCSV, indexWorkWeeks }
+import { $, weekDone, toggleWeek, renderProgress, exportCSV, indexWorkWeeks }
   from './progress.js';
-
-const $ = s => document.querySelector(s);
 
 export const TOOL_NAMES = {
   app_inventor: 'App Inventor', thunkable: 'Thunkable',
   scratch: 'Scratch', python_streamlit: 'Python + Streamlit'
 };
-const AGE_LABEL = { beginner: 'Ages 8-12', junior: 'Ages 13-15', senior: 'Ages 16-18' };
+const AGE_LABEL = { beginner: 'Ages 8–12', junior: 'Ages 13–15', senior: 'Ages 16–18' };
 const AI_LABEL  = { none: 'no AI', integrated: 'AI included', focused: 'AI-focused' };
 
 /* Where the weekly homework figure stops being routine and starts being a

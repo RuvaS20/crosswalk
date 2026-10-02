@@ -9,7 +9,7 @@
  * copy is one more thing that can go stale.
  */
 
-const $ = s => document.querySelector(s);
+export const $ = s => document.querySelector(s);
 
 /**
  * Which lessons have been marked done, per configuration.
